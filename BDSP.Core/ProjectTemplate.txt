@@ -1,0 +1,41 @@
+Poffin.Core
+│
+├── Primitives
+│   ├── Flavor.cs
+│   ├── FlavorMask.cs
+│   └── Constants.cs
+│
+├── Berries
+│   ├── BerryId.cs
+│   ├── Berry.cs
+│   ├── BerryTable.cs
+│   └── BerryCombinations.cs
+│
+├── Poffins
+│   ├── Poffin.cs
+│   ├── PoffinType.cs
+│   └── PoffinCooker.cs
+│
+├── Contest
+│   ├── ContestStats.cs
+│   └── Nature.cs
+│
+├── Selection
+│   ├── IPoffinComparer.cs
+│   ├── LevelThenSmoothnessComparer .cs
+│   ├── PoffinMinHeap .cs
+│   └── TopKPoffinSelector.cs
+│
+└── Filtering
+    ├── Predicate.cs
+    └── Comparer.cs
+
+
+
+BerryIds
+  ↓ (partition)
+Parallel Workers
+  ↓
+Local Top-K heaps
+  ↓ (merge)
+Global Top-K
