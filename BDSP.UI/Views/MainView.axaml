@@ -98,7 +98,10 @@
 
 								<TextBlock Text="Primary Flavor:" Grid.Row="0"/>
 								<TextBlock Text="{Binding SelectedBerryInfo.PrimaryFlavor}"
-										   Grid.Row="0" Grid.Column="1"/>
+										   Foreground="{Binding SelectedBerryInfo.PrimaryFlavorBrush}"
+										   FontWeight="Bold"
+
+											Grid.Row="0" Grid.Column="1"/>
 
 								<TextBlock Text="Smoothness:" Grid.Row="1"/>
 								<TextBlock Text="{Binding SelectedBerryInfo.Smoothness}"
@@ -106,7 +109,10 @@
 
 								<TextBlock Text="Rarity:" Grid.Row="2"/>
 								<TextBlock Text="{Binding SelectedBerryInfo.Rarity}"
-										   Grid.Row="2" Grid.Column="1"/>
+           Foreground="{Binding SelectedBerryInfo.RarityBrush}"
+           FontWeight="SemiBold"
+
+								Grid.Row="2" Grid.Column="1"/>
 
 							</Grid>
 

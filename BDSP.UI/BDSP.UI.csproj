@@ -44,4 +44,8 @@
   <ItemGroup>
     <Folder Include="Mapping\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Styling\FlavorColors.cs" />
+  </ItemGroup>
 </Project>
