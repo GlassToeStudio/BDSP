@@ -3,8 +3,20 @@ using BDSP.Core.Berries;
 
 namespace BDSP.Core.Berries;
 
+/// <summary>
+/// Generates combinations of berries without allocation.
+/// </summary>
 public static class BerryCombinations
 {
+    /// <summary>
+    /// Enumerates all combinations of the specified size from a berry pool.
+    /// </summary>
+    /// <param name="source">Source berry pool.</param>
+    /// <param name="choose">Number of berries per combination.</param>
+    /// <param name="action">
+    /// Callback invoked for each generated combination.
+    /// The span is only valid for the duration of the call.
+    /// </param>
     public static void ForEach(
         ReadOnlySpan<BerryId> source,
         int choose,

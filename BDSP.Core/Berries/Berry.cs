@@ -7,17 +7,28 @@ namespace BDSP.Core.Berries
 {
     public readonly struct Berry
     {
+        /// <summary>The unique identifier of the berry.</summary>
         public readonly BerryId Id;
 
-        // Packed flavor values: length = 5
-        // Spicy, Dry, Sweet, Bitter, Sour
+        /// <summary>Spicy flavor value.</summary>
         public readonly byte Spicy;
+        /// <summary>Dry flavor value.</summary>
         public readonly byte Dry;
+        /// <summary>Sweet flavor value.</summary>
         public readonly byte Sweet;
+        /// <summary>Bitter flavor value.</summary>
         public readonly byte Bitter;
+        /// <summary>Sour flavor value.</summary>
         public readonly byte Sour;
 
+        /// <summary>
+        /// Smoothness contribution of the berry. Higher? is better.
+        /// </summary>
         public readonly byte Smoothness;
+
+        /// <summary>
+        /// Rarity of the berry. Lower is better.
+        /// </summary>
         public readonly byte Rarity;
 
         public Berry(

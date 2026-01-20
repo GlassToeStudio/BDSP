@@ -8,13 +8,30 @@ using BDSP.Core.Poffins;
 
 namespace BDSP.Core.Contest
 {
+    /*
+        Condition	Flavor	Color
+        Coolness	Spicy	Red
+        Beauty	    Dry	    Blue
+        Cuteness	Sweet	Pink
+        Cleverness	Bitter	Green
+        Toughness	Sour	Yellow
+    */
+    /// <summary>
+    /// Represents contest stat gains from consuming a Poffin.
+    /// </summary>
     public struct ContestStats
     {
+        /// <summary>Cool contest stat.</summary>
         public byte Coolness;
+        /// <summary>Beautiful contest stat.</summary>
         public byte Beauty;
+        /// <summary>Cuteness contest stat. </summary>
         public byte Cuteness;
+        /// <summary>Cleverness contest stat.</summary>
         public byte Cleverness;
+        /// <summary>Tough contest stat.</summary>
         public byte Toughness;
+        /// <summary>Sheen Pokemon stat.</summary>
         public byte Sheen;
 
         public byte PerfectCount;

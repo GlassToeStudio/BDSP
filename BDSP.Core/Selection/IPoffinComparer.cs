@@ -2,10 +2,13 @@
 
 namespace BDSP.Core.Selection
 {
+    /// <summary>
+    /// Defines a comparison strategy for ranking Poffins.
+    /// </summary>
     public interface IPoffinComparer
     {
         /// <summary>
-        /// Returns true if A is strictly better than B.
+        /// Determines whether <paramref name="a"/> is better than <paramref name="b"/>.
         /// </summary>
         bool IsBetter(in Poffin a, in Poffin b);
     }

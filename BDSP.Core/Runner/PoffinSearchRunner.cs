@@ -6,8 +6,45 @@ using BDSP.Core.Selection;
 
 namespace BDSP.Core.Runner;
 
+/// <summary>
+/// Executes a deterministic search over berry combinations to find optimal poffins.
+/// </summary>
 public static class PoffinSearchRunner
 {
+
+    /// <summary>
+    /// Runs a full Poffin search using the provided parameters.
+    /// </summary>
+    /// <param name="berryPool">
+    /// Pool of berries to select from. Each entry represents a unique <see cref="BerryId"/>.
+    /// </param>
+    /// <param name="berriesPerPoffin">
+    /// Number of berries used per Poffin (1–4).
+    /// </param>
+    /// <param name="topK">
+    /// Maximum number of best Poffins to retain.
+    /// </param>
+    /// <param name="cookTimeSeconds">
+    /// Cooking time in seconds.
+    /// </param>
+    /// <param name="errors">
+    /// Number of cooking errors.
+    /// </param>
+    /// <param name="amityBonus">
+    /// Amity Square smoothness bonus (BDSP only).
+    /// </param>
+    /// <param name="comparer">
+    /// Comparer used to rank Poffins.
+    /// </param>
+    /// <param name="predicate">
+    /// Optional predicate used to filter Poffins before ranking.
+    /// </param>
+    /// <param name="maxDegreeOfParallelism">
+    /// Optional limit for parallel execution. If null, a sensible default is used.
+    /// </param>
+    /// <returns>
+    /// A deterministic <see cref="PoffinSearchResult"/> containing the best Poffins found.
+    /// </returns>
     public static PoffinSearchResult Run(
         ReadOnlySpan<BerryId> berryPool,
         int berriesPerPoffin,

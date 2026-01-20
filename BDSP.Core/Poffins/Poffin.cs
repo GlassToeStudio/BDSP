@@ -7,6 +7,9 @@ using BDSP.Core.Primitives;
 
 namespace BDSP.Core.Poffins
 {
+    /// <summary>
+    /// Immutable result of cooking a Poffin.
+    /// </summary>
     public readonly struct Poffin
     {
         public readonly byte Level;

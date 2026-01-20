@@ -6,16 +6,28 @@ using System.Threading.Tasks;
 
 namespace BDSP.Core.Primitives
 {
+    /// <summary>
+    /// Defines flavor interaction rules for BDSP (Generation VIII).
+    /// </summary>
     public static class FlavorRules
     {
         // Index = flavor, value = weakened by
+        /// <summary>
+        /// Applies flavor weakening according to the BDSP flavor cycle.
+        /// </summary>
+        /// <remarks>
+        /// The flavor weakening cycle is as follows:
+        /// Flavor X is weakened by Flavor Y:
+        /// <br/>X -> Y <br/>
+        /// Spicy → Dry → Sweet → Bitter → Sour → Spicy
+        /// </remarks>
         public static readonly Flavor[] WeakenedBy =
         [
-            Flavor.Dry,     // Spicy
-            Flavor.Spicy,   // Dry
-            Flavor.Sour,    // Sweet
-            Flavor.Bitter,  // Bitter
-            Flavor.Sweet    // Sour
+            Flavor.Dry,     // Weakens -> Spicy
+            Flavor.Spicy,   // Weakens -> Dry
+            Flavor.Sour,    // Weakens -> Sweet
+            Flavor.Bitter,  // Weakens -> Bitter
+            Flavor.Sweet    // Weakens -> Sour
         ];
     }
 }

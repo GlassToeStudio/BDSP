@@ -2,6 +2,9 @@
 
 namespace BDSP.Core.Selection;
 
+/// <summary>
+/// Maintains the top-K best Poffins using a bounded min-heap.
+/// </summary>
 public sealed class TopKPoffinSelector
 {
     private readonly PoffinMinHeap _heap;
@@ -12,7 +15,9 @@ public sealed class TopKPoffinSelector
         _heap = new PoffinMinHeap(k, comparer);
         _cmp = comparer;
     }
-
+    /// <summary>
+    /// Considers a Poffin for inclusion in the top-K set.
+    /// </summary>
     public void Consider(in Poffin p)
     {
         // Always accept until heap is full
@@ -32,6 +37,9 @@ public sealed class TopKPoffinSelector
         }
     }
 
+    /// <summary>
+    /// Returns the current best Poffins.
+    /// </summary>
     public ReadOnlySpan<Poffin> Results
         => _heap.AsSpan();
 }
