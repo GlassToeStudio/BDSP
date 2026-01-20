@@ -24,9 +24,13 @@ public static class FeedingOptimizer
 
         stack.Push(initial);
 
+        int explored = 0;
 
         while (stack.Count > 0)
         {
+            if (++explored > options.MaxNodes)
+                break;
+
             var node = stack.Pop();
 
             for (int i = node.LastIndex + 1; i < candidates.Length; i++)
