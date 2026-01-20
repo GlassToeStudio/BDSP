@@ -52,6 +52,32 @@ namespace BDSP.Core.Contest
 
             // PerfectCount recomputed only when needed
         }
-    }
 
+        /// <summary>
+        /// Returns true if this stat vector dominates the other.
+        /// </summary>
+        public bool Dominates(ContestStats other)
+        {
+            return Cool >= other.Cool &&
+                   Beauty >= other.Beauty &&
+                   Cute >= other.Cute &&
+                   Smart >= other.Smart &&
+                   Tough >= other.Tough;
+        }
+
+        /// <summary>
+        /// Adds two contest stat vectors.
+        /// </summary>
+        public static ContestStats operator +(
+            ContestStats a,
+            ContestStats b)
+        {
+            return new ContestStats(
+                (byte)(a.Cool + b.Cool),
+                (byte)(a.Beauty + b.Beauty),
+                (byte)(a.Cute + b.Cute),
+                (byte)(a.Smart + b.Smart),
+                (byte)(a.Tough + b.Tough));
+        }
+    }
 }
