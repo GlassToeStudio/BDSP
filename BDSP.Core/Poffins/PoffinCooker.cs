@@ -5,6 +5,9 @@ using BDSP.Core.Primitives;
 
 namespace BDSP.Core.Poffins;
 
+/// <summary>
+/// Cooks Poffins according to BDSP (Generation VIII) rules.
+/// </summary>
 public static class PoffinCooker
 {
     private static readonly Flavor[] FlavorPriority =
@@ -16,12 +19,23 @@ public static class PoffinCooker
         Flavor.Sour
     };
 
+    /// <summary>
+    /// Cooks a poffin from the provided berries.
+    /// </summary>
+    /// <param name="berryIds">The berries used (1–4).</param>
+    /// <param name="cookTimeSeconds">Cooking time in seconds.</param>
+    /// <param name="errors">Number of cooking errors.</param>
+    /// <param name="amityBonus">Amity Square smoothness bonus.</param>
+    /// <returns>The cooked <see cref="Poffin"/>.</returns>
     public static Poffin Cook(
         ReadOnlySpan<BerryId> berryIds,
         byte cookTimeSeconds,
         byte errors,
         byte amityBonus)
     {
+#if DEBUG
+        Debug.Assert(berryIds.Length is >= 1 and <= 4);
+#endif
         int count = berryIds.Length;
 
         // ---------- duplicate check ----------
