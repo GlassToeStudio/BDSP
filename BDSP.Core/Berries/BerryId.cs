@@ -11,5 +11,4 @@ namespace BDSP.Core.Berries
         public readonly ushort Value;
         public BerryId(ushort value) => Value = value;
     }
-
 }

@@ -96,6 +96,19 @@ static PoffinCriteria ParseCriteria(string[] args)
     return c;
 }
 
+static PoffinCriteria ApplyPreset(string name)
+{
+    return name.ToLowerInvariant() switch
+    {
+        "cool" => PoffinPresets.Cool,
+        "beauty" => PoffinPresets.Beauty,
+        "cute" => PoffinPresets.Cute,
+        "smart" => PoffinPresets.Smart,
+        "tough" => PoffinPresets.Tough,
+        _ => throw new ArgumentException("Unknown preset")
+    };
+}
+
 var criteria = ParseCriteria(args);
 
 var predicate = PoffinCriteriaCompiler.CompilePredicate(criteria);
@@ -143,5 +156,12 @@ if (args.Contains("--json"))
     File.WriteAllText("poffins.json", json);
     Console.WriteLine("Saved poffins.json");
 }
+
+Console.WriteLine($"Criteria: {criteria}");
+
+
+criteria = args.Any(a => a.StartsWith("--preset="))
+    ? ApplyPreset(args.First(a => a.StartsWith("--preset=")).Split('=')[1])
+    : new PoffinCriteria();
 
 Console.WriteLine($"Criteria: {criteria}");
