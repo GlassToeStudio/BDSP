@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BDSP.Core\BDSP.Core.csproj" />
+    <ProjectReference Include="..\BDSP.Criteria\BDSP.Criteria.csproj" />
   </ItemGroup>
 
   <ItemGroup>

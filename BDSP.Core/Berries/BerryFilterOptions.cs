@@ -27,9 +27,25 @@ public readonly struct BerryFilterOptions
     public readonly int MinWeakenedMainFlavorValue; // int.MinValue disables
     public readonly int MaxWeakenedMainFlavorValue; // int.MaxValue disables
 
+    // Flavor-specific filters (-1/MaxValue disable).
+    public readonly int MinSpicy;
+    public readonly int MaxSpicy;
+    public readonly int MinDry;
+    public readonly int MaxDry;
+    public readonly int MinSweet;
+    public readonly int MaxSweet;
+    public readonly int MinBitter;
+    public readonly int MaxBitter;
+    public readonly int MinSour;
+    public readonly int MaxSour;
+
     // Optional: require a specific flavor to be present (> 0). Disabled when null.
     public readonly byte RequiredFlavor;     // uses BDSP.Core.Primitives.Flavor underlying values
     public readonly bool HasRequiredFlavor;
+
+    // Optional: require/exclude multiple flavors (bitmask, bit 0..4).
+    public readonly byte RequiredFlavorMask;
+    public readonly byte ExcludedFlavorMask;
 
     public BerryFilterOptions(
         ulong allowedMaskLo = 0,
@@ -47,7 +63,19 @@ public readonly struct BerryFilterOptions
         int minWeakenedMainFlavorValue = int.MinValue,
         int maxWeakenedMainFlavorValue = int.MaxValue,
         bool hasRequiredFlavor = false,
-        byte requiredFlavor = 0)
+        byte requiredFlavor = 0,
+        byte requiredFlavorMask = 0,
+        byte excludedFlavorMask = 0,
+        int minSpicy = -1,
+        int maxSpicy = int.MaxValue,
+        int minDry = -1,
+        int maxDry = int.MaxValue,
+        int minSweet = -1,
+        int maxSweet = int.MaxValue,
+        int minBitter = -1,
+        int maxBitter = int.MaxValue,
+        int minSour = -1,
+        int maxSour = int.MaxValue)
     {
         AllowedMaskLo = allowedMaskLo;
         AllowedMaskHi = allowedMaskHi;
@@ -72,6 +100,20 @@ public readonly struct BerryFilterOptions
 
         HasRequiredFlavor = hasRequiredFlavor;
         RequiredFlavor = requiredFlavor;
+
+        RequiredFlavorMask = requiredFlavorMask;
+        ExcludedFlavorMask = excludedFlavorMask;
+
+        MinSpicy = minSpicy;
+        MaxSpicy = maxSpicy;
+        MinDry = minDry;
+        MaxDry = maxDry;
+        MinSweet = minSweet;
+        MaxSweet = maxSweet;
+        MinBitter = minBitter;
+        MaxBitter = maxBitter;
+        MinSour = minSour;
+        MaxSour = maxSour;
     }
 
     public static BerryFilterOptions Default => new BerryFilterOptions(
@@ -90,7 +132,19 @@ public readonly struct BerryFilterOptions
         minWeakenedMainFlavorValue: int.MinValue,
         maxWeakenedMainFlavorValue: int.MaxValue,
         hasRequiredFlavor: false,
-        requiredFlavor: 0);
+        requiredFlavor: 0,
+        requiredFlavorMask: 0,
+        excludedFlavorMask: 0,
+        minSpicy: -1,
+        maxSpicy: int.MaxValue,
+        minDry: -1,
+        maxDry: int.MaxValue,
+        minSweet: -1,
+        maxSweet: int.MaxValue,
+        minBitter: -1,
+        maxBitter: int.MaxValue,
+        minSour: -1,
+        maxSour: int.MaxValue);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Allows(ushort idValue)

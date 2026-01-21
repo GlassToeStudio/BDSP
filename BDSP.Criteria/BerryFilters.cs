@@ -1,6 +1,7 @@
-﻿using BDSP.Core.Primitives;
+using BDSP.Core.Berries;
+using BDSP.Core.Primitives;
 
-namespace BDSP.Core.Berries;
+namespace BDSP.Criteria;
 
 public static class BerryFilters
 {
@@ -38,6 +39,30 @@ public static class BerryFilters
     /// </summary>
     public static BerryFilterOptions RequireFlavor(Flavor flavor)
         => new BerryFilterOptions(hasRequiredFlavor: true, requiredFlavor: (byte)flavor);
+
+    /// <summary>
+    /// Requires all listed flavors to be present (> 0).
+    /// </summary>
+    public static BerryFilterOptions RequireFlavors(params Flavor[] flavors)
+    {
+        byte mask = 0;
+        for (int i = 0; i < flavors.Length; i++)
+            mask |= (byte)(1 << (int)flavors[i]);
+
+        return new BerryFilterOptions(requiredFlavorMask: mask);
+    }
+
+    /// <summary>
+    /// Excludes berries that have any of the listed flavors (> 0).
+    /// </summary>
+    public static BerryFilterOptions ExcludeFlavors(params Flavor[] flavors)
+    {
+        byte mask = 0;
+        for (int i = 0; i < flavors.Length; i++)
+            mask |= (byte)(1 << (int)flavors[i]);
+
+        return new BerryFilterOptions(excludedFlavorMask: mask);
+    }
 
     /// <summary>
     /// Requires a minimum main flavor value.
@@ -82,6 +107,60 @@ public static class BerryFilters
         => new BerryFilterOptions(
             minWeakenedMainFlavorValue: minWeakenedMainFlavorValue,
             maxWeakenedMainFlavorValue: maxWeakenedMainFlavorValue);
+
+    /// <summary>
+    /// Limits an individual flavor's value to a range.
+    /// </summary>
+    public static BerryFilterOptions FlavorRange(Flavor flavor, int minValue, int maxValue)
+    {
+        return flavor switch
+        {
+            Flavor.Spicy => new BerryFilterOptions(minSpicy: minValue, maxSpicy: maxValue),
+            Flavor.Dry => new BerryFilterOptions(minDry: minValue, maxDry: maxValue),
+            Flavor.Sweet => new BerryFilterOptions(minSweet: minValue, maxSweet: maxValue),
+            Flavor.Bitter => new BerryFilterOptions(minBitter: minValue, maxBitter: maxValue),
+            Flavor.Sour => new BerryFilterOptions(minSour: minValue, maxSour: maxValue),
+            _ => BerryFilterOptions.Default
+        };
+    }
+
+    /// <summary>
+    /// Limits the minimum value of an individual flavor.
+    /// </summary>
+    public static BerryFilterOptions MinFlavor(Flavor flavor, int minValue)
+    {
+        return flavor switch
+        {
+            Flavor.Spicy => new BerryFilterOptions(minSpicy: minValue),
+            Flavor.Dry => new BerryFilterOptions(minDry: minValue),
+            Flavor.Sweet => new BerryFilterOptions(minSweet: minValue),
+            Flavor.Bitter => new BerryFilterOptions(minBitter: minValue),
+            Flavor.Sour => new BerryFilterOptions(minSour: minValue),
+            _ => BerryFilterOptions.Default
+        };
+    }
+
+    /// <summary>
+    /// Limits the maximum value of an individual flavor.
+    /// </summary>
+    public static BerryFilterOptions MaxFlavor(Flavor flavor, int maxValue)
+    {
+        return flavor switch
+        {
+            Flavor.Spicy => new BerryFilterOptions(maxSpicy: maxValue),
+            Flavor.Dry => new BerryFilterOptions(maxDry: maxValue),
+            Flavor.Sweet => new BerryFilterOptions(maxSweet: maxValue),
+            Flavor.Bitter => new BerryFilterOptions(maxBitter: maxValue),
+            Flavor.Sour => new BerryFilterOptions(maxSour: maxValue),
+            _ => BerryFilterOptions.Default
+        };
+    }
+
+    /// <summary>
+    /// Allow-only filter from a list of berry IDs.
+    /// </summary>
+    public static BerryFilterOptions AllowOnly(ReadOnlySpan<BerryId> ids)
+        => BerryFilterOptions.WithAllowedIds(ids);
 
     /// <summary>
     /// Compact filter for common, low-smoothness berries with strong main flavor.

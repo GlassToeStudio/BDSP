@@ -23,6 +23,7 @@ for (ushort i = 0; i < (ushort)BerryTable.Count; i++)
 Filter berries into a stack buffer:
 ```csharp
 using BDSP.Core.Berries;
+using BDSP.Criteria;
 
 Span<BerryId> poolBuf = stackalloc BerryId[BerryTable.Count];
 var filter = BerryFilters.Tight(maxSmoothness: 25, maxRarity: 3, minMainFlavorValue: 10);

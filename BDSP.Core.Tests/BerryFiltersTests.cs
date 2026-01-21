@@ -1,5 +1,6 @@
 using BDSP.Core.Berries;
 using BDSP.Core.Primitives;
+using BDSP.Criteria;
 
 namespace BDSP.Core.Tests;
 
@@ -54,6 +55,22 @@ public sealed class BerryFiltersTests
     }
 
     [Fact]
+    public void RequireFlavors_SetsRequiredFlavorMask()
+    {
+        var f = BerryFilters.RequireFlavors(Flavor.Spicy, Flavor.Sweet);
+        AssertDefaults(f, requiredFlavorMask: false);
+        Assert.Equal((byte)((1 << 0) | (1 << 2)), f.RequiredFlavorMask);
+    }
+
+    [Fact]
+    public void ExcludeFlavors_SetsExcludedFlavorMask()
+    {
+        var f = BerryFilters.ExcludeFlavors(Flavor.Dry, Flavor.Bitter);
+        AssertDefaults(f, excludedFlavorMask: false);
+        Assert.Equal((byte)((1 << 1) | (1 << 3)), f.ExcludedFlavorMask);
+    }
+
+    [Fact]
     public void StrongMainFlavor_SetsMinMainFlavorValue()
     {
         var f = BerryFilters.StrongMainFlavor(12);
@@ -105,6 +122,39 @@ public sealed class BerryFiltersTests
     }
 
     [Fact]
+    public void FlavorRange_SetsPerFlavorBounds()
+    {
+        var f = BerryFilters.FlavorRange(Flavor.Sour, 5, 20);
+        AssertDefaults(f, flavorRanges: false);
+        Assert.Equal(5, f.MinSour);
+        Assert.Equal(20, f.MaxSour);
+    }
+
+    [Fact]
+    public void MinFlavor_SetsPerFlavorMin()
+    {
+        var f = BerryFilters.MinFlavor(Flavor.Dry, 10);
+        AssertDefaults(f, flavorRanges: false);
+        Assert.Equal(10, f.MinDry);
+    }
+
+    [Fact]
+    public void MaxFlavor_SetsPerFlavorMax()
+    {
+        var f = BerryFilters.MaxFlavor(Flavor.Bitter, 12);
+        AssertDefaults(f, flavorRanges: false);
+        Assert.Equal(12, f.MaxBitter);
+    }
+
+    [Fact]
+    public void AllowOnly_SetsAllowMask()
+    {
+        var f = BerryFilters.AllowOnly(TestHelpers.Ids(1, 3, 5));
+        AssertDefaults(f, allowMask: false);
+        Assert.True(f.AllowedMaskLo != 0 || f.AllowedMaskHi != 0);
+    }
+
+    [Fact]
     public void Tight_SetsThreeConstraints()
     {
         var f = BerryFilters.Tight(maxSmoothness: 25, maxRarity: 3, minMainFlavorValue: 10);
@@ -141,6 +191,36 @@ public sealed class BerryFiltersTests
         {
             ref readonly var b = ref BerryTable.Get(buf[i]);
             Assert.True(b.Sweet > 0);
+        }
+    }
+
+    [Fact]
+    public void Filter_RequireFlavors_OnlyIncludesBerriesWithAllFlavors()
+    {
+        var f = BerryFilters.RequireFlavors(Flavor.Spicy, Flavor.Dry);
+
+        Span<BerryId> buf = stackalloc BerryId[BerryTable.Count];
+        int count = BerryQuery.Filter(in f, buf);
+
+        for (int i = 0; i < count; i++)
+        {
+            ref readonly var b = ref BerryTable.Get(buf[i]);
+            Assert.True(b.Spicy > 0 && b.Dry > 0);
+        }
+    }
+
+    [Fact]
+    public void Filter_ExcludeFlavors_OnlyIncludesBerriesWithoutFlavors()
+    {
+        var f = BerryFilters.ExcludeFlavors(Flavor.Bitter);
+
+        Span<BerryId> buf = stackalloc BerryId[BerryTable.Count];
+        int count = BerryQuery.Filter(in f, buf);
+
+        for (int i = 0; i < count; i++)
+        {
+            ref readonly var b = ref BerryTable.Get(buf[i]);
+            Assert.True(b.Bitter == 0);
         }
     }
 
@@ -301,6 +381,66 @@ public sealed class BerryFiltersTests
         }
     }
 
+    [Fact]
+    public void Filter_FlavorRange_StaysWithinBounds()
+    {
+        var f = BerryFilters.FlavorRange(Flavor.Sour, 5, 20);
+
+        Span<BerryId> buf = stackalloc BerryId[BerryTable.Count];
+        int count = BerryQuery.Filter(in f, buf);
+
+        for (int i = 0; i < count; i++)
+        {
+            ref readonly var b = ref BerryTable.Get(buf[i]);
+            Assert.True(b.Sour >= 5 && b.Sour <= 20);
+        }
+    }
+
+    [Fact]
+    public void Filter_MinFlavor_OnlyIncludesAtOrAboveMin()
+    {
+        var f = BerryFilters.MinFlavor(Flavor.Spicy, 10);
+
+        Span<BerryId> buf = stackalloc BerryId[BerryTable.Count];
+        int count = BerryQuery.Filter(in f, buf);
+
+        for (int i = 0; i < count; i++)
+        {
+            ref readonly var b = ref BerryTable.Get(buf[i]);
+            Assert.True(b.Spicy >= 10);
+        }
+    }
+
+    [Fact]
+    public void Filter_MaxFlavor_OnlyIncludesAtOrBelowMax()
+    {
+        var f = BerryFilters.MaxFlavor(Flavor.Dry, 15);
+
+        Span<BerryId> buf = stackalloc BerryId[BerryTable.Count];
+        int count = BerryQuery.Filter(in f, buf);
+
+        for (int i = 0; i < count; i++)
+        {
+            ref readonly var b = ref BerryTable.Get(buf[i]);
+            Assert.True(b.Dry <= 15);
+        }
+    }
+
+    [Fact]
+    public void Filter_AllowOnly_OnlyIncludesAllowedIds()
+    {
+        var allowed = TestHelpers.Ids(1, 3, 5);
+        var f = BerryFilters.AllowOnly(allowed);
+
+        Span<BerryId> buf = stackalloc BerryId[BerryTable.Count];
+        int count = BerryQuery.Filter(in f, buf);
+
+        for (int i = 0; i < count; i++)
+        {
+            Assert.Contains(buf[i].Value, new ushort[] { 1, 3, 5 });
+        }
+    }
+
     private static void AssertDefaults(
         BerryFilterOptions f,
         bool allowMask = true,
@@ -310,7 +450,10 @@ public sealed class BerryFiltersTests
         bool numFlavors = true,
         bool anyNonZero = true,
         bool weakened = true,
-        bool requiredFlavor = true)
+        bool requiredFlavor = true,
+        bool requiredFlavorMask = true,
+        bool excludedFlavorMask = true,
+        bool flavorRanges = true)
     {
         if (allowMask)
         {
@@ -358,6 +501,26 @@ public sealed class BerryFiltersTests
         {
             Assert.False(f.HasRequiredFlavor);
             Assert.Equal((byte)0, f.RequiredFlavor);
+        }
+
+        if (requiredFlavorMask)
+            Assert.Equal((byte)0, f.RequiredFlavorMask);
+
+        if (excludedFlavorMask)
+            Assert.Equal((byte)0, f.ExcludedFlavorMask);
+
+        if (flavorRanges)
+        {
+            Assert.Equal(-1, f.MinSpicy);
+            Assert.Equal(int.MaxValue, f.MaxSpicy);
+            Assert.Equal(-1, f.MinDry);
+            Assert.Equal(int.MaxValue, f.MaxDry);
+            Assert.Equal(-1, f.MinSweet);
+            Assert.Equal(int.MaxValue, f.MaxSweet);
+            Assert.Equal(-1, f.MinBitter);
+            Assert.Equal(int.MaxValue, f.MaxBitter);
+            Assert.Equal(-1, f.MinSour);
+            Assert.Equal(int.MaxValue, f.MaxSour);
         }
     }
 }
