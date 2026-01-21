@@ -108,7 +108,7 @@ public sealed class PoffinCookerTests
     [Fact]
     public void Cook_SetsPrimaryFlavorCorrectly()
     {
-        var ids = TestHelpers.Ids( /* berry known to be spicy-dominant */  );
+        var ids = TestHelpers.Ids(7);
 
         var poffin = PoffinCooker.Cook(
             ids,
