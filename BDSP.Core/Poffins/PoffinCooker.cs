@@ -207,7 +207,9 @@ public static class PoffinCooker
             sour -= negativeCount;
         }
 
-        // ---------- time multiplier ----------
+        // ---------- time + mistake modifier (rounding) ----------
+        // ---------- time multiplier (truncate) ----------
+        // NOTE: Docs describe rounding, but we intentionally truncate for speed.
         if (cookTimeSeconds != 60)
         {
             spicy = spicy * 60 / cookTimeSeconds;
@@ -245,7 +247,7 @@ public static class PoffinCooker
         // ---------- smoothness (Gen VIII) ----------
         if (amityBonus > 9) amityBonus = 9;
 
-        int smoothness = (smoothnessSum / count) - amityBonus;
+        int smoothness = (smoothnessSum / count) - count - amityBonus;
         if (smoothness < 0) smoothness = 0;
 
         // ---------- classification ----------
@@ -271,26 +273,14 @@ public static class PoffinCooker
             type = PoffinType.Overripe;
 
         // ---------- primary / secondary flavor ----------
-        Flavor primary = Flavor.Spicy;
-        Flavor secondary = Flavor.Spicy;
-        int best = -1, second = -1;
-
-        foreach (var f in FlavorPriority)
-        {
-            int v = GetFlavorValue(f, spicy, dry, sweet, bitter, sour);
-            if (v > best)
-            {
-                second = best;
-                secondary = primary;
-                best = v;
-                primary = f;
-            }
-            else if (v > second && v > 0)
-            {
-                second = v;
-                secondary = f;
-            }
-        }
+        GetPrimarySecondary(
+            spicy,
+            dry,
+            sweet,
+            bitter,
+            sour,
+            out Flavor primary,
+            out Flavor secondary);
 
         return new Poffin(
             (byte)level,
@@ -311,19 +301,49 @@ public static class PoffinCooker
 
     private static Poffin CreateFoul()
     {
-        // Canonical foul payload (randomization handled outside core)
+        int spicy = 0, dry = 0, sweet = 0, bitter = 0, sour = 0;
+        Span<byte> pool = stackalloc byte[5] { 0, 1, 2, 3, 4 };
+
+        // Fisher-Yates shuffle for 3 picks.
+        for (int i = pool.Length - 1; i > 0; i--)
+        {
+            int j = Random.Shared.Next(i + 1);
+            (pool[i], pool[j]) = (pool[j], pool[i]);
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            switch ((Flavor)pool[i])
+            {
+                case Flavor.Spicy: spicy = 2; break;
+                case Flavor.Dry: dry = 2; break;
+                case Flavor.Sweet: sweet = 2; break;
+                case Flavor.Bitter: bitter = 2; break;
+                case Flavor.Sour: sour = 2; break;
+            }
+        }
+
+        GetPrimarySecondary(
+            spicy,
+            dry,
+            sweet,
+            bitter,
+            sour,
+            out Flavor primary,
+            out Flavor secondary);
+
         return new Poffin(
             level: 2,
             secondLevel: 2,
             smoothness: 0,
-            spicy: 2,
-            dry: 2,
-            sweet: 2,
-            bitter: 0,
-            sour: 0,
+            spicy: (byte)spicy,
+            dry: (byte)dry,
+            sweet: (byte)sweet,
+            bitter: (byte)bitter,
+            sour: (byte)sour,
             type: PoffinType.Foul,
-            primaryFlavor: Flavor.Spicy,
-            secondaryFlavor: Flavor.Dry
+            primaryFlavor: primary,
+            secondaryFlavor: secondary
         );
     }
 
@@ -356,4 +376,35 @@ public static class PoffinCooker
             Flavor.Sour => sour,
             _ => 0
         };
+
+    private static void GetPrimarySecondary(
+        int spicy,
+        int dry,
+        int sweet,
+        int bitter,
+        int sour,
+        out Flavor primary,
+        out Flavor secondary)
+    {
+        primary = Flavor.Spicy;
+        secondary = Flavor.Spicy;
+        int best = -1, second = -1;
+
+        foreach (var f in FlavorPriority)
+        {
+            int v = GetFlavorValue(f, spicy, dry, sweet, bitter, sour);
+            if (v > best)
+            {
+                second = best;
+                secondary = primary;
+                best = v;
+                primary = f;
+            }
+            else if (v > second && v > 0)
+            {
+                second = v;
+                secondary = f;
+            }
+        }
+    }
 }

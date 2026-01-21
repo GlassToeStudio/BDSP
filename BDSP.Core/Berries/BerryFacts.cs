@@ -140,43 +140,5 @@ public static class BerryFacts
         || b.Bitter > threshold
         || b.Sour > threshold;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int CompareMainFlavorToSmoothnessRatio(in Berry a, in Berry b)
-    {
-        // Compare (mainA / smoothA) vs (mainB / smoothB) using cross multiplication.
-        int mainA = GetMainFlavorValue(in a);
-        int mainB = GetMainFlavorValue(in b);
-
-        int dA = a.Smoothness;
-        int dB = b.Smoothness;
-
-        if (dA == 0 && dB == 0) return 0;
-        if (dA == 0) return 1;   // treat as infinity
-        if (dB == 0) return -1;
-
-        long left = (long)mainA * dB;
-        long right = (long)mainB * dA;
-        return left.CompareTo(right);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int CompareField(in Berry a, in Berry b, BerrySortField field) => field switch
-    {
-        BerrySortField.Id => a.Id.Value.CompareTo(b.Id.Value),
-        BerrySortField.Name => string.Compare(a.Id.GetName(), b.Id.GetName(), StringComparison.Ordinal),
-
-        BerrySortField.Smoothness => a.Smoothness.CompareTo(b.Smoothness),
-        BerrySortField.Rarity => a.Rarity.CompareTo(b.Rarity),
-
-        BerrySortField.MainFlavor => GetMainFlavor(in a).CompareTo(GetMainFlavor(in b)),
-        BerrySortField.MainFlavorValue => GetMainFlavorValue(in a).CompareTo(GetMainFlavorValue(in b)),
-        BerrySortField.NumFlavors => GetNumFlavors(in a).CompareTo(GetNumFlavors(in b)),
-
-        BerrySortField.WeakenedMainFlavor => GetWeakenedMainFlavor(in a).CompareTo(GetWeakenedMainFlavor(in b)),
-        BerrySortField.WeakenedMainFlavorValue => GetWeakenedMainFlavorValue(in a).CompareTo(GetWeakenedMainFlavorValue(in b)),
-
-        BerrySortField.MainFlavorToSmoothnessRatio => CompareMainFlavorToSmoothnessRatio(in a, in b),
-
-        _ => 0
-    };
+    
 }

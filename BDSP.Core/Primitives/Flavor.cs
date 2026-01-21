@@ -14,5 +14,4 @@ namespace BDSP.Core.Primitives
         Bitter = 3,
         Sour = 4
     }
-
 }

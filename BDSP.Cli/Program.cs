@@ -80,14 +80,14 @@ static PoffinCriteria ParseCriteria(string[] args)
             case "--sort":
                 {
                     var (f, d) = ParseSort(value!);
-                    c = c with { PrimarySort = f, PrimaryDirection = d };
+                    c = c with { PrimarySort = f, PrimaryDirection = (BDSP.Criteria.SortDirection ) d };
                     break;
                 }
 
             case "--then":
                 {
                     var (f, d) = ParseSort(value!);
-                    c = c with { SecondarySort = f, SecondaryDirection = d };
+                    c = c with { SecondarySort = f, SecondaryDirection = (BDSP.Criteria.SortDirection) d };
                     break;
                 }
         }

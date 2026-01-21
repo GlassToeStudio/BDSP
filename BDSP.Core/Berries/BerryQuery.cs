@@ -8,12 +8,18 @@ public static class BerryQuery
     /// Zero-allocation path: writes results into <paramref name="destination"/> and returns count.
     /// destination must be at least BerryTable.Count in length.
     /// </summary>
-    public static int FilterAndSort(
+    /// <example>
+    /// <code>
+    /// Span&lt;BerryId&gt; poolBuf = stackalloc BerryId[BerryTable.Count];
+    /// var filter = BerryFilters.Tight(maxSmoothness: 25, maxRarity: 3, minMainFlavorValue: 10);
+    /// int count = BerryQuery.Filter(in filter, poolBuf);
+    /// var berryPool = poolBuf[..count];
+    /// </code>
+    /// </example>
+    public static int Filter(
         in BerryFilterOptions filter,
-        ReadOnlySpan<BerrySortSpec> sort,
         Span<BerryId> destination)
     {
-        // 1) Filter
         int count = 0;
         for (ushort i = 0; i < (ushort)BerryTable.Count; i++)
         {
@@ -29,20 +35,16 @@ public static class BerryQuery
             destination[count++] = id;
         }
 
-        // 2) Sort (small N)
-        if (count > 1 && sort.Length > 0)
-            InsertionSort(destination.Slice(0, count), sort);
-
         return count;
     }
 
     /// <summary>
     /// Convenience path: allocates a new array sized to count (<= 65).
     /// </summary>
-    public static BerryId[] FilterAndSort(in BerryFilterOptions filter, ReadOnlySpan<BerrySortSpec> sort)
+    public static BerryId[] Filter(in BerryFilterOptions filter)
     {
         Span<BerryId> tmp = stackalloc BerryId[BerryTable.Count];
-        int count = FilterAndSort(in filter, sort, tmp);
+        int count = Filter(in filter, tmp);
         return tmp.Slice(0, count).ToArray();
     }
 
@@ -100,37 +102,5 @@ public static class BerryQuery
         return true;
     }
 
-    private static void InsertionSort(Span<BerryId> ids, ReadOnlySpan<BerrySortSpec> sort)
-    {
-        for (int i = 1; i < ids.Length; i++)
-        {
-            var key = ids[i];
-            int j = i - 1;
-
-            while (j >= 0 && Compare(ids[j], key, sort) > 0)
-            {
-                ids[j + 1] = ids[j];
-                j--;
-            }
-
-            ids[j + 1] = key;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Compare(BerryId a, BerryId b, ReadOnlySpan<BerrySortSpec> sort)
-    {
-        ref readonly var ba = ref BerryTable.Get(a);
-        ref readonly var bb = ref BerryTable.Get(b);
-
-        for (int i = 0; i < sort.Length; i++)
-        {
-            int cmp = BerryFacts.CompareField(in ba, in bb, sort[i].Field);
-
-            if (cmp != 0)
-                return sort[i].Direction == SortDirection.Asc ? cmp : -cmp;
-        }
-
-        return 0;
-    }
+    
 }
