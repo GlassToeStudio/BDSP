@@ -74,7 +74,23 @@ public readonly struct BerryFilterOptions
         RequiredFlavor = requiredFlavor;
     }
 
-    public static BerryFilterOptions Default => new();
+    public static BerryFilterOptions Default => new BerryFilterOptions(
+        allowedMaskLo: 0,
+        allowedMaskHi: 0,
+        minSmoothness: -1,
+        maxSmoothness: int.MaxValue,
+        minRarity: -1,
+        maxRarity: int.MaxValue,
+        minMainFlavorValue: -1,
+        maxMainFlavorValue: int.MaxValue,
+        minNumFlavors: -1,
+        maxNumFlavors: int.MaxValue,
+        minAnyNonZeroFlavorValue: -1,
+        maxAnyNonZeroFlavorValue: int.MaxValue,
+        minWeakenedMainFlavorValue: int.MinValue,
+        maxWeakenedMainFlavorValue: int.MaxValue,
+        hasRequiredFlavor: false,
+        requiredFlavor: 0);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Allows(ushort idValue)
