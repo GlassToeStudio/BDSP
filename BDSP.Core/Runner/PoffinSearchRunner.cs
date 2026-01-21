@@ -62,31 +62,40 @@ public static class PoffinSearchRunner
         if (topK <= 0)
             throw new ArgumentOutOfRangeException(nameof(topK));
 
+        if (berryPool.Length < berriesPerPoffin)
+            return new PoffinSearchResult(Array.Empty<Poffin>());
+
+        // Materialize to avoid capturing a ref-like span in worker lambdas.
+        BerryId[] pool = berryPool.ToArray();
+
         int workers =
             maxDegreeOfParallelism ??
             Math.Max(1, Environment.ProcessorCount - 1);
 
-        // Partition berry pool across workers
-        BerryId[][] partitions = Partition(berryPool, workers);
+        int firstIndexCount = pool.Length - berriesPerPoffin + 1;
+        int partitions = Math.Min(workers, Math.Max(1, firstIndexCount));
+        var ranges = PartitionFirstIndices(firstIndexCount, partitions);
 
         var globalSelector = new TopKPoffinSelector(topK, comparer);
         object mergeLock = new();
 
         Parallel.For(
             0,
-            partitions.Length,
+            ranges.Length,
             new ParallelOptions { MaxDegreeOfParallelism = workers },
             workerIndex =>
             {
                 var localSelector = new TopKPoffinSelector(topK, comparer);
-                BerryId[] localPool = partitions[workerIndex];
+                var range = ranges[workerIndex];
 
-                BerryCombinations.ForEach(
-                    localPool,
+                ForEachByFirstIndex(
+                    pool,
                     berriesPerPoffin,
+                    range.Start,
+                    range.End,
                     combo =>
                     {
-                        var poffin = PoffinCooker.Cook(
+                        var poffin = PoffinCooker.CookUnique(
                             combo,
                             cookTimeSeconds,
                             errors,
@@ -112,36 +121,114 @@ public static class PoffinSearchRunner
             globalSelector.Results.ToArray());
     }
 
+    private readonly struct IndexRange
+    {
+        public IndexRange(int start, int end)
+        {
+            Start = start;
+            End = end;
+        }
+
+        public int Start { get; }
+        public int End { get; }
+    }
+
     // ------------------------------------------------------------
-    // Helper: partition berry pool using stride distribution
+    // Helper: partition first-index range across workers
     // ------------------------------------------------------------
-    private static BerryId[][] Partition(
-        ReadOnlySpan<BerryId> source,
+    private static IndexRange[] PartitionFirstIndices(
+        int count,
         int partitions)
     {
         if (partitions <= 0)
             throw new ArgumentOutOfRangeException(nameof(partitions));
 
-        // Count elements per partition
-        int[] counts = new int[partitions];
-        for (int i = 0; i < source.Length; i++)
-            counts[i % partitions]++;
-
-        // Allocate exact-sized arrays
-        var result = new BerryId[partitions][];
+        var ranges = new IndexRange[partitions];
         for (int p = 0; p < partitions; p++)
-            result[p] = new BerryId[counts[p]];
-
-        // Reset counters
-        Array.Clear(counts, 0, counts.Length);
-
-        // Fill partitions
-        for (int i = 0; i < source.Length; i++)
         {
-            int p = i % partitions;
-            result[p][counts[p]++] = source[i];
+            int start = (int)((long)p * count / partitions);
+            int end = (int)((long)(p + 1) * count / partitions);
+            ranges[p] = new IndexRange(start, end);
         }
 
-        return result;
+        return ranges;
+    }
+
+    private static void ForEachByFirstIndex(
+        ReadOnlySpan<BerryId> source,
+        int choose,
+        int start,
+        int end,
+        Action<ReadOnlySpan<BerryId>> action)
+    {
+        int n = source.Length;
+
+        switch (choose)
+        {
+            case 1:
+            {
+                Span<BerryId> buffer = stackalloc BerryId[1];
+                for (int i = start; i < end; i++)
+                {
+                    buffer[0] = source[i];
+                    action(buffer);
+                }
+                break;
+            }
+            case 2:
+            {
+                Span<BerryId> buffer = stackalloc BerryId[2];
+                for (int i = start; i < end; i++)
+                {
+                    buffer[0] = source[i];
+                    for (int j = i + 1; j < n; j++)
+                    {
+                        buffer[1] = source[j];
+                        action(buffer);
+                    }
+                }
+                break;
+            }
+            case 3:
+            {
+                Span<BerryId> buffer = stackalloc BerryId[3];
+                for (int i = start; i < end; i++)
+                {
+                    buffer[0] = source[i];
+                    for (int j = i + 1; j < n - 1; j++)
+                    {
+                        buffer[1] = source[j];
+                        for (int k = j + 1; k < n; k++)
+                        {
+                            buffer[2] = source[k];
+                            action(buffer);
+                        }
+                    }
+                }
+                break;
+            }
+            case 4:
+            {
+                Span<BerryId> buffer = stackalloc BerryId[4];
+                for (int i = start; i < end; i++)
+                {
+                    buffer[0] = source[i];
+                    for (int j = i + 1; j < n - 2; j++)
+                    {
+                        buffer[1] = source[j];
+                        for (int k = j + 1; k < n - 1; k++)
+                        {
+                            buffer[2] = source[k];
+                            for (int l = k + 1; l < n; l++)
+                            {
+                                buffer[3] = source[l];
+                                action(buffer);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+        }
     }
 }

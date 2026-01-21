@@ -20,12 +20,15 @@ internal static class FeedingPlanner
         var state = new FeedingState(0, default);
 
         // Sort by score-per-sheen descending
-        var ordered = candidates
-            .OrderByDescending(p =>
-                options.Score(
-                    Contest.ContestStatsCalculator.FromPoffin(p)) /
-                Math.Max(1, p.Smoothness))
-            .ToArray();
+        var ordered = candidates.ToArray();
+        var scorePerSheen = new int[ordered.Length];
+        for (int i = 0; i < ordered.Length; i++)
+            scorePerSheen[i] = ScorePerSheen(ordered[i], options);
+
+        Array.Sort(
+            scorePerSheen,
+            ordered,
+            Comparer<int>.Create((a, b) => b.CompareTo(a)));
 
         foreach (var poffin in ordered)
         {
@@ -42,5 +45,12 @@ internal static class FeedingPlanner
         }
 
         return new FeedingPlan(selected, state);
+    }
+
+    private static int ScorePerSheen(Poffins.Poffin p, FeedingOptions options)
+    {
+        return options.Score(
+            Contest.ContestStatsCalculator.FromPoffin(p)) /
+            Math.Max(1, (int)p.Smoothness);
     }
 }
