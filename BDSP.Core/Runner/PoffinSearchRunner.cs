@@ -67,6 +67,9 @@ public static class PoffinSearchRunner
 
         // Materialize to avoid capturing a ref-like span in worker lambdas.
         BerryId[] pool = berryPool.ToArray();
+        var poolBerries = new Berry[pool.Length];
+        for (int i = 0; i < pool.Length; i++)
+            poolBerries[i] = BerryTable.Get(pool[i]);
 
         int workers =
             maxDegreeOfParallelism ??
@@ -88,14 +91,14 @@ public static class PoffinSearchRunner
                 var localSelector = new TopKPoffinSelector(topK, comparer);
                 var range = ranges[workerIndex];
 
-                ForEachByFirstIndex(
-                    pool,
+                ForEachByFirstIndexBerries(
+                    poolBerries,
                     berriesPerPoffin,
                     range.Start,
                     range.End,
                     combo =>
                     {
-                        var poffin = PoffinCooker.CookUnique(
+                        var poffin = PoffinCooker.CookFromBerriesUnique(
                             combo,
                             cookTimeSeconds,
                             errors,
@@ -154,12 +157,12 @@ public static class PoffinSearchRunner
         return ranges;
     }
 
-    private static void ForEachByFirstIndex(
-        ReadOnlySpan<BerryId> source,
+    private static void ForEachByFirstIndexBerries(
+        ReadOnlySpan<Berry> source,
         int choose,
         int start,
         int end,
-        Action<ReadOnlySpan<BerryId>> action)
+        Action<ReadOnlySpan<Berry>> action)
     {
         int n = source.Length;
 
@@ -167,7 +170,7 @@ public static class PoffinSearchRunner
         {
             case 1:
             {
-                Span<BerryId> buffer = stackalloc BerryId[1];
+                Span<Berry> buffer = stackalloc Berry[1];
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
@@ -177,7 +180,7 @@ public static class PoffinSearchRunner
             }
             case 2:
             {
-                Span<BerryId> buffer = stackalloc BerryId[2];
+                Span<Berry> buffer = stackalloc Berry[2];
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
@@ -191,7 +194,7 @@ public static class PoffinSearchRunner
             }
             case 3:
             {
-                Span<BerryId> buffer = stackalloc BerryId[3];
+                Span<Berry> buffer = stackalloc Berry[3];
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
@@ -209,7 +212,7 @@ public static class PoffinSearchRunner
             }
             case 4:
             {
-                Span<BerryId> buffer = stackalloc BerryId[4];
+                Span<Berry> buffer = stackalloc Berry[4];
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];

@@ -16,6 +16,9 @@ public static class FeedingOptimizer
         FeedingOptions options)
     {
         var bestNodes = new List<FeedingNode>();
+        var candidateStats = new ContestStats[candidates.Length];
+        for (int i = 0; i < candidates.Length; i++)
+            candidateStats[i] = ContestStatsCalculator.FromPoffin(candidates[i]);
 
         var stack = new Stack<FeedingNode>();
 
@@ -45,7 +48,7 @@ public static class FeedingOptimizer
 
                 var newStats =
                     node.State.Stats +
-                    ContestStatsCalculator.FromPoffin(p);
+                    candidateStats[i];
 
                 var newState = new FeedingState(newSheen, newStats);
                 var newNode = new FeedingNode(newState, i, node);

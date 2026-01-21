@@ -34,7 +34,7 @@ public static class PoffinCooker
         byte errors,
         byte amityBonus)
     {
-        return CookCore(
+        return CookCoreFromIds(
             berryIds,
             cookTimeSeconds,
             errors,
@@ -51,7 +51,7 @@ public static class PoffinCooker
         byte errors,
         byte amityBonus)
     {
-        return CookCore(
+        return CookCoreFromIds(
             berryIds,
             cookTimeSeconds,
             errors,
@@ -59,7 +59,53 @@ public static class PoffinCooker
             checkDuplicates: false);
     }
 
-    private static Poffin CookCore(
+    /// <summary>
+    /// Cooks a poffin from unique berries (duplicate check skipped).
+    /// </summary>
+    internal static Poffin CookFromBerriesUnique(
+        ReadOnlySpan<Berry> berries,
+        byte cookTimeSeconds,
+        byte errors,
+        byte amityBonus)
+    {
+        if (cookTimeSeconds == 0)
+            throw new ArgumentOutOfRangeException(nameof(cookTimeSeconds));
+
+#if DEBUG
+        Debug.Assert(berries.Length is >= 1 and <= 4);
+#endif
+        int count = berries.Length;
+
+        int spicy = 0, dry = 0, sweet = 0, bitter = 0, sour = 0;
+        int smoothnessSum = 0;
+
+        for (int i = 0; i < count; i++)
+        {
+            ref readonly Berry b = ref berries[i];
+
+            spicy += b.Spicy;
+            dry += b.Dry;
+            sweet += b.Sweet;
+            bitter += b.Bitter;
+            sour += b.Sour;
+
+            smoothnessSum += b.Smoothness;
+        }
+
+        return CookFromTotals(
+            spicy,
+            dry,
+            sweet,
+            bitter,
+            sour,
+            smoothnessSum,
+            count,
+            cookTimeSeconds,
+            errors,
+            amityBonus);
+    }
+
+    private static Poffin CookCoreFromIds(
         ReadOnlySpan<BerryId> berryIds,
         byte cookTimeSeconds,
         byte errors,
@@ -105,7 +151,33 @@ public static class PoffinCooker
             smoothnessSum += b.Smoothness;
         }
 
+        return CookFromTotals(
+            spicy,
+            dry,
+            sweet,
+            bitter,
+            sour,
+            smoothnessSum,
+            count,
+            cookTimeSeconds,
+            errors,
+            amityBonus);
+    }
+
+    private static Poffin CookFromTotals(
+        int spicy,
+        int dry,
+        int sweet,
+        int bitter,
+        int sour,
+        int smoothnessSum,
+        int count,
+        byte cookTimeSeconds,
+        byte errors,
+        byte amityBonus)
+    {
         // ---------- weakening (correct order) ----------
+        /// Spicy → Dry → Sweet → Bitter → Sour → Spicy
         int wSpicy = spicy - dry;
         int wDry = dry - sweet;
         int wSweet = sweet - bitter;
@@ -136,18 +208,24 @@ public static class PoffinCooker
         }
 
         // ---------- time multiplier ----------
-        spicy = spicy * 60 / cookTimeSeconds;
-        dry = dry * 60 / cookTimeSeconds;
-        sweet = sweet * 60 / cookTimeSeconds;
-        bitter = bitter * 60 / cookTimeSeconds;
-        sour = sour * 60 / cookTimeSeconds;
+        if (cookTimeSeconds != 60)
+        {
+            spicy = spicy * 60 / cookTimeSeconds;
+            dry = dry * 60 / cookTimeSeconds;
+            sweet = sweet * 60 / cookTimeSeconds;
+            bitter = bitter * 60 / cookTimeSeconds;
+            sour = sour * 60 / cookTimeSeconds;
+        }
 
         // ---------- mistake penalty ----------
-        spicy -= errors;
-        dry -= errors;
-        sweet -= errors;
-        bitter -= errors;
-        sour -= errors;
+        if (errors != 0)
+        {
+            spicy -= errors;
+            dry -= errors;
+            sweet -= errors;
+            bitter -= errors;
+            sour -= errors;
+        }
 
         spicy = Clamp(spicy);
         dry = Clamp(dry);
