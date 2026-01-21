@@ -1,93 +1,345 @@
-This is a project I made in python.
+## **Making Poffins**
 
-Its purpose is to find the best berry combination to cook a Poffin that gives the highest max stats with the least effort. There is the Berry class, which is the ingredient to a Poffin. The Poffin class, which is made of 1 or more berries, and the Poffin cooker, which cooks a Poffin based on some rules. There is then a contest stats class that ranks each poffin. Every main class, berry, poffin, stats has a similar filtering system to reduce the total number of poffins tested. I am converting this to c# 9. I want it to be as fast as possible, working with millions of permutations of berries and combinations, and reduce memory footprint. I want it to be a core class library that will integrate, later, with a UI.
+Of course! Here is a more concise, Markdown-formatted version of the text you provided.
 
-Here is some text about the rules of poffin making and how they affect a pokemon
+### **How to Cook Poffins**
 
-Flavors
-The Poffin's flavors depend on the flavors of the Berries used to produce it. Each flavor is weakened by another flavor, so the presence of one flavor will decrease the strength of another. The strength of each flavor determines how much a Poffin will affect each of a Pokémon's conditions.
+Poffins can be cooked alone or in groups of up to four players. The process involves stirring berry batter in a pot, with the goal of creating the strongest Poffin possible in the shortest time.
 
-Flavor Spicy Sour Bitter Sweet Dry
-Weakened by... Dry Spicy Sour Bitter Sweet
-If each Berry used in the Poffin is different from the others, the flavors in the resulting Poffin are calculated as follows:
+#### **Cooking Setup**
 
-Add together the respective flavors of all Berries being used (sum all spicy values, all dry values, and so on).
-For each Berry flavor total, subtract the Berry flavor total of that flavor's weakening flavor as per the table above (e.g. spicy is weakened by dry, sour is weakened by spicy, etc.).
-Subtract 1 from each flavor for every flavor that is negative.
-Multiply all flavors by 60 divided by the number of seconds taken to cook, then subtract the number of times the mixture was burned or spilled. Round to the nearest integer.
-Set any flavors that are now negative to 0.
-If any flavors are greater 100, set those flavors to that limit.
-If two or more copies of the same Berry are used, or all flavors are 0 (due to a large number of burns or spills), the Poffin will instead become a Foul Poffin, which boosts three random conditions by 2.
+| Generation          | Players & Locations                                                                                | Berry Input                                 |
+| :------------------ | :------------------------------------------------------------------------------------------------- | :------------------------------------------ |
+| **Gen IV (DPPt)**   | • **Alone:** Poffin House<br>• **Local Wireless:** Poffin House<br>• **Wi-Fi:** Pokémon Wi-Fi Club | Each player adds one Berry.                 |
+| **Gen VIII (BDSP)** | • **Alone:** Poffin House                                                                          | A single player can use up to four Berries. |
 
-Poffin level
-The Poffin's level is equal to the strength of its strongest flavor. The level can be improved by making the Poffin in a shorter time, and by minimizing the number of burns and spills, as detailed in the above procedure. The highest possible level for a Poffin is thus 100.
+#### **The Cooking Process**
 
-Base flavor levels
-When cooking with one Berry (which is always the case when cooking alone in Generation IV), each Berry can be viewed as having a base strength for each Poffin flavor, which is then boosted by cooking faster than the maximum and decreased by spilling or burning the mixture. Since flavors that are already negative can only become more negative, they can be treated as 0, even though this is not performed until later in the algorithm.
+1.  **Stir the Batter:** Use the stylus (DS) or control sticks (Switch) to stir the batter in the pot.
+2.  **Follow the Arrows:** An arrow will show which direction to stir (clockwise or counter-clockwise). Stirring in the correct direction lowers the cooking time.
+3.  **Avoid Mistakes:**
+    - **Burning:** Occurs if you stir too slowly.
+    - **Spilling:** Occurs if you stir too quickly in the early stages.
+4.  **Cooking Ends:** The process finishes after one minute, or sooner if you stir effectively.
 
-Poffin levels can be improved by making the Poffin in a shorter time. The level of the cooked Poffin is equal to
-round⁡(base⋅60time−errors),
+---
 
-⁡(If this level would be less than 0, it becomes 0 instead.)
+#### **Cooking Stages**
 
-For example, when with a single Berry, an Aguav Berry has a base bitterness of 14 (other flavors have a base strength of 0). This means completing in 60 seconds with 0 burns and spills will yield a level 14 Poffin:
+The cooking process has three distinct stages as the batter thickens.
 
-Base flavor levels
+| Stage             | Flames | Batter Appearance | Stirring Notes                                    |
+| :---------------- | :----- | :---------------- | :------------------------------------------------ |
+| **1. Doughy**     | Orange | Pale and doughy   | Easy to spill, requires slow stirring.            |
+| **2. Thickening** | Red    | Browning          | Harder to spill, requires faster stirring.        |
+| **3. Final**      | Blue   | Dark brown        | Impossible to spill, requires very fast stirring. |
 
-Poffin types
-Poffin types depend on the number and strength of flavors present.
+---
 
-If a Poffin is created using two or more of the same Berry, or if all of its flavors end up being 0 or less, it becomes a Foul Poffin, which is black in color. A Foul Poffin has three random flavors with 2 strength, ignoring the flavors of the constituent Berries.
+#### **Results**
 
-If the Poffin is Level 50 or higher, it is a Mild Poffin, which is gold with lighter yellow sprinkles on top. In Brilliant Diamond and Shining Pearl, if a Poffin is Level 95 or higher and was cooked without any overflows or burns, it is a Super Mild Poffin, which has a rainbow-striped coloration with the same yellow sprinkles as the Mild Poffin.
+Once finished, every player involved receives a number of identical Poffins equal to the total number of Berries used in the recipe.
 
-Otherwise, if there is only one flavor present, the Poffin will be named after that flavor. If there are two flavors, the Poffin will be named after both flavors, with the stronger flavor first; if both flavors have the same strength, they are prioritized in the following order: Spicy, Dry, Sweet, Bitter, Sour. These Poffins are colored based on their primary flavor, with sprinkles of the second flavor's color for two-flavored Poffins.
+#### **Two-Flavor Naming Priority**
 
-If there are three flavors, the Poffin is a Rich Poffin, which is a medium gray color. If there are four flavors, the Poffin is an Overripe Poffin, which is a light gray color.
+If both flavors have equal strength, the name is prioritized in this order:
 
-Smoothness
-This section is incomplete.
-Please feel free to edit this section to add missing information and complete it.
-Reason: Determine how different levels of synchronization/friendship affect the smoothness reduction
-The smoothness of a Poffin is equal to the average smoothness of the Berries used (rounded down), minus the number of Berries used, minus any applicable bonus reduction. This can be expressed as the following formula (where n is the number of Berries used):
+1. Spicy
+2. Dry
+3. Sweet
+4. Bitter
+5. Sour
 
-In Generation IV, if two or more players are cooking Poffins together and their stirring motions are all synchronized, a sparkling trail will appear on each game's touch screen.[1] The Poffin's smoothness will then be reduced by between 1 and 10 points, depending on how much of the stirring was synchronized enough to earn sparkles. The stirring itself is also more effective this way, allowing for lower cook times and thus higher-level Poffins that the Pokémon can eat more of before they get full.
+### **Poffin Flavors & Strengths**
 
-In Generation VIII, the bonus reduction to smoothness is instead earned by cooking at Amity Square, and is based on how many of the player's party Pokémon are eligible for the park and have been herded up prior to cooking, as well as the friendship levels of those Pokémon. With a full party of Pokémon at maximum friendship which are all eligible for Amity Square, the largest possible smoothness reduction in this generation is 9 points.
+A Poffin's flavors are derived from the Berries used to make it. Each of the five flavors is weakened by one other flavor, which can reduce its final strength. The strength of each flavor in the final Poffin determines how much it will boost a Pokémon's contest conditions.
 
-The highest legally obtainable smoothness of a Poffin is 59, by using a single Berry with 60 smoothness. The lowest obtainable smoothness is 6 in Generation IV, or 7 in Generation VIII, by using four berries that each have 20 smoothness and getting the maximum available bonus reduction.
+#### **Flavor Weaknesses**
 
-The Berries of each smoothness are listed below.
+The following table shows which flavor weakens another.
 
-Feeding Poffins
-Condition
-When a Pokémon is fed a Poffin, its Contest conditions are normally increased by an amount equal to the strength of the corresponding flavor. If the primary flavor of a Poffin matches the favorite flavor of the Pokémon it is fed to, the Pokémon will "happily" eat the Poffin, and the value of all of that Poffin's condition increases, not just the one associated with the chosen flavor, will be multiplied by 1.1 (rounded down). If the primary flavor matches the Pokémon's disliked flavor instead, the Pokémon will "disdainfully" eat the Poffin, and all condition increases will be multiplied by 0.9 (rounded down).
+| Flavor     | Is Weakened By |
+| :--------- | :------------- |
+| **Spicy**  | Dry            |
+| **Sour**   | Spicy          |
+| **Bitter** | Sour           |
+| **Sweet**  | Bitter         |
+| **Dry**    | Sweet          |
 
-A Pokémon's liked and disliked flavor are determined by its nature. Some Pokémon neither like nor dislike any flavors.
+### **Poffin Flavor Calculation**
 
-No preferences ↘ Disliked flavor
-Spicy Dry Sweet Bitter Sour
-Liked flavor Spicy Bashful Adamant Brave Naughty Lonely
-Dry Modest Docile Quiet Rash Mild
-Sweet Timid Jolly Hardy Naive Hasty
-Bitter Calm Careful Sassy Quirky Gentle
-Sour Bold Impish Relaxed Lax Serious
-Sheen
-Main article: Sheen
-Whenever a Pokémon eats a Poffin, that Poffin's smoothness is added to the Pokémon's sheen, up to a maximum of 255 sheen. Pokémon initially have 0 sheen. If a Pokémon has 255 sheen, it can no longer eat any Poffins. Sheen is permanent and cannot be reset.
+This formula applies only when all Berries used in the recipe are unique.
 
-If a Pokémon eats a Poffin that would cause its sheen to exceed 255, instead its sheen becomes 255 (but the Pokémon's condition stats are still increased by the Poffin's full amount as normal).
+#### **Step-by-Step Calculation**
 
-```csharp
-using BDSP.Core.Berries.Data;
-using BDSP.Core.Berries.Filters;
-using BDSP.Criteria;
+1. **Sum Flavors:** Add the values for each of the five flavors from all Berries used. You will have five totals (one for Spicy, one for Dry, etc.).
+2. **Apply Weaknesses:** For each flavor total, subtract the total of the flavor that weakens it.
+   - **New Spicy** = Total Spicy - Total Dry
+   - **New Dry** = Total Dry - Total Sweet
+   - **New Sweet** = Total Sweet - Total Bitter
+   - **New Bitter** = Total Bitter - Total Sour
+   - **New Sour** = Total Sour - Total Spicy
 
-Span<BerryId> poolBuf = stackalloc BerryId[BerryTable.Count];
+3. **Negative Flavor Penalty:** For each flavor that is currently negative, subtract 1 from _all five_ flavors.
+4. **Time & Error Modifier:** Apply the following formula to each of the five flavors:
+   - `Final Flavor = round( (Flavor Value * (60 / Cook Time in Seconds)) - (Number of Burns + Number of Spills) )`
 
-var filter = BerryFilters.Tight(maxSmoothness: 25, maxRarity: 3, minMainFlavorValue: 10);
+5. **Remove Negatives:** Set any flavor value that is now negative to 0.
+6. **Apply Flavor Cap:** Any flavor value exceeding the maximum is reduced to the cap.
+   - **Generation IV:** Max flavor is 99.
+   - **Generation VIII:** Max flavor is 100.
 
-int count = BerryQuery.Filter(in filter, poolBuf);
-var berryPool = poolBuf[..count]; // slice is allocation-free
-```
+---
 
+#### **Exceptions**
+
+- **Foul Poffin:** The recipe results in a **Foul Poffin** if two or more identical Berries are used, or if all flavors end up at 0. A Foul Poffin gives a +2 boost to three random conditions.
+- **Cook Time Display:** The timer displays hundredths of a second, but the game only registers time in 1/30th of a second intervals. In Generation VIII, a time displayed as "0:47.100" is treated as 48 full seconds.
+
+### **Poffin Level**
+
+A Poffin's level is simply the value of its single strongest flavor.
+
+- **Example:** A Poffin with 12 Spiciness and 8 Dryness is a **Level 12** Poffin.
+- **Improving Level:** The level is increased by cooking faster and avoiding burns or spills.
+- **Maximum Level:**
+  - **Generation IV:** 99
+  - **Generation VIII:** 100
+
+### **Poffin Calculation Example**
+
+This example shows how the flavors are calculated for a Poffin made with a **Bluk Berry**, a **Nanab Berry**, and a **Wepear Berry**.
+
+---
+
+#### **Scenario 1: 60-Second Cook Time**
+
+Assume the Poffin was cooked in the maximum 60 seconds with no burns or spills.
+
+##### **Initial Berry Flavors**
+
+| Berry            | Spicy | Dry | Sweet | Bitter | Sour |
+| :--------------- | :---- | :-- | :---- | :----- | :--- |
+| **Bluk Berry**   | 0     | 10  | 10    | 0      | 0    |
+| **Nanab Berry**  | 0     | 0   | 10    | 10     | 0    |
+| **Wepear Berry** | 0     | 0   | 0     | 10     | 10   |
+
+##### **Calculation Steps**
+
+| Step                         | Spicy | Dry   | Sweet | Bitter | Sour  |
+| :--------------------------- | :---- | :---- | :---- | :----- | :---- |
+| **1. Sum Flavors**           | 0     | 10    | 20    | 20     | 10    |
+| **2. Subtract Weaknesses**   | -10   | -10   | 0     | 10     | 10    |
+| **3. Negative Penalty (-2)** | -12   | -12   | -2    | 8      | 8     |
+| **4. Time/Error Modifier**   | -12   | -12   | -2    | 8      | 8     |
+| **5. Set Negatives to 0**    | 0     | 0     | 0     | 8      | 8     |
+| **Final Flavors**            | **0** | **0** | **0** | **8**  | **8** |
+
+**Result:** Each player receives three **Level 8 Bitter-Sour Poffins** (Smoothness 17).
+
+---
+
+#### **Scenario 2: 40-Second Cook Time**
+
+Now, assume the same Poffin was cooked in just 40 seconds, again with no errors. The first three steps of the calculation are identical.
+
+##### **Modified Calculation Steps**
+
+| Step                         | Spicy | Dry   | Sweet | Bitter | Sour   |
+| :--------------------------- | :---- | :---- | :---- | :----- | :----- |
+| **3. Negative Penalty (-2)** | -12   | -12   | -2    | 8      | 8      |
+| **4. Time Modifier (x1.5)**  | -18   | -18   | -3    | 12     | 12     |
+| **5. Set Negatives to 0**    | 0     | 0     | 0     | 12     | 12     |
+| **Final Flavors**            | **0** | **0** | **0** | **12** | **12** |
+
+**Result:** By cooking faster, each player receives three **Level 12 Bitter-Sour Poffins** (Smoothness 17).
+
+### **Base Flavor Levels (Single Berry Cooking)**
+
+When cooking with only one Berry (as is always the case when cooking alone in Generation IV), the process can be simplified. Each Berry has a "base level" for its primary flavor.
+
+The final level of the Poffin can be calculated with the following formula:
+
+`Level = floor( (60 / Time in Seconds) * Base Level ) - (Number of Burns + Number of Spills)`
+
+If the result is a negative number, the final level is 0.
+
+---
+
+#### **Example: Aguav Berry**
+
+An Aguav Berry has a base Bitter level of **14**.
+
+| Cook Time      | Errors | Calculation                 | Final Level |
+| :------------- | :----- | :-------------------------- | :---------- |
+| **60 seconds** | 0      | `floor( (60/60) * 14 ) - 0` | **14**      |
+| **40 seconds** | 0      | `floor( (60/40) * 14 ) - 0` | **21**      |
+| **40 seconds** | 2      | `floor( (60/40) * 14 ) - 2` | **19**      |
+
+### **Poffin Types**
+
+The type of Poffin is determined by the number and strength of its flavors.
+
+| Poffin Type       | Flavors | Appearance                                                         | Notes                                                                                                  |
+| ----------------- | ------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| **Foul**          | N/A     | Black                                                              | Results from using ≥2 of the same berry or if all flavors are ≤ 0. Has 3 random flavors at strength 2. |
+| **Single-Flavor** | 1       | Solid color based on the flavor                                    | Named after the single flavor (e.g., Spicy Poffin).                                                    |
+| **Two-Flavor**    | 2       | Primary flavor's color with sprinkles of the second flavor's color | Named after both flavors, with the stronger one listed first.                                          |
+| **Rich**          | 3       | Medium gray                                                        |                                                                                                        |
+| **Overripe**      | 4       | Light gray                                                         |                                                                                                        |
+| **Mild**          | N/A     | Gold with yellow sprinkles                                         | Created when the Poffin's level is 50 or higher.                                                       |
+| **Super Mild**    | N/A     | Rainbow-striped with yellow sprinkles                              | (Brilliant Diamond/Shining Pearl only) Level 95+, cooked with no overflows or burns.                   |
+
+---
+
+### **Poffin Smoothness**
+
+The smoothness of a Poffin determines how many a Pokemon can eat before it gets full. It is calculated from the Berries used and any bonus reduction earned during cooking.
+
+#### **Smoothness Formula**
+
+`Smoothness = floor( Average Berry Smoothness ) - Number of Berries Used - Bonus Reduction`
+
+---
+
+#### **Bonus Smoothness Reduction**
+
+A bonus can be earned to make the Poffin smoother (lower value), allowing a Pokemon to eat more.
+
+| Generation      | Method                            | Details                                                                                     | Max Reduction |
+| :-------------- | :-------------------------------- | :------------------------------------------------------------------------------------------ | :------------ |
+| **IV (DPPt)**   | Multiplayer synchronized stirring | Players stir together in sync, creating sparkles. More sparkles lead to a larger reduction. | **10 points** |
+| **VIII (BDSP)** | Cooking in Amity Square           | Based on the number and friendship level of your party Pokemon that can enter the park.     | **9 points**  |
+
+**Implementation note:** The core library currently models the BDSP cap (max bonus 9). Gen IV's max bonus (10) is not modeled in code.
+
+---
+
+#### **Smoothness Range**
+
+- **Highest Possible:** **59** (from a single Berry with 60 smoothness).
+- **Lowest Possible:** **6** (in Gen IV) or **7** (in Gen VIII).
+
+---
+
+#### **Berry Smoothness Values**
+
+The following table lists the base smoothness for each Berry type.
+
+| Smoothness | Berries                                                                                                     |
+| :--------- | :---------------------------------------------------------------------------------------------------------- |
+| **20**     | Leppa, Oran, Persim, Lum, Sitrus, Razz, Bluk, Nanab, Wepear, Pinap, Pomeg, Kelpsy, Qualot, Hondew, Grepa    |
+| **25**     | Cheri, Chesto, Pecha, Rawst, Aspear, Figy, Wiki, Mago, Aguav, Iapapa                                        |
+| **30**     | Tamato, Cornn, Magost, Rabuta, Nomel, Occa, Passho, Wacan, Rindo, Yache, Chople, Kebia, Shuca, Coba, Payapa |
+| **35**     | Spelon, Pamtre, Watmel, Durin, Belue, Tanga, Charti, Kasib, Haban, Colbur, Babiri, Chilan, Roseli (BDSP)    |
+| **40**     | Liechi, Ganlon, Salac, Petaya, Apicot                                                                       |
+| **50**     | Lansat, Starf                                                                                               |
+| **60**     | Enigma, Micle, Custap, Jaboca, Rowap                                                                        |
+
+### **Feeding Poffins & Condition Boosts**
+
+When a Pokémon eats a Poffin, its contest conditions increase based on the Poffin's flavors and the Pokémon's Nature.
+
+#### **Calculating Condition Gains**
+
+- **Base Gain:** A Pokémon's condition increases by an amount equal to the Poffin's corresponding flavor strength.
+- **Flavor Preference Bonus:** This gain is modified if the Poffin's primary flavor matches the Pokémon's liked or disliked flavor.
+  - **Liked Flavor:** The Pokémon "happily" eats it. All condition gains from that Poffin are multiplied by **1.1x** (rounded down).
+  - **Disliked Flavor:** The Pokémon "disdainfully" eats it. All condition gains from that Poffin are multiplied by **0.9x** (rounded down).
+
+---
+
+#### **Pokémon Flavor Preferences by Nature**
+
+A Pokémon's liked and disliked flavors are determined by its Nature. Natures in _italics_ have no flavor preference.
+
+| ↓ Liked Flavor | **Spicy** | **Dry**  | **Sweet** | **Bitter** | **Sour**  |
+| :------------- | :-------- | :------- | :-------- | :--------- | :-------- |
+| **Spicy**      | _Bashful_ | Adamant  | Brave     | Naughty    | Lonely    |
+| **Dry**        | Modest    | _Docile_ | Quiet     | Rash       | Mild      |
+| **Sweet**      | Timid     | Jolly    | _Hardy_   | Naive      | Hasty     |
+| **Bitter**     | Calm      | Careful  | Sassy     | _Quirky_   | Gentle    |
+| **Sour**       | Bold      | Impish   | Relaxed   | Lax        | _Serious_ |
+
+### **Sheen**
+
+A Pokémon's sheen determines how "full" it is and limits the number of Poffins it can eat.
+
+#### **Core Rules**
+
+| Attribute               | Rule                                                                                           |
+| :---------------------- | :--------------------------------------------------------------------------------------------- |
+| **How it Increases**    | When a Pokémon eats a Poffin, the Poffin's `smoothness` value is added to the Pokémon's sheen. |
+| **Initial Sheen**       | 0                                                                                              |
+| **Maximum Sheen**       | **255**                                                                                        |
+| **Effect of Max Sheen** | A Pokémon with 255 sheen can no longer eat any Poffins.                                        |
+| **Permanence**          | Sheen is permanent and cannot be removed or reset.                                             |
+
+---
+
+#### **Exceeding the Limit**
+
+If a Pokémon eats a Poffin that would cause its sheen to go _above_ 255, its sheen is simply set to 255. The Pokémon still receives the full condition boosts from that final Poffin.
+
+#### **Example**
+
+A Poffin made from a single Wiki Berry has **24 smoothness**.
+
+- After eating **10** of these Poffins, a Pokémon's sheen will be **240**.
+- After eating the **11th** Poffin, its sheen becomes **255** (not 264). It can now no longer eat any Poffins.
+
+### **Checking Sheen**
+
+A Pokémon's sheen value is not displayed as a number in-game. Instead, it is represented by a series of sparkles on the Pokémon's status screen.
+
+#### **Where to Check Sheen**
+
+| Game Series                    | Location                 |
+| :----------------------------- | :----------------------- |
+| Ruby, Sapphire, Emerald        | PokéNav                  |
+| Diamond, Pearl, Platinum, BDSP | Pokémon's Summary Screen |
+
+---
+
+#### **Sheen-to-Sparkle Conversion**
+
+The number of sparkles shown corresponds to a specific range of sheen values, which differs by game generation. A fully maxed-out sheen has a special indicator.
+
+##### **Generation III**
+
+| Sparkles          | Sheen Range |
+| :---------------- | :---------- |
+| 1                 | 0 - 28      |
+| 2                 | 29 - 57     |
+| 3                 | 58 - 86     |
+| 4                 | 87 - 115    |
+| 5                 | 116 - 144   |
+| 6                 | 145 - 173   |
+| 7                 | 174 - 202   |
+| 8                 | 203 - 231   |
+| 9                 | 232 - 254   |
+| **10 (Flashing)** | **255**     |
+
+##### **Generation IV & VIII**
+
+| Sparkles          | Sheen Range |
+| :---------------- | :---------- |
+| 0                 | 0 - 21      |
+| 1                 | 22 - 42     |
+| 2                 | 43 - 63     |
+| 3                 | 64 - 85     |
+| 4                 | 86 - 106    |
+| 5                 | 107 - 127   |
+| 6                 | 128 - 149   |
+| 7                 | 150 - 170   |
+| 8                 | 171 - 191   |
+| 9                 | 192 - 213   |
+| 10                | 214 - 234   |
+| 11                | 235 - 254   |
+| **12 (Flashing)** | **255**     |
+
+---
+
+#### **Special Case: Pokémon Box**
+
+In **Pokémon Box Ruby & Sapphire**, while the exact sheen is not viewable, the condition stars for a Pokémon will flash if its sheen is maxed out at 255.
