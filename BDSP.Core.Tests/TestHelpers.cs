@@ -1,4 +1,4 @@
-﻿using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 
 namespace BDSP.Core.Tests;
 
@@ -12,3 +12,4 @@ internal static class TestHelpers
         return result;
     }
 }
+

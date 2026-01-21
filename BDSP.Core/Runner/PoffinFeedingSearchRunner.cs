@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Poffins;
 using BDSP.Core.Feeding;
 using BDSP.Core.Selection;

@@ -1,4 +1,5 @@
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
+using BDSP.Core.Berries.Filters;
 using BDSP.Core.Primitives;
 
 namespace BDSP.Criteria;

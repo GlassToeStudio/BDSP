@@ -7,7 +7,6 @@
 	xmlns:poffins="clr-namespace:BDSP.Core.Poffins;assembly=BDSP.Core"
 	xmlns:controls="clr-namespace:BDSP.UI.Controls"
 	xmlns:commands="clr-namespace:BDSP.UI.Commands"
-	xmlns:berries="clr-namespace:BDSP.Core.Berries;assembly=BDSP.Core"
 	x:Class="BDSP.UI.Views.MainView"
 	x:DataType="vm:MainViewModel"
 	mc:Ignorable="d"

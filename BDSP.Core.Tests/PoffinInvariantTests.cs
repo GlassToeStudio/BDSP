@@ -1,4 +1,4 @@
-﻿using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Poffins;
 using Xunit;
 
@@ -30,7 +30,7 @@ public sealed class PoffinInvariantTests
     [Fact]
     public void FoulPoffins_HaveExactlyThreeFlavorsOfTwo()
     {
-        var ids = TestHelpers.Ids(0, 0); // duplicate → Foul
+        var ids = TestHelpers.Ids(0, 0); // duplicate ? Foul
 
         var p = PoffinCooker.Cook(
             ids,
@@ -75,3 +75,4 @@ public sealed class PoffinInvariantTests
         }
     }
 }
+

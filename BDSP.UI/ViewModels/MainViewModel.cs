@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Xml.Linq;
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Poffins;
 using BDSP.Core.Runner;
 using BDSP.Core.Selection;
@@ -196,7 +196,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             errors: 0,
             amityBonus: 9);
 
-        // Map poffin → radar
+        // Map poffin ? radar
         ResultPoffinRadar = RadarMapping.FromPoffin(poffin);
     }
 
@@ -214,3 +214,4 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
     #endregion
 }
+

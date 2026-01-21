@@ -1,4 +1,4 @@
-﻿using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.UI.Models;
 
 namespace BDSP.UI.Mapping;
@@ -24,3 +24,4 @@ public static class BerryRadarMapping
             maxValue: 40  // <-- IMPORTANT
         );
 }
+

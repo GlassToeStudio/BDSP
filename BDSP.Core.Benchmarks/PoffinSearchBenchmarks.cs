@@ -1,6 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Poffins;
 using BDSP.Core.Runner;
 using BDSP.Core.Selection;

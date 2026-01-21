@@ -79,7 +79,8 @@ Whenever a Pokémon eats a Poffin, that Poffin's smoothness is added to the Pok�
 If a Pokémon eats a Poffin that would cause its sheen to exceed 255, instead its sheen becomes 255 (but the Pokémon's condition stats are still increased by the Poffin's full amount as normal).
 
 ```csharp
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
+using BDSP.Core.Berries.Filters;
 using BDSP.Criteria;
 
 Span<BerryId> poolBuf = stackalloc BerryId[BerryTable.Count];
@@ -89,3 +90,4 @@ var filter = BerryFilters.Tight(maxSmoothness: 25, maxRarity: 3, minMainFlavorVa
 int count = BerryQuery.Filter(in filter, poolBuf);
 var berryPool = poolBuf[..count]; // slice is allocation-free
 ```
+

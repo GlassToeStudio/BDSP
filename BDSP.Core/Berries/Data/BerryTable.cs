@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace BDSP.Core.Berries
+namespace BDSP.Core.Berries.Data
 {
     /// <summary>
     /// Canonical, immutable berry data table for BDSP (Generation VIII).
@@ -10,7 +10,7 @@ namespace BDSP.Core.Berries
     {
         /// <summary>Total number of berries supported by BDSP.</summary>
         public const int Count = 65;
-        public static readonly Berry[] _berries =
+        private static readonly Berry[] _berries =
         [
             // 🍐 aguav  (Bitter) 25 - Flavors [  0,   0,   0,  15,   0] Rarity:  3
             new Berry(new BerryId(0), spicy: 0, dry: 0, sweet: 0, bitter: 15, sour: 0, smoothness: 25, rarity: 3),
@@ -152,7 +152,6 @@ namespace BDSP.Core.Berries
         /// <returns>The corresponding <see cref="Berry"/>.</returns>
         public static ReadOnlySpan<Berry> All => _berries;
 
-        /// <summary>
         /// <summary>
         /// Retrieves a berry by its ID.
         /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:BerryIdTable"]/*' />

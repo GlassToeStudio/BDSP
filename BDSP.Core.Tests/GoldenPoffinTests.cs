@@ -1,4 +1,4 @@
-﻿using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Poffins;
 using Xunit;
 
@@ -94,3 +94,4 @@ public sealed class GoldenPoffinTests
         Assert.Equal(3, count);
     }
 }
+

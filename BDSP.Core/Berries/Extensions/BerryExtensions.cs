@@ -1,6 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
+
+namespace BDSP.Core.Berries.Extensions;
 
 /// <summary>
 /// Provides convenient extension methods for berry-related data structures.

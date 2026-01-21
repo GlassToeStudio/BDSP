@@ -194,14 +194,9 @@ The type of Poffin is determined by the number and strength of its flavors.
 
 ### **Poffin Smoothness**
 
-**This section is incomplete.**
-*(Reason: The exact calculation for the bonus reduction based on synchronization or friendship levels is not fully detailed).*
-
-The smoothness of a Poffin determines how many a Pokémon can eat before it gets full. It is calculated based on the Berries used and any bonuses earned during cooking.
+The smoothness of a Poffin determines how many a Pokemon can eat before it gets full. It is calculated from the Berries used and any bonus reduction earned during cooking.
 
 #### **Smoothness Formula**
-
-The final smoothness is calculated as follows:
 
 `Smoothness = floor( Average Berry Smoothness ) - Number of Berries Used - Bonus Reduction`
 
@@ -209,12 +204,14 @@ The final smoothness is calculated as follows:
 
 #### **Bonus Smoothness Reduction**
 
-A bonus can be earned to make the Poffin smoother (lower value), allowing a Pokémon to eat more.
+A bonus can be earned to make the Poffin smoother (lower value), allowing a Pokemon to eat more.
 
 | Generation | Method | Details | Max Reduction |
 | :--- | :--- | :--- | :--- |
 | **IV (DPPt)** | Multiplayer synchronized stirring | Players stir together in sync, creating sparkles. More sparkles lead to a larger reduction. | **10 points** |
-| **VIII (BDSP)**| Cooking in Amity Square | Based on the number and friendship level of your party Pokémon that can enter the park. | **9 points** |
+| **VIII (BDSP)**| Cooking in Amity Square | Based on the number and friendship level of your party Pokemon that can enter the park. | **9 points** |
+
+**Implementation note:** The core library currently models the BDSP cap (max bonus 9). Gen IV's max bonus (10) is not modeled in code.
 
 ---
 #### **Smoothness Range**
@@ -236,7 +233,6 @@ The following table lists the base smoothness for each Berry type.
 | **40** | Liechi, Ganlon, Salac, Petaya, Apicot |
 | **50** | Lansat, Starf |
 | **60** | Enigma, Micle, Custap, Jaboca, Rowap |
-
 
 ### **Feeding Poffins & Condition Boosts**
 

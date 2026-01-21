@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BDSP.Core.Berries
+namespace BDSP.Core.Berries.Data
 {
     /// <summary>
     /// A lightweight, type-safe wrapper for a berry's unique identifier.

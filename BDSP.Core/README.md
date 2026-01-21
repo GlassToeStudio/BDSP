@@ -10,7 +10,8 @@ Usage Examples:
 
 Enumerate berries and print names:
 ```csharp
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
+using BDSP.Core.Berries.Extensions;
 
 for (ushort i = 0; i < (ushort)BerryTable.Count; i++)
 {
@@ -22,7 +23,8 @@ for (ushort i = 0; i < (ushort)BerryTable.Count; i++)
 
 Filter berries into a stack buffer:
 ```csharp
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
+using BDSP.Core.Berries.Filters;
 using BDSP.Criteria;
 
 Span<BerryId> poolBuf = stackalloc BerryId[BerryTable.Count];
@@ -33,7 +35,8 @@ var berryPool = poolBuf[..count];
 
 Filter by allow-list of IDs:
 ```csharp
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
+using BDSP.Core.Berries.Filters;
 
 var allowed = new BerryId[] { new(0), new(5), new(34) };
 var filter = BerryFilterOptions.WithAllowedIds(allowed);
@@ -44,7 +47,7 @@ int count = BerryQuery.Filter(in filter, poolBuf);
 
 Cook a poffin from Berry IDs (duplicate check enabled):
 ```csharp
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Poffins;
 
 Span<BerryId> ids = stackalloc BerryId[3]
@@ -63,7 +66,7 @@ var poffin = PoffinCooker.Cook(
 
 Cook a poffin from unique Berry instances (skip duplicate check):
 ```csharp
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Poffins;
 
 Span<Berry> berries = stackalloc Berry[2];
@@ -88,7 +91,7 @@ Console.WriteLine($"{stats.Coolness}/{stats.Beauty}/{stats.Cuteness}/{stats.Clev
 
 Run a full poffin search (parallel):
 ```csharp
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Runner;
 using BDSP.Core.Selection;
 
@@ -142,7 +145,7 @@ Console.WriteLine($"Sheen: {plan.FinalState.Sheen}");
 
 Search all 4-berry combinations (no duplicates), get top 50 poffins, then rank top 5 feeding plans:
 ```csharp
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Feeding;
 using BDSP.Core.Runner;
 using BDSP.Core.Selection;
@@ -182,3 +185,4 @@ for (int i = 0; i < 5 && candidates.Length > 0; i++)
     candidates = candidates.Where(p => !used.Contains(p)).ToArray();
 }
 ```
+

@@ -1,7 +1,8 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Primitives;
 
-namespace BDSP.Core.Berries;
+namespace BDSP.Core.Berries.Analysis;
 
 public static class BerryFacts
 {
@@ -142,3 +143,4 @@ public static class BerryFacts
 
     
 }
+

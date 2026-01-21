@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
+using BDSP.Core.Berries.Extensions;
 using Avalonia.Media;
 using BDSP.UI.Styling;
 namespace BDSP.UI.ViewModels
@@ -64,7 +65,7 @@ namespace BDSP.UI.ViewModels
 
         private static string GetRarity(Berry b)
         {
-            // Placeholder – refine later
+            // Placeholder � refine later
             return b.Smoothness <= 20 ? "Common" :
                    b.Smoothness <= 30 ? "Uncommon" :
                    "Rare";
@@ -73,3 +74,4 @@ namespace BDSP.UI.ViewModels
 
     }
 }
+

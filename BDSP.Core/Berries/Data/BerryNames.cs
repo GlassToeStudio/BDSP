@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace BDSP.Core.Berries;
+namespace BDSP.Core.Berries.Data;
 
 /// <summary>
 /// Names are sorted alphabetically A-Z - names are indexed by BerryId.Value.

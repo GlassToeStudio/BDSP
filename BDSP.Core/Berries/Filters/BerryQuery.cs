@@ -1,6 +1,8 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
+using BDSP.Core.Berries.Analysis;
+using BDSP.Core.Berries.Data;
 
-namespace BDSP.Core.Berries;
+namespace BDSP.Core.Berries.Filters;
 
 public static class BerryQuery
 {
@@ -133,3 +135,4 @@ public static class BerryQuery
 
     
 }
+

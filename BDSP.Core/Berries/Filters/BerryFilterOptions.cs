@@ -1,6 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
+
+namespace BDSP.Core.Berries.Filters;
 
 public readonly struct BerryFilterOptions
 {

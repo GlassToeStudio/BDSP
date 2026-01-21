@@ -1,4 +1,4 @@
-﻿using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using Xunit;
 
 namespace BDSP.Core.Tests;
@@ -41,3 +41,4 @@ public sealed class BerryDataInvariantTests
         }
     }
 }
+

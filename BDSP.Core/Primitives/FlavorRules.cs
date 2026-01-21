@@ -24,10 +24,10 @@ namespace BDSP.Core.Primitives
         public static readonly Flavor[] WeakenedBy =
         [
             Flavor.Dry,     // Weakens -> Spicy
-            Flavor.Spicy,   // Weakens -> Dry
-            Flavor.Sour,    // Weakens -> Sweet
-            Flavor.Bitter,  // Weakens -> Bitter
-            Flavor.Sweet    // Weakens -> Sour
+            Flavor.Sweet,   // Weakens -> Dry
+            Flavor.Bitter,  // Weakens -> Sweet
+            Flavor.Sour,    // Weakens -> Bitter
+            Flavor.Spicy    // Weakens -> Sour
         ];
     }
 }

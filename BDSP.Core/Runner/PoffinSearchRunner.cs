@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Poffins;
 using BDSP.Core.Selection;
 

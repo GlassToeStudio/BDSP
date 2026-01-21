@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
 using BDSP.Core.Primitives;
 
 namespace BDSP.Core.Poffins;
@@ -249,6 +249,8 @@ public static class PoffinCooker
 
         int smoothness = (smoothnessSum / count) - count - amityBonus;
         if (smoothness < 0) smoothness = 0;
+        // NOTE: This matches BDSP (max bonus 9). Gen IV can reach a lower minimum
+        // smoothness (bonus up to 10), which is not modeled here.
 
         // ---------- classification ----------
         int nonZero =

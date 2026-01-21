@@ -1,7 +1,7 @@
-﻿using System;
-using BDSP.Core.Berries;
+using System;
+using BDSP.Core.Berries.Data;
 
-namespace BDSP.Core.Berries;
+namespace BDSP.Core.Berries.Combinations;
 
 /// <summary>
 /// Generates combinations of berries without allocation.
@@ -132,3 +132,4 @@ public static class BerryCombinations
         }
     }
 }
+

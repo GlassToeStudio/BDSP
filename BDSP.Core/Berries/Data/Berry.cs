@@ -3,7 +3,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using BDSP.Core.Primitives;
 
-namespace BDSP.Core.Berries
+namespace BDSP.Core.Berries.Data
 {
     /// <summary>
     /// Represents the canonical, immutable data for a single Pokémon berry in Generation VIII.
