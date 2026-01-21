@@ -316,3 +316,124 @@ A completely new ranking scheme (say multi-objective beyond two fields) could re
 The feeding optimization’s Score function is already a delegate in FeedingOptions, so one can supply any custom scoring. This is excellent for separation – e.g. a user could decide that getting at least 200 in each stat is the goal, and implement a score function that heavily penalizes any stat below 200. The core will then optimize according to that. We should ensure this flexibility is documented for advanced users.
 
 In conclusion, the code is modular and ready for integration. The main recommendations are to preserve and strengthen these separations: avoid any temptation to put UI logic in the core (which hasn’t been done, good), keep criteria and output formatting as add-ons, and document the interfaces between them. With thorough documentation and testing, adding a new UI or API layer should require zero changes to the core – only using the core’s public API. This will allow the BDSP Poffin optimizer to serve as a true core engine that can power multiple frontends (CLI, GUI, web, etc.) with consistent results and minimal duplication of logic
+
+Roadmap to Complete BDSP.Core Poffin Logic Parity
+Missing Features & Gaps in BDSP.Core vs. Python Factory
+
+Incomplete Combination Search: The C# search splits the berry pool across threads, missing mixed-berry combinations (partitions don’t cover combos spanning partitions). This yields incomplete results and needs redesign.
+
+No Support for Duplicate Berries: BDSP.Core currently generates combinations without repetition (each combo uses unique berries). The Python factory allows duplicate berries in a recipe (though those yield foul Poffins). The C# core needs a way to include duplicate-berry combos when allowed.
+
+Limited Filtering Criteria: The C# PoffinCriteria only supports a few filters (exclude foul, min level, max smoothness, min each flavor). In contrast, the Python system can filter by Poffin flavor count, specific flavor type, name category, etc. (e.g. filtering by number of flavors or Poffin name). These additional filters are not yet exposed in BDSP.Core.
+
+Limited Sorting Options: The current SortField enum covers only Level, Smoothness, and individual flavors. Python’s PoffinSort supports sorting by secondary flavor strength, flavor count, Poffin name/type, and custom ratios. BDSP.Core lacks equivalents for “second level”, “num_flavors”, or “level/smoothness ratio” sorts.
+
+Contest Stats Evaluation Output: The Python factory can generate and filter a list of multi-Poffin ContestStats results (feeding outcomes) with various criteria (min stats, max berries used, etc.) and sort them. BDSP.Core’s FeedingOptimizer finds only a single optimal plan and provides no built-in filtering/sorting of alternate feeding plans.
+
+Miscellaneous Incomplete Implementations: Several core classes are partially implemented or contain bugs. For example, ContestStats naming mismatches (Coolness vs. Cool, etc.), missing constructors, and PoffinCooker lacking input validation (e.g. zero cookTime causing divide-by-zero). These need fixes to align with the Python logic and ensure correctness.
+
+Implementation Plan by Module
+
+1. Berry Combination Generation (BDSP.Core.Berries)
+
+Enable Duplicate-Combinations: Extend BerryCombinations to generate combinations with replacement when duplicates are allowed. This could be a new method or a parameter in ForEach (e.g. allowDuplicates flag). If AllowDuplicates is true in criteria, use loops where inner indices start from the current index (i ≤ j) instead of i+1 for combination generation, so the same berry can appear multiple times.
+
+Parallel Search Refactor: Refactor PoffinSearchRunner.Run to partition the combination space instead of the berry pool. For example, assign each worker a range of first-berry indices (so one thread handles combos starting with berries 0-3, next with 4-7, etc.) rather than disjoint pools. This ensures combinations that mix berries from different index ranges are included. Remove or redesign the current Partition() logic so that all N-choose-K combinations are covered across threads without omission.
+
+Use Allowed Berry List: Filter the input berryPool based on PoffinCriteria.AllowedBerries before running combinations. The CLI or UI should construct the berryPool from the allowed IDs (or exclude disallowed ones). This ensures the combination generator only uses permitted berries.
+
+Early Pruning of Foul Combos: As an optimization, skip generating combinations that will definitely be foul when the user excludes foul Poffins. Since any recipe with a duplicate berry yields a foul Poffin in the current rules, the combination loop can avoid duplicates entirely if ExcludeFoul is true (which it is by default). This prevents wasted cooking of combos that will be filtered out anyway.
+
+Design Note: We might implement duplicate support with a separate set of combination functions (ForEachWithReplacement for K=2..4). Alternatively, we generate duplicates by inflating the berry pool (e.g. include multiple instances of each berry if duplicates allowed). The chosen approach should maintain determinism (consistent ordering of combos) to keep the search results stable.
+
+2. Poffin Cooking & Data Model (BDSP.Core.Poffins)
+
+Finalize PoffinCooker Logic: Complete the PoffinCooker.Cook implementation to mirror the Python’s Poffin calculation. Ensure that it correctly computes each flavor’s value, the Poffin’s Level (highest flavor), SecondLevel (second highest flavor), Smoothness, and assigns the proper PoffinType. This includes replicating the naming rules from the Python version (e.g. mark Poffin as Foul if any duplicate berry used, set Super Mild if Level ≥ 100, Mild if Level ≥ 50, Rich for 3 flavors, Overripe for 4 flavors, etc.). The PoffinType enum already covers these categories – ensure the Cook method chooses the correct type and that the PrimaryFlavor and SecondaryFlavor fields are set (e.g. primary flavor = flavor with Level value, secondary = flavor with SecondLevel value).
+
+Input Validation: Add guard checks in Cook for parameters like cookTimeSeconds. The Python uses a decorator to measure time but does not pass zero; in C#, explicitly throw or handle if cookTime is 0 (to avoid division by zero when calculating burn adjustments, etc.). Similarly, validate the range of errors and amityBonus if those affect the formula. Use CoreGuards (after renaming to .cs and including it) to enforce valid ranges.
+
+Negative Flavor Handling: Confirm that no flavor value goes negative after cooking (the Python logic likely prevents negatives). Add an invariant check or clamp to 0 if needed, so that all Poffin.Spicy/Dry/... are ≥ 0. This keeps outcomes consistent with game rules (no negative contest stats).
+
+Expose Flavor Count: To support filters like “number of flavors,” consider adding a derived property or method on Poffin to get the count of flavors > 0. Python computes this as num_flavors. In C#, we could compute on the fly in the predicate, but having it readily available (or even storing in the Poffin if memory is not a concern) would simplify sorting/filtering by flavor count.
+
+Design Note: The Poffin formula should be thoroughly tested against known outputs (possibly using GoldenPoffinTests.cs). Pay special attention to foul Poffin output – the invariant test expects foul Poffins to have exactly three flavor values equal to 2, indicating a very specific outcome. Reproduce these quirks in C# so that the core logic matches the Python reference and game behavior.
+
+3. Filtering & Sorting System (BDSP.Criteria)
+
+Extend PoffinCriteria Filters: Add new fields to PoffinCriteria to cover the full range of Python filters. For example, MinFlavors and MaxFlavors (to require a minimum/maximum number of flavor types in the Poffin), and possibly a way to filter by Poffin name/type (e.g. exclude “Mild” Poffins). Since PoffinType encapsulates categories, we could add flags like AllowRich, AllowMild, etc., or a set of disallowed types. Also consider a MinSecondLevel filter if users want to ensure a strong secondary flavor. These additions close the gap with Python’s filters (e.g. the Python RemovePoffinsWith_NumberOfFlavors_LessThan corresponds to MinFlavors in criteria).
+
+Compile New Predicate Rules: Update PoffinCriteriaCompiler.CompilePredicate to enforce the new filters. For example: if MinFlavors is set, include a check that (count of p’s flavors > 0) >= MinFlavors; if MaxFlavors is set, check count <= MaxFlavors. If filtering by PoffinType (name), e.g. exclude Mild, add if (p.Type == PoffinType.Mild) return false when the user opts to remove mild Poffins. These conditions should short-circuit just like the existing ones.
+
+Expand SortField Options: Add entries to the SortField enum for SecondLevel, NumFlavors, and any other metric we want to sort by (e.g. perhaps Name if sorting alphabetically by Poffin name, or Ratio for level-to-smoothness ratio). The Python list includes these fields, so extending our enum makes them accessible.
+
+Dynamic Comparer Enhancement: Modify DynamicPoffinComparer.CompareField to handle the new sort fields. For SecondLevel and NumFlavors, the comparison is straightforward (compute a.SecondLevel vs b.SecondLevel, etc.). For sorting by Poffin “Name”, we might derive an ordering using PoffinType and perhaps primary flavor as a tiebreaker – for instance, sort by Type enum ordinal or a predefined string if needed. For ratio sorts (Level/Smoothness), compute the float ratio on the fly; note that we should be consistent with Python’s interpretation (they define level_to_smoothness_ratio as level/smoothness and ...\_sum as (level+second)/smoothness). We can compute these in comparison (though doing floating-point compare inside CompareField is acceptable given the small data set of top Poffins). Document that ratio sorts are available for expert use.
+
+Secondary/Tertiary Sorts: The current design supports primary and one secondary sort. Python’s system allows chaining multiple sort criteria arbitrarily. To mirror this flexibility, we could extend PoffinCriteria with a list of sort fields or allow specifying more than two sorts (e.g. tertiary). A simpler approach is to permit compound sorts as needed (the two-level sort often suffices). For now, implement the additional SortFields and secondary sort; optionally note in documentation that more complex ordering can be achieved by custom comparer implementations if needed.
+
+Design Note: Ensure that default sorting remains by Level descending (primary) and Smoothness ascending (secondary) – this matches typical “best Poffin” criteria (highest level, tie-break by lowest smoothness) and is essentially what LevelThenSmoothnessComparer did. After adding new sort fields, verify that the CLI parsing (e.g. --sort spicy:desc --then smoothness:asc) correctly maps to the extended enum. Add unit tests for the new predicate filters and comparers to avoid regression in the top-K selection logic.
+
+4. Poffin Search Execution (BDSP.Core.Runner)
+
+Integrate New Criteria in SearchRunner: Pass the compiled predicate and comparer from criteria into PoffinSearchRunner.Run (the CLI already does this). After expanding criteria, ensure all filters (like exclude foul, min stats) are being honored during the search. The predicate is applied immediately after cooking each Poffin – this is good for performance (skips adding filtered-out Poffins to selectors). One improvement is to apply simple filters even earlier: e.g., if MaxSmoothness is set, we can check the sum of berry smoothness values before cooking (an upper bound for that combo’s smoothness) and skip cooking if it exceeds the max. Such pre-checks (for smoothness or even for min flavor using a quick sum of berry flavors) can prune invalid combos before expensive cooking.
+
+Top-K Selection & Merging: The core search logic uses TopKPoffinSelector per thread and merges results under a lock. We should ensure that after fixing combination generation, the number of combos might increase (especially if duplicates allowed), so keep an eye on performance. Consider optimizing the merge: e.g., gather all thread-local top-K lists and perform a k-way merge sort to produce the global top K, instead of locking for each local result. Given K is small (default 50) and thread count not huge, the current approach is acceptable, but a single merge outside the parallel loop could reduce locking overhead.
+
+Determinism and Reproducibility: After refactoring, run multiple search passes to confirm the results are stable (the same best Poffins in the same order). The search should be deterministic as long as combination generation order and merging are fixed. Document that allowing duplicates will include foul Poffins (unless excluded) – which might flood the top-K if not handled. We might want to always exclude foul in ranking (since they are usually very low level), or ensure the predicate defaults to exclude them unless explicitly disabled (which is already the case).
+
+Design Note: The search runner currently only uses up to 4-berry recipes (Gen4 Poffins). If in the future BerriesPerPoffin is changed (the criteria allows 1–4), the combination generator and cooker already handle those cases. We should test edge cases like 1-berry Poffins and 4-berry Poffins to ensure no off-by-one errors in loops or partition logic. Add tests for duplicates (e.g. 2 of the same berry + others) to ensure they produce foul Poffin outputs as expected and respect filtering.
+
+5. Feeding Optimization (BDSP.Core.Feeding)
+
+Validate ContestStats Calculation: Ensure ContestStatsCalculator.FromPoffin correctly converts a Poffin’s flavors to contest stat gains (currently it takes each flavor value directly, with no contribution from 0 or negative flavors). This aligns with BDSP rules (flavor points translate one-to-one to contest stats). No changes needed unless the formula is incomplete (e.g., if multiple Poffins interact in a nonlinear way, which they do not – stats just sum until capped at 255).
+
+Use Full Sheen Capacity: The FeedingOptimizer.Optimize algorithm already navigates combinations of candidate Poffins using DFS and prunes dominated states. One thing to double-check is that it explores using all available sheen (255). It stops either when the stack is exhausted or MaxNodes reached. We should verify that the default MaxNodes (100k) is sufficient for exploring most combinations of top Poffins – it likely is, given the branching factor is limited by sheen constraints. If needed, expose MaxNodes or search depth as a tunable parameter in FeedingOptions.
+
+Extend Feeding Options (Optional): To mirror Python’s flexibility in evaluating feeding plans, consider adding filters/sorting for contest stats results. For example, a user might want only plans that max out all five stats or plans using ≤ N Poffins. We could introduce a ContestStatsCriteria analogous to PoffinCriteria. In the feeding phase, after obtaining the Pareto-optimal set of feeding states (bestNodes list in the optimizer), apply such criteria to filter out undesired plans. We can then either return the single best plan among those or even return a list of top plans. (This would parallel Python’s ContestStatsFactory.filtered_sorted_contest_stats which returns a list of ContestStats meeting the filters.)
+
+Output Multiple Plans (Optional): The current PoffinFeedingSearchRunner returns only the single optimal FeedingPlan. For greater flexibility, we could create a variant that returns multiple plans (e.g. all non-dominated plans or the top K by score). This would allow users to see alternatives (for instance, a plan that nearly maxes all stats with fewer Poffins vs. one that exactly maxes 3 stats but uses all 10 Poffins). Implementing this would involve modifying FeedingOptimizer to output the full bestNodes list (perhaps sorted by the Score function) instead of just building one best plan. We would then wrap those in FeedingPlan objects and allow filtering/sorting similar to Python’s approach (e.g. sort by total stat sum, then by Poffins used, etc. which Python does via sort interfaces).
+
+Optimize Pruning Strategy: The dominance pruning in FeedingOptimizer can be further optimized by keeping the list of bestNodes sorted by sheen or by a heuristic. Currently, each new node is checked against all existing best nodes. Given the relatively small state space, this is fine, but we could improve it by maintaining separate lists keyed by sheen or partial stat sums to avoid unnecessary comparisons. Another micro-optimization: stop exploring a branch early if even adding all remaining Poffins cannot surpass the current best score (requires a bound on max attainable stats from remaining sheen). This is complex to calculate accurately but could use an optimistic assumption (e.g., each remaining sheen point yields a stat point in the category we care most about). Such bounds can prune branches in advance.
+
+Design Note: The feeding system in C# is geared toward the “optimize everything” use-case. If we add user criteria for specific contest categories (as in presets like Cool/Beauty, etc.), that is handled by adjusting the Score function (e.g. a preset might weight one stat higher). This is different from Python’s approach of sorting the ContestStats list by a specific stat. Our approach is to incorporate the user’s objective into the optimization scoring itself (via FeedingOptions.Score). We should document this clearly: to maximize a specific stat, the user can supply a Score function that returns (e.g.) just that stat value, and the optimizer will find the plan that maximizes it. This gives flexibility without needing separate sort pipelines for contest stats.
+
+6. Testing & Performance Considerations
+
+Feature Parity Verification: After implementing the above, cross-verify against the Python bdsp-poffin-factory outputs for a few scenarios. For example, generate top Poffins with certain filters (min flavors, exclude mild, etc.) in both systems and compare results. They should match in content and ordering. Also test feeding outcomes: if the Python can list the best contest stats for feeding X Poffins, ensure the C# optimal plan matches the best entry.
+
+Unit Tests for New Features: Add tests for duplicate berry combinations (expect foul Poffin outputs), for new filter criteria (e.g. MinFlavors = 2 should filter out single-flavor Poffins), and new sort orders (e.g. sorting by Smoothness ascending, by NumFlavors descending, etc., comparing that the list comes out in the intended order). Testing edge cases like all berries allowed vs. a restricted subset will ensure AllowedBerries logic is correct.
+
+Benchmarking: Use the BDSP.Core.Benchmarks project to measure performance before and after changes. Key things to watch: combination explosion when allowing duplicates (even though many will be foul and filtered, cooking them incurs cost). If performance suffers, consider pruning duplicate combos early or adding a limit on duplicates (e.g. at most 2 of the same berry if we know >2 always yields foul anyway in BDSP – which seems to be the case that any duplicate triggers foul, so 2 vs 3 vs 4 duplicates all are just “foul” outcomes). Also benchmark the feeding optimizer with a larger candidate list to ensure the dominance pruning scales. Optimize data structures if needed (e.g. use a set or bit mask for dominated-state checks).
+
+Refactor for Clarity: As the core logic becomes more complex, ensure code readability and maintainability. For instance, consider refactoring the search runners to use smaller helper methods (the parallel loop could be extracted for clarity). Document the expected behavior of each major step (cooking, filtering, selecting top K, feeding optimization) in the code comments, as done in Python. This will help future contributors understand the intent (the included NOTES.md already provides an architectural overview which we can update to reflect the new changes).
+
+Modules to Extend/Refactor Summary
+
+BerryCombinations – add support for combination with replacement (duplicate berries) and possibly a unified interface for both modes.
+
+PoffinSearchRunner – refactor parallelization strategy to avoid missing cross-partition combos; integrate new filtering logic prior to cooking (simple skips); ensure it uses the updated criteria (AllowedBerries, etc.).
+
+PoffinCooker – complete the recipe-to-Poffin formula, enforce input guards, and mirror naming/category rules from Python. Make sure PoffinType assignment (Foul, Mild, etc.) matches the conditions in the Python implementation.
+
+Poffin (struct) – possibly enrich it with computed metadata (flavor count, maybe a precomputed Name string if needed for sorting by name, although generating the name on the fly from PoffinType and flavors is trivial).
+
+PoffinCriteria & PoffinCriteriaCompiler – extend with new filter fields (min/max flavors, etc.) and incorporate those into the predicate logic.
+
+SortField enum & DynamicPoffinComparer – add new sort keys (SecondLevel, NumFlavors, etc.) and implement their comparisons. Double-check the comparer’s logic for Smoothness (currently inverts compare to make lower smoothness rank higher by default) and apply similar reasoning for any new fields (e.g. for NumFlavors, higher is usually better; for Name, alphabetical ascending makes sense).
+
+FeedingOptimizer – largely complete; just ensure it’s using ContestStats.Dominates correctly and consider exposing more results or criteria. No fundamental refactor needed, but could add an option to retrieve all Pareto-optimal plans instead of just one optimal.
+
+ContestStats / FeedingPlan – if we provide multiple plans, we might create a new container (e.g. FeedingResults containing a list of plans). Also, implement any remaining TODOs in ContestStats (e.g., a method to compute PerfectCount (number of 255 stats) and perhaps a computed “rank” as the Python uses for filtering). These can be done after the core logic is solid, as polish for feature parity.
+
+CoreGuards and Validation – fix the project file or filename so that CoreGuards (preconditions) are included in compilation and use them to assert invariants (e.g. non-negative flavors, sheen not exceeded 255 in a plan, etc.). While not directly a feature, this improves robustness.
+
+Each of the above changes will bring BDSP.Core’s capabilities in line with the Python bdsp-poffin-factory, with potential improvements in performance and extensibility. By the end, the C# core should be able to generate all possible Poffins (with or without duplicates), filter and sort them on any criteria the Python version supports, and find optimal feeding combinations with equal flexibility. The result will be a more powerful and reliable Poffin optimization library, ready for integration into the UI and other layers.
+
+Sources:
+
+BDSP.Core code audit notes highlighting current issues
+
+BDSP.Core implementation of combination generation and filtering
+
+bdsp-poffin-factory (Python) filtering and sorting rules for reference
+
+BDSP.Core tests confirming foul Poffin conditions (duplicate berries) and flavor non-negativity.
