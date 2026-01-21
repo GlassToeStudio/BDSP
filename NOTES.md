@@ -440,7 +440,6 @@ BDSP.Core tests confirming foul Poffin conditions (duplicate berries) and flavor
 
 ####Findings
 
-High: BerryQuery sorts by BerrySortField.Name using string.Compare on every compare, which allocates nothing but is relatively expensive; if this is used in hot paths or repeated calls, it can dominate (consider precomputing name order or sorting by BerryId then mapping to names). BerryFacts.cs
 Medium: BerryQuery’s Compare recomputes derived fields (MainFlavor, WeakenedMainFlavor, etc.) for every comparison in insertion sort; even with N=65, repeated calls can add up if you call this many times per second. Caching per‑berry derived values would help. BerryQuery.cs
 Low: GetWeakenedMainFlavorValue can return negative values for berries with weak profiles; if you later use this in filters/sorts as a “quality” metric, be sure callers expect negative values. BerryFacts.cs
 Optimization Ideas (if you expect millions of combos)
