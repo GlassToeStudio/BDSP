@@ -1,6 +1,6 @@
 This is a project I made in python.
 
-Its purpose is to find the best berry combination to cook a Poffin that gives the highest max stats with the least effort. There is the Berry class, which is the ingredient to a Poffin. The Poffin class, which is made of 1 or more berries, and the Poffin cooker, which cooks a Poffin based on some rules. There is then a contest stats class that ranks each poffin. Every main class, berry, poffin, stats has a similar filter and sorting system to reduce the total number of poffins tested. I am converting this to c# 9. I want it to be as fast as possible, working with millions of permutations of berries and combinations, and reduce memory footprint. I want it to be a core class library that will integrate, later, with a UI.
+Its purpose is to find the best berry combination to cook a Poffin that gives the highest max stats with the least effort. There is the Berry class, which is the ingredient to a Poffin. The Poffin class, which is made of 1 or more berries, and the Poffin cooker, which cooks a Poffin based on some rules. There is then a contest stats class that ranks each poffin. Every main class, berry, poffin, stats has a similar filtering system to reduce the total number of poffins tested. I am converting this to c# 9. I want it to be as fast as possible, working with millions of permutations of berries and combinations, and reduce memory footprint. I want it to be a core class library that will integrate, later, with a UI.
 
 Here is some text about the rules of poffin making and how they affect a pokemon
 
@@ -80,11 +80,9 @@ If a Pokémon eats a Poffin that would cause its sheen to exceed 255, instead it
 
 ```
 Span<BerryId> poolBuf = stackalloc BerryId[BerryTable.Count];
-Span<BerrySortSpec> sortBuf = stackalloc BerrySortSpec[3];
 
 var filter = BerryFilters.Tight(maxSmoothness: 25, maxRarity: 3, minMainFlavorValue: 10);
-int sortCount = BerrySorts.SmoothnessThenRarity(sortBuf);
 
-int count = BerryQuery.FilterAndSort(in filter, sortBuf[..sortCount], poolBuf);
+int count = BerryQuery.Filter(in filter, poolBuf);
 var berryPool = poolBuf[..count]; // slice is allocation-free
 ```
