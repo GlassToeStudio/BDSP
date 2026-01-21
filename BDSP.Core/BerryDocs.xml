@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members>
+    <member name="T:BerryIdTable">
+      <para>
+        <code>
+        ID | Name            | ID | Name
+        -- | --------------- | -- | ---------------
+        0  | Aguav Berry     | 33 | Micle Berry
+        1  | Apicot Berry    | 34 | Nanab Berry
+        2  | Aspear Berry    | 35 | Nomel Berry
+        3  | Babiri Berry    | 36 | Occa Berry
+        4  | Belue Berry     | 37 | Oran Berry
+        5  | Bluk Berry      | 38 | Pamtre Berry
+        6  | Charti Berry    | 39 | Passho Berry
+        7  | Cheri Berry     | 40 | Payapa Berry
+        8  | Chesto Berry    | 41 | Pecha Berry
+        9  | Chilan Berry    | 42 | Persim Berry
+        10 | Chople Berry    | 43 | Petaya Berry
+        11 | Coba Berry      | 44 | Pinap Berry
+        12 | Colbur Berry    | 45 | Pomeg Berry
+        13 | Cornn Berry     | 46 | Qualot Berry
+        14 | Custap Berry    | 47 | Rabuta Berry
+        15 | Durin Berry     | 48 | Rawst Berry
+        16 | Enigma Berry    | 49 | Razz Berry
+        17 | Figy Berry      | 50 | Rindo Berry
+        18 | Ganlon Berry    | 51 | Roseli Berry
+        19 | Grepa Berry     | 52 | Rowap Berry
+        20 | Haban Berry     | 53 | Salac Berry
+        21 | Hondew Berry    | 54 | Shuca Berry
+        22 | Iapapa Berry    | 55 | Sitrus Berry
+        23 | Jaboca Berry    | 56 | Spelon Berry
+        24 | Kasib Berry     | 57 | Starf Berry
+        25 | Kebia Berry     | 58 | Tamato Berry
+        26 | Kelpsy Berry    | 59 | Tanga Berry
+        27 | Lansat Berry    | 60 | Wacan Berry
+        28 | Leppa Berry     | 61 | Watmel Berry
+        29 | Liechi Berry    | 62 | Wepear Berry
+        30 | Lum Berry       | 63 | Wiki Berry
+        31 | Mago Berry      | 64 | Yache Berry
+        32 | Magost Berry    |    |
+        </code>
+      </para>
+    </member>
+  </members>
+</docs>

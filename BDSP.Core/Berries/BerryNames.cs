@@ -2,11 +2,15 @@
 
 namespace BDSP.Core.Berries;
 
+/// <summary>
+/// Names are sorted alphabetically A-Z - names are indexed by BerryId.Value.
+/// <include file='BerryDocs.xml' path='docs/members/member[@name="T:BerryIdTable"]/*' />
+/// </summary>
 public static class BerryNames
 {
     // Index == BerryId.Value
     private static readonly string[] _names =
-    {
+    [
         "Aguav Berry",
         "Apicot Berry",
         "Aspear Berry",
@@ -72,8 +76,12 @@ public static class BerryNames
         "Wepear Berry",
         "Wiki Berry",
         "Yache Berry",
-    };
+    ];
 
+    /// <summary>
+    /// Names are sorted alphabetically A-Z - names are indexed by BerryId.Value.
+    /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:BerryIdTable"]/*' />
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string GetName(BerryId id)
         => _names[id.Value];
