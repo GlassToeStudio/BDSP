@@ -77,3 +77,14 @@ Main article: Sheen
 Whenever a Pokémon eats a Poffin, that Poffin's smoothness is added to the Pokémon's sheen, up to a maximum of 255 sheen. Pokémon initially have 0 sheen. If a Pokémon has 255 sheen, it can no longer eat any Poffins. Sheen is permanent and cannot be reset.
 
 If a Pokémon eats a Poffin that would cause its sheen to exceed 255, instead its sheen becomes 255 (but the Pokémon's condition stats are still increased by the Poffin's full amount as normal).
+
+```
+Span<BerryId> poolBuf = stackalloc BerryId[BerryTable.Count];
+Span<BerrySortSpec> sortBuf = stackalloc BerrySortSpec[3];
+
+var filter = BerryFilters.Tight(maxSmoothness: 25, maxRarity: 3, minMainFlavorValue: 10);
+int sortCount = BerrySorts.SmoothnessThenRarity(sortBuf);
+
+int count = BerryQuery.FilterAndSort(in filter, sortBuf[..sortCount], poolBuf);
+var berryPool = poolBuf[..count]; // slice is allocation-free
+```

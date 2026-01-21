@@ -65,5 +65,4 @@ namespace BDSP.Core.Berries
             };
         }
     }
-
 }
