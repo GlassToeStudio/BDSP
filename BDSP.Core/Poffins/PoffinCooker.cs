@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using BDSP.Core.Berries;
@@ -23,7 +23,7 @@ public static class PoffinCooker
     /// <summary>
     /// Cooks a poffin from the provided berries.
     /// </summary>
-    /// <param name="berryIds">The berries used (1–4).</param>
+    /// <param name="berryIds">The berries used (1ï¿½4).</param>
     /// <param name="cookTimeSeconds">Cooking time in seconds.</param>
     /// <param name="errors">Number of cooking errors.</param>
     /// <param name="amityBonus">Amity Square smoothness bonus.</param>
@@ -34,19 +34,57 @@ public static class PoffinCooker
         byte errors,
         byte amityBonus)
     {
+        return CookCore(
+            berryIds,
+            cookTimeSeconds,
+            errors,
+            amityBonus,
+            checkDuplicates: true);
+    }
+
+    /// <summary>
+    /// Cooks a poffin from unique berry IDs (duplicate check skipped).
+    /// </summary>
+    internal static Poffin CookUnique(
+        ReadOnlySpan<BerryId> berryIds,
+        byte cookTimeSeconds,
+        byte errors,
+        byte amityBonus)
+    {
+        return CookCore(
+            berryIds,
+            cookTimeSeconds,
+            errors,
+            amityBonus,
+            checkDuplicates: false);
+    }
+
+    private static Poffin CookCore(
+        ReadOnlySpan<BerryId> berryIds,
+        byte cookTimeSeconds,
+        byte errors,
+        byte amityBonus,
+        bool checkDuplicates)
+    {
+        if (cookTimeSeconds == 0)
+            throw new ArgumentOutOfRangeException(nameof(cookTimeSeconds));
+
 #if DEBUG
         Debug.Assert(berryIds.Length is >= 1 and <= 4);
 #endif
         int count = berryIds.Length;
 
         // ---------- duplicate check ----------
-        for (int i = 0; i < count - 1; i++)
+        if (checkDuplicates)
         {
-            for (int j = i + 1; j < count; j++)
+            for (int i = 0; i < count - 1; i++)
             {
-                if (berryIds[i].Value == berryIds[j].Value)
+                for (int j = i + 1; j < count; j++)
                 {
-                    return CreateFoul();
+                    if (berryIds[i].Value == berryIds[j].Value)
+                    {
+                        return CreateFoul();
+                    }
                 }
             }
         }
