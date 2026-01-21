@@ -437,3 +437,18 @@ BDSP.Core implementation of combination generation and filtering
 bdsp-poffin-factory (Python) filtering and sorting rules for reference
 
 BDSP.Core tests confirming foul Poffin conditions (duplicate berries) and flavor non-negativity.
+
+####Findings
+
+High: BerryQuery sorts by BerrySortField.Name using string.Compare on every compare, which allocates nothing but is relatively expensive; if this is used in hot paths or repeated calls, it can dominate (consider precomputing name order or sorting by BerryId then mapping to names). BerryFacts.cs
+Medium: BerryQuery’s Compare recomputes derived fields (MainFlavor, WeakenedMainFlavor, etc.) for every comparison in insertion sort; even with N=65, repeated calls can add up if you call this many times per second. Caching per‑berry derived values would help. BerryQuery.cs
+Low: GetWeakenedMainFlavorValue can return negative values for berries with weak profiles; if you later use this in filters/sorts as a “quality” metric, be sure callers expect negative values. BerryFacts.cs
+Optimization Ideas (if you expect millions of combos)
+
+Precompute Berry metrics once: build arrays for MainFlavorValue, WeakenedMainFlavorValue, NumFlavors, etc., indexed by BerryId. Then PassesFilters and sorting can be key‑lookups rather than recomputation. This would turn the sort comparator into mostly integer comparisons. (BerryQuery.cs, BerryFacts.cs)
+Keyed sort: For each BerryId, compute a packed sort key (e.g., 64‑bit) per sort spec and sort on keys, not by calling CompareField repeatedly. This removes repeated BerryTable.Get and BerryFacts calls. (BerryQuery.cs)
+Avoid name comparisons in hot paths: If name sorting is needed, precompute NameOrder (array of BerryId sorted by name) and intersect it with filtered results (stable merge). This is O(n) vs. O(n²) comparisons for small n but avoids string compares entirely. (BerryFacts.cs, BerryQuery.cs)
+Questions / Assumptions
+
+Are these filters/sorts called per search run (once) or per combo? If per combo, we should push filtering earlier and cache everything; if once per run, current approach is likely fine.
+If you want, I can implement a cached‑metrics path and a keyed sort that keeps the API unchanged while reducing per‑call CPU.
