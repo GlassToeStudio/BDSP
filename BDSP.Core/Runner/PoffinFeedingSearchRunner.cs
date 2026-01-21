@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BDSP.Core.Berries;
+using BDSP.Core.Poffins;
 using BDSP.Core.Feeding;
 using BDSP.Core.Selection;
 
@@ -63,7 +64,7 @@ public static class PoffinFeedingSearchRunner
         if (candidates is null || candidates.Length == 0)
         {
             return new FeedingPlan(
-                new List<Core.Poffins.Poffin>(0),
+                [],
                 new FeedingState(0, default));
         }
 
@@ -81,8 +82,8 @@ public static class PoffinFeedingSearchRunner
         {
             // FeedingPlan is a class (not a record), so "with" is invalid.
             // Reconstruct the plan with clamped sheen.
-            var poffinsCopy = plan.Poffins as List<Core.Poffins.Poffin>
-                              ?? new List<Core.Poffins.Poffin>(plan.Poffins);
+            var poffinsCopy = plan.Poffins as List<Poffin>
+                              ?? [.. plan.Poffins];
 
             plan = new FeedingPlan(
                 poffinsCopy,

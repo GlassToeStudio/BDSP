@@ -41,10 +41,13 @@ public static class FeedingOptimizer
             for (int i = node.LastIndex + 1; i < candidates.Length; i++)
             {
                 var p = candidates[i];
-                int newSheen = node.State.Sheen + p.Smoothness;
 
+                if (node.State.Sheen >= options.MaxSheen)
+                    continue; // cannot feed any further once capped
+
+                int newSheen = node.State.Sheen + p.Smoothness;
                 if (newSheen > options.MaxSheen)
-                    continue;
+                    newSheen = options.MaxSheen; // ✅ overshoot allowed; clamp
 
                 var newStats =
                     node.State.Stats +

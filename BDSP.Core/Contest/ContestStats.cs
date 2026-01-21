@@ -88,12 +88,17 @@ namespace BDSP.Core.Contest
             ContestStats a,
             ContestStats b)
         {
+            static byte SatAdd(byte x, byte y)
+            {
+                int sum = x + y;
+                return (byte)(sum > 255 ? 255 : sum);
+            }
             return new ContestStats(
-                (byte)(a.Coolness + b.Coolness),
-                (byte)(a.Beauty + b.Beauty),
-                (byte)(a.Cuteness + b.Cuteness),
-                (byte)(a.Cleverness + b.Cleverness),
-                (byte)(a.Toughness + b.Toughness));
+                SatAdd(a.Coolness, b.Coolness),
+                SatAdd(a.Beauty, b.Beauty),
+                SatAdd(a.Cuteness, b.Cuteness),
+                SatAdd(a.Cleverness, b.Cleverness),
+                SatAdd(a.Toughness, b.Toughness));
         }
     }
 }
