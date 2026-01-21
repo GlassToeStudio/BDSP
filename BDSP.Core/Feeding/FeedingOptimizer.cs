@@ -1,3 +1,5 @@
+using BDSP.Core.Contest;
+
 namespace BDSP.Core.Feeding;
 
 /// <summary>
@@ -13,7 +15,7 @@ public static class FeedingOptimizer
         ReadOnlySpan<Poffins.Poffin> candidates,
         FeedingOptions options)
     {
-        var bestStates = new List<FeedingState>();
+        var bestNodes = new List<FeedingNode>();
 
         var stack = new Stack<FeedingNode>();
 
@@ -92,6 +94,9 @@ public static class FeedingOptimizer
         FeedingOptions options,
         ReadOnlySpan<Poffins.Poffin> candidates)
     {
+        if (nodes.Count == 0)
+            return new FeedingPlan(new List<Poffins.Poffin>(0), new FeedingState(0, default));
+
         FeedingNode best = nodes[0];
 
         foreach (var n in nodes)

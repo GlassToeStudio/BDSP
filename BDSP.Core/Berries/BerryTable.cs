@@ -1,25 +1,21 @@
-﻿using BDSP.Core.Primitives;
+﻿using System.Diagnostics;
 
-namespace BDSP.Core.Berries;
-
-using System;
-using System.Diagnostics;
-
-namespace BDSP.Core.Berries;
-
-/// <summary>
-/// Canonical, immutable berry data table for BDSP (Generation VIII).
-/// Index corresponds exactly to <see cref="BerryId.Value"/>.
-/// </summary>
-public static class BerryTable
+namespace BDSP.Core.Berries
 {
-    /// <summary>Total number of berries supported by BDSP.</summary>
-    public const int Count = 65;
 
-    public static readonly Berry[] _berries =
-     [
-         // 🍐 aguav  (Bitter) 25 - Flavors [  0,   0,   0,  15,   0] Rarity:  3
-         new Berry(new BerryId(0),
+    /// <summary>
+    /// Canonical, immutable berry data table for BDSP (Generation VIII).
+    /// Index corresponds exactly to <see cref="BerryId.Value"/>.
+    /// </summary>
+    public static class BerryTable
+    {
+        /// <summary>Total number of berries supported by BDSP.</summary>
+        public const int Count = 65;
+
+        public static readonly Berry[] _berries =
+         [
+             // 🍐 aguav  (Bitter) 25 - Flavors [  0,   0,   0,  15,   0] Rarity:  3
+             new Berry(new BerryId(0),
             spicy: 0, dry: 0, sweet: 0, bitter: 15, sour: 0,
             smoothness: 25,
             rarity: 3),
@@ -346,21 +342,22 @@ public static class BerryTable
     ];
 
 
-    /// <summary>
-    /// Returns a read-only span of all berries in ID order.
-    /// </summary>
-    public static ReadOnlySpan<Berry> All => _berries;
+        /// <summary>
+        /// Returns a read-only span of all berries in ID order.
+        /// </summary>
+        public static ReadOnlySpan<Berry> All => _berries;
 
-    /// <summary>
-    /// Retrieves a berry by its ID.
-    /// </summary>
-    /// <param name="id">The berry identifier.</param>
-    /// <returns>The corresponding <see cref="Berry"/>.</returns>
-    public static ref readonly Berry Get(in BerryId id)
-    {
+        /// <summary>
+        /// Retrieves a berry by its ID.
+        /// </summary>
+        /// <param name="id">The berry identifier.</param>
+        /// <returns>The corresponding <see cref="Berry"/>.</returns>
+        public static ref readonly Berry Get(in BerryId id)
+        {
 #if DEBUG
-        Debug.Assert(id.Value < Count, "Invalid BerryId.");
+            Debug.Assert(id.Value < Count, "Invalid BerryId.");
 #endif
-        return ref _berries[id.Value];
+            return ref _berries[id.Value];
+        }
     }
 }

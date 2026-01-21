@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using BDSP.Core.Berries;
 using BDSP.Core.Primitives;
@@ -22,7 +23,7 @@ public static class PoffinCooker
     /// <summary>
     /// Cooks a poffin from the provided berries.
     /// </summary>
-    /// <param name="berryIds">The berries used (1–4).</param>
+    /// <param name="berryIds">The berries used (1�4).</param>
     /// <param name="cookTimeSeconds">Cooking time in seconds.</param>
     /// <param name="errors">Number of cooking errors.</param>
     /// <param name="amityBonus">Amity Square smoothness bonus.</param>

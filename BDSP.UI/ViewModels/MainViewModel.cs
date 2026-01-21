@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -40,7 +41,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     #region Berry List and Filter
 
-    private readonly List<BerryViewModel> _allBerries;
+    private readonly List<BerryViewModel> _allBerries = new(BerryTable.All.Length);
 
     private string _berrySearchText = string.Empty;
     public string BerrySearchText
@@ -135,8 +136,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         CookPoffinCommand = new RelayCommand(CookPoffin);
 
-        _allBerries = [.. BerryTable.All.Select(b => new BerryViewModel(b))];
-
+        //_allBerries = [.. BerryTable.All.ToImmutableArray().Select((Berry b) => new BerryViewModel(b))];
+        foreach (var b in BerryTable.All)
+        {
+            _allBerries.Add(new BerryViewModel(b));
+        }
         _filteredBerries = _allBerries;
     }
 

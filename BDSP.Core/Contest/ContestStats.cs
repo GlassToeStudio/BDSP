@@ -36,6 +36,22 @@ namespace BDSP.Core.Contest
 
         public byte PerfectCount;
 
+        public ContestStats(
+            byte cool,
+            byte beauty,
+            byte cute,
+            byte smart,
+            byte tough)
+        {
+            Coolness = cool;
+            Beauty = beauty;
+            Cuteness = cute;
+            Cleverness = smart;
+            Toughness = tough;
+            Sheen = 0;
+            PerfectCount = 0;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Feed(in Poffin poffin)
         {
@@ -58,11 +74,11 @@ namespace BDSP.Core.Contest
         /// </summary>
         public bool Dominates(ContestStats other)
         {
-            return Cool >= other.Cool &&
+            return Coolness >= other.Coolness &&
                    Beauty >= other.Beauty &&
-                   Cute >= other.Cute &&
-                   Smart >= other.Smart &&
-                   Tough >= other.Tough;
+                   Cuteness >= other.Cuteness &&
+                   Cleverness >= other.Cleverness &&
+                   Toughness >= other.Toughness;
         }
 
         /// <summary>
@@ -73,11 +89,11 @@ namespace BDSP.Core.Contest
             ContestStats b)
         {
             return new ContestStats(
-                (byte)(a.Cool + b.Cool),
+                (byte)(a.Coolness + b.Coolness),
                 (byte)(a.Beauty + b.Beauty),
-                (byte)(a.Cute + b.Cute),
-                (byte)(a.Smart + b.Smart),
-                (byte)(a.Tough + b.Tough));
+                (byte)(a.Cuteness + b.Cuteness),
+                (byte)(a.Cleverness + b.Cleverness),
+                (byte)(a.Toughness + b.Toughness));
         }
     }
 }

@@ -1,3 +1,5 @@
+using BDSP.Core.Contest;
+
 namespace BDSP.Core.Feeding
 {
 
@@ -20,9 +22,7 @@ namespace BDSP.Core.Feeding
         /// Determines how accumulated stats are scored.
         /// </summary>
         public Func<ContestStats, int> Score { get; init; }
-            = static s => s.Cool + s.Beauty + s.Cute + s.Smart + s.Tough;
-
-        public Func<ContestStats, int> Score { get; init; } = DefaultScore;
+            = DefaultScore;
 
         internal static int DefaultScore(ContestStats stats)
         {
