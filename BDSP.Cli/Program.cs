@@ -236,6 +236,9 @@ static IDisposable StartProgress(string label, bool enabled)
     return spinner;
 }
 
+Console.Error.WriteLine("BDSP.Cli starting...");
+Console.Error.Flush();
+
 if (args.Any(a => a is "--help" or "-h" or "/?"))
 {
     ShowHelp();
