@@ -33,7 +33,10 @@ public static class PoffinQuery
     }
 
     public static PoffinPredicate CompilePredicate(in PoffinFilterOptions filter)
-        => (in Poffin p) => PassesFilters(in filter, in p);
+    {
+        var f = filter;
+        return (in Poffin p) => PassesFilters(in f, in p);
+    }
 
     private static bool PassesFilters(in PoffinFilterOptions f, in Poffin p)
     {

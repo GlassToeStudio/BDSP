@@ -4,6 +4,7 @@ using BDSP.Core.Selection;
 using System.Collections.Generic;
 using BDSP.Core.Berries;
 using BDSP.Core.Berries.Data;
+using BDSP.Core.Berries.Filters;
 
 namespace BDSP.Criteria;
 
@@ -63,21 +64,36 @@ public static class PoffinCriteriaCompiler
 
     public static BerryId[] CompileBerryPool(PoffinCriteria c)
     {
-        if (c.AllowedBerries is { Count: > 0 })
+        bool hasAllowed = c.AllowedBerries is { Count: > 0 };
+        bool hasRarity = c.MinBerryRarity.HasValue || c.MaxBerryRarity.HasValue;
+
+        if (!hasAllowed && !hasRarity)
         {
-            var seen = new HashSet<BerryId>();
-            var list = new List<BerryId>(c.AllowedBerries.Count);
-            foreach (var id in c.AllowedBerries)
-            {
-                if (seen.Add(id))
-                    list.Add(id);
-            }
-            return list.ToArray();
+            var pool = new BerryId[BerryTable.Count];
+            for (ushort i = 0; i < BerryTable.Count; i++)
+                pool[i] = new BerryId(i);
+            return pool;
         }
 
-        var pool = new BerryId[BerryTable.Count];
-        for (ushort i = 0; i < BerryTable.Count; i++)
-            pool[i] = new BerryId(i);
-        return pool;
+        ulong lo = 0, hi = 0;
+        if (hasAllowed)
+        {
+            foreach (var id in c.AllowedBerries!)
+            {
+                var v = id.Value;
+                if (v < 64) lo |= 1UL << (int)v;
+                else hi |= 1UL << (int)(v - 64);
+            }
+        }
+
+        int minRarity = c.MinBerryRarity ?? -1;
+        int maxRarity = c.MaxBerryRarity ?? int.MaxValue;
+        var filter = new BerryFilterOptions(
+            allowedMaskLo: lo,
+            allowedMaskHi: hi,
+            minRarity: minRarity,
+            maxRarity: maxRarity);
+
+        return BerryQuery.Filter(in filter);
     }
 }

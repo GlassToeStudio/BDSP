@@ -25,6 +25,7 @@ static void ShowHelp()
     Console.WriteLine("  --topk=N");
     Console.WriteLine("  --min-level=N --max-smooth=N");
     Console.WriteLine("  --min-spicy=N --min-dry=N --min-sweet=N --min-bitter=N --min-sour=N");
+    Console.WriteLine("  --min-berry-rarity=N --max-berry-rarity=N");
     Console.WriteLine("  --sort=field:asc|desc --then=field:asc|desc");
     Console.WriteLine("  --allowed-berries=cheri,pecha,37");
     Console.WriteLine("  --allowed-berries-file=inventory.txt");
@@ -65,14 +66,14 @@ static IReadOnlyList<BerryId> ParseAllowedBerriesTokens(IEnumerable<string> toke
         if (ushort.TryParse(token, out var id))
         {
             if (id >= BerryTable.Count)
-                throw new ArgumentOutOfRangeException(nameof(value), $"Berry id must be between 0 and {BerryTable.Count - 1}.");
+                throw new ArgumentOutOfRangeException(nameof(tokens), $"Berry id must be between 0 and {BerryTable.Count - 1}.");
             list.Add(new BerryId(id));
             continue;
         }
 
         var key = NormalizeBerryName(token);
         if (!map.TryGetValue(key, out var nameId))
-            throw new ArgumentException($"Unknown berry '{token}'. Use id 0-{BerryTable.Count - 1} or a name like Cheri.", nameof(value));
+            throw new ArgumentException($"Unknown berry '{token}'. Use id 0-{BerryTable.Count - 1} or a name like Cheri.", nameof(tokens));
 
         list.Add(new BerryId(nameId));
     }
@@ -131,6 +132,14 @@ static PoffinCriteria ParseCriteria(string[] args)
 
             case "--allowed-berries-file":
                 c = c with { AllowedBerries = MergeAllowedBerries(c.AllowedBerries, ParseAllowedBerriesFromFile(value!)) };
+                break;
+
+            case "--min-berry-rarity":
+                c = c with { MinBerryRarity = int.Parse(value!) };
+                break;
+
+            case "--max-berry-rarity":
+                c = c with { MaxBerryRarity = int.Parse(value!) };
                 break;
 
             case "--berries":

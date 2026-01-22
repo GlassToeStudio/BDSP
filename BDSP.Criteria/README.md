@@ -19,6 +19,7 @@ var criteria = new PoffinCriteria
         new BerryId(41), // Pecha
         new BerryId(37)  // Oran
     },
+    MaxBerryRarity = 5,
     MinLevel = 50,
     MaxSmoothness = 20,
     MinSpicy = 20

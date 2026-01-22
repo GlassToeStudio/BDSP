@@ -7,6 +7,8 @@ public sealed record PoffinCriteria
 {
     // ---- Berry selection ----
     public IReadOnlyList<BerryId>? AllowedBerries { get; init; }
+    public int? MinBerryRarity { get; init; }
+    public int? MaxBerryRarity { get; init; }
 
     // ---- Search scope ----
     public int BerriesPerPoffin { get; init; } = 4;

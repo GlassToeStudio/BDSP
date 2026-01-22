@@ -106,10 +106,11 @@ public static class FeedingOptimizer
             return new FeedingPlan(new List<Poffins.Poffin>(0), new FeedingState(0, default));
 
         FeedingNode best = nodes[0];
+        int bestScore = options.Score(best.State.Stats);
+        int bestCount = CountPoffins(best);
 
         foreach (var n in nodes)
         {
-            int bestScore = options.Score(best.State.Stats);
             int curScore = options.Score(n.State.Stats);
 
             if (curScore > bestScore ||
@@ -117,6 +118,20 @@ public static class FeedingOptimizer
                 n.State.Sheen > best.State.Sheen))
             {
                 best = n;
+                bestScore = curScore;
+                bestCount = CountPoffins(n);
+                continue;
+            }
+
+            if (curScore == bestScore &&
+                n.State.Sheen == best.State.Sheen)
+            {
+                int curCount = CountPoffins(n);
+                if (curCount < bestCount)
+                {
+                    best = n;
+                    bestCount = curCount;
+                }
             }
         }
 
@@ -127,5 +142,13 @@ public static class FeedingOptimizer
 
         poffins.Reverse();
         return new FeedingPlan(poffins, best.State);
+    }
+
+    private static int CountPoffins(FeedingNode node)
+    {
+        int count = 0;
+        for (var n = node; n.Parent != null; n = n.Parent)
+            count++;
+        return count;
     }
 }

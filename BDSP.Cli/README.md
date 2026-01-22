@@ -16,6 +16,9 @@ dotnet run --project BDSP.Cli -- --min-spicy=30 --sort=level:desc --then=smoothn
 # Restrict search to a berry inventory subset (ids or names).
 dotnet run --project BDSP.Cli -- --allowed-berries=cheri,pecha,37 --min-level=40
 
+# Restrict search to common berries (rarity <= 5).
+dotnet run --project BDSP.Cli -- --max-berry-rarity=5 --topk=10000
+
 # Load berry inventory from a file (comma/space/newline-separated).
 dotnet run --project BDSP.Cli -- --allowed-berries-file=inventory.txt --min-spicy=30
 
