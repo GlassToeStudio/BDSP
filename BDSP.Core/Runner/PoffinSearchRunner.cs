@@ -91,24 +91,31 @@ public static class PoffinSearchRunner
                 var localSelector = new TopKPoffinSelector(topK, comparer);
                 var range = ranges[workerIndex];
 
-                ForEachByFirstIndexBerries(
-                    poolBerries,
-                    berriesPerPoffin,
-                    range.Start,
-                    range.End,
-                    combo =>
-                    {
-                        var poffin = PoffinCooker.CookFromBerriesUnique(
-                            combo,
-                            cookTimeSeconds,
-                            errors,
-                            amityBonus);
-
-                        if (predicate != null && !predicate(in poffin))
-                            return;
-
-                        localSelector.Consider(in poffin);
-                    });
+                if (predicate is null)
+                {
+                    ProcessRangeNoPredicate(
+                        poolBerries,
+                        berriesPerPoffin,
+                        range.Start,
+                        range.End,
+                        cookTimeSeconds,
+                        errors,
+                        amityBonus,
+                        localSelector);
+                }
+                else
+                {
+                    ProcessRangeWithPredicate(
+                        poolBerries,
+                        berriesPerPoffin,
+                        range.Start,
+                        range.End,
+                        cookTimeSeconds,
+                        errors,
+                        amityBonus,
+                        localSelector,
+                        predicate);
+                }
 
                 // Merge local Top-K into global Top-K
                 lock (mergeLock)
@@ -157,12 +164,15 @@ public static class PoffinSearchRunner
         return ranges;
     }
 
-    private static void ForEachByFirstIndexBerries(
+    private static void ProcessRangeNoPredicate(
         ReadOnlySpan<Berry> source,
         int choose,
         int start,
         int end,
-        Action<ReadOnlySpan<Berry>> action)
+        byte cookTimeSeconds,
+        byte errors,
+        byte amityBonus,
+        TopKPoffinSelector selector)
     {
         int n = source.Length;
 
@@ -174,7 +184,12 @@ public static class PoffinSearchRunner
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
-                    action(buffer);
+                    var poffin = PoffinCooker.CookFromBerriesUnique(
+                        buffer,
+                        cookTimeSeconds,
+                        errors,
+                        amityBonus);
+                    selector.Consider(in poffin);
                 }
                 break;
             }
@@ -187,7 +202,12 @@ public static class PoffinSearchRunner
                     for (int j = i + 1; j < n; j++)
                     {
                         buffer[1] = source[j];
-                        action(buffer);
+                        var poffin = PoffinCooker.CookFromBerriesUnique(
+                            buffer,
+                            cookTimeSeconds,
+                            errors,
+                            amityBonus);
+                        selector.Consider(in poffin);
                     }
                 }
                 break;
@@ -204,7 +224,12 @@ public static class PoffinSearchRunner
                         for (int k = j + 1; k < n; k++)
                         {
                             buffer[2] = source[k];
-                            action(buffer);
+                            var poffin = PoffinCooker.CookFromBerriesUnique(
+                                buffer,
+                                cookTimeSeconds,
+                                errors,
+                                amityBonus);
+                            selector.Consider(in poffin);
                         }
                     }
                 }
@@ -225,7 +250,122 @@ public static class PoffinSearchRunner
                             for (int l = k + 1; l < n; l++)
                             {
                                 buffer[3] = source[l];
-                                action(buffer);
+                                var poffin = PoffinCooker.CookFromBerriesUnique(
+                                    buffer,
+                                    cookTimeSeconds,
+                                    errors,
+                                    amityBonus);
+                                selector.Consider(in poffin);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    private static void ProcessRangeWithPredicate(
+        ReadOnlySpan<Berry> source,
+        int choose,
+        int start,
+        int end,
+        byte cookTimeSeconds,
+        byte errors,
+        byte amityBonus,
+        TopKPoffinSelector selector,
+        PoffinPredicate predicate)
+    {
+        int n = source.Length;
+
+        switch (choose)
+        {
+            case 1:
+            {
+                Span<Berry> buffer = stackalloc Berry[1];
+                for (int i = start; i < end; i++)
+                {
+                    buffer[0] = source[i];
+                    var poffin = PoffinCooker.CookFromBerriesUnique(
+                        buffer,
+                        cookTimeSeconds,
+                        errors,
+                        amityBonus);
+                    if (!predicate(in poffin))
+                        continue;
+                    selector.Consider(in poffin);
+                }
+                break;
+            }
+            case 2:
+            {
+                Span<Berry> buffer = stackalloc Berry[2];
+                for (int i = start; i < end; i++)
+                {
+                    buffer[0] = source[i];
+                    for (int j = i + 1; j < n; j++)
+                    {
+                        buffer[1] = source[j];
+                        var poffin = PoffinCooker.CookFromBerriesUnique(
+                            buffer,
+                            cookTimeSeconds,
+                            errors,
+                            amityBonus);
+                        if (!predicate(in poffin))
+                            continue;
+                        selector.Consider(in poffin);
+                    }
+                }
+                break;
+            }
+            case 3:
+            {
+                Span<Berry> buffer = stackalloc Berry[3];
+                for (int i = start; i < end; i++)
+                {
+                    buffer[0] = source[i];
+                    for (int j = i + 1; j < n - 1; j++)
+                    {
+                        buffer[1] = source[j];
+                        for (int k = j + 1; k < n; k++)
+                        {
+                            buffer[2] = source[k];
+                            var poffin = PoffinCooker.CookFromBerriesUnique(
+                                buffer,
+                                cookTimeSeconds,
+                                errors,
+                                amityBonus);
+                            if (!predicate(in poffin))
+                                continue;
+                            selector.Consider(in poffin);
+                        }
+                    }
+                }
+                break;
+            }
+            case 4:
+            {
+                Span<Berry> buffer = stackalloc Berry[4];
+                for (int i = start; i < end; i++)
+                {
+                    buffer[0] = source[i];
+                    for (int j = i + 1; j < n - 2; j++)
+                    {
+                        buffer[1] = source[j];
+                        for (int k = j + 1; k < n - 1; k++)
+                        {
+                            buffer[2] = source[k];
+                            for (int l = k + 1; l < n; l++)
+                            {
+                                buffer[3] = source[l];
+                                var poffin = PoffinCooker.CookFromBerriesUnique(
+                                    buffer,
+                                    cookTimeSeconds,
+                                    errors,
+                                    amityBonus);
+                                if (!predicate(in poffin))
+                                    continue;
+                                selector.Consider(in poffin);
                             }
                         }
                     }

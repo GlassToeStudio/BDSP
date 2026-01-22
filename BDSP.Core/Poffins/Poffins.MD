@@ -83,6 +83,7 @@ This formula applies only when all Berries used in the recipe are unique.
 4. **Time & Error Modifier:** Apply the following formula to each of the five flavors:
 
    * `Final Flavor = round( (Flavor Value * (60 / Cook Time in Seconds)) - (Number of Burns + Number of Spills) )`
+   * **Implementation note:** The core library truncates (integer division) instead of rounding for speed.
 5. **Remove Negatives:** Set any flavor value that is now negative to 0.
 6. **Apply Flavor Cap:** Any flavor value exceeding the maximum is reduced to the cap.
 
@@ -94,6 +95,7 @@ This formula applies only when all Berries used in the recipe are unique.
 #### **Exceptions**
 
 * **Foul Poffin:** The recipe results in a **Foul Poffin** if two or more identical Berries are used, or if all flavors end up at 0. A Foul Poffin gives a +2 boost to three random conditions.
+  * **Implementation note:** The core library uses a deterministic foul result (Spicy/Dry/Sweet set to 2, others 0).
 * **Cook Time Display:** The timer displays hundredths of a second, but the game only registers time in 1/30th of a second intervals. In Generation VIII, a time displayed as "0:47.100" is treated as 48 full seconds.
 
 ### **Poffin Level**

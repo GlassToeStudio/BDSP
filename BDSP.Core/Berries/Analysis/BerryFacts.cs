@@ -13,19 +13,81 @@ public static class BerryFacts
         Flavor.Spicy, Flavor.Dry, Flavor.Sweet, Flavor.Bitter, Flavor.Sour
     };
 
+    private static readonly byte[] MainFlavorValues = new byte[BerryTable.Count];
+    private static readonly byte[] NumFlavors = new byte[BerryTable.Count];
+    private static readonly int[] WeakenedMainFlavorValues = new int[BerryTable.Count];
+
+    static BerryFacts()
+    {
+        var all = BerryTable.All;
+        for (int i = 0; i < all.Length; i++)
+        {
+            ref readonly var b = ref all[i];
+
+            NumFlavors[i] =
+                (byte)((b.Spicy > 0 ? 1 : 0)
+                     + (b.Dry > 0 ? 1 : 0)
+                     + (b.Sweet > 0 ? 1 : 0)
+                     + (b.Bitter > 0 ? 1 : 0)
+                     + (b.Sour > 0 ? 1 : 0));
+
+            byte best = 0;
+            if (b.Spicy > best) best = b.Spicy;
+            if (b.Dry > best) best = b.Dry;
+            if (b.Sweet > best) best = b.Sweet;
+            if (b.Bitter > best) best = b.Bitter;
+            if (b.Sour > best) best = b.Sour;
+            MainFlavorValues[i] = best;
+
+            int spicy = b.Spicy - b.Dry;
+            int sour = b.Sour - b.Spicy;
+            int bitter = b.Bitter - b.Sour;
+            int sweet = b.Sweet - b.Bitter;
+            int dry = b.Dry - b.Sweet;
+
+            int weakenedBest = int.MinValue;
+            foreach (var f in FlavorPriority)
+            {
+                int v = f switch
+                {
+                    Flavor.Spicy => spicy,
+                    Flavor.Dry => dry,
+                    Flavor.Sweet => sweet,
+                    Flavor.Bitter => bitter,
+                    Flavor.Sour => sour,
+                    _ => int.MinValue
+                };
+
+                if (v > weakenedBest)
+                    weakenedBest = v;
+            }
+
+            WeakenedMainFlavorValues[i] = weakenedBest;
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetNumFlavors(in Berry b)
-        => (b.Spicy > 0 ? 1 : 0)
-         + (b.Dry > 0 ? 1 : 0)
-         + (b.Sweet > 0 ? 1 : 0)
-         + (b.Bitter > 0 ? 1 : 0)
-         + (b.Sour > 0 ? 1 : 0);
+    {
+        int index = b.Id.Value;
+        if ((uint)index < (uint)NumFlavors.Length)
+            return NumFlavors[index];
+
+        return (b.Spicy > 0 ? 1 : 0)
+             + (b.Dry > 0 ? 1 : 0)
+             + (b.Sweet > 0 ? 1 : 0)
+             + (b.Bitter > 0 ? 1 : 0)
+             + (b.Sour > 0 ? 1 : 0);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte GetMainFlavorValue(in Berry b)
     {
+        int index = b.Id.Value;
+        if ((uint)index < (uint)MainFlavorValues.Length)
+            return MainFlavorValues[index];
+
         byte best = 0;
-        // priority tie-break by ordering below
         if (b.Spicy > best) best = b.Spicy;
         if (b.Dry > best) best = b.Dry;
         if (b.Sweet > best) best = b.Sweet;
@@ -64,6 +126,10 @@ public static class BerryFacts
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetWeakenedMainFlavorValue(in Berry b)
     {
+        int index = b.Id.Value;
+        if ((uint)index < (uint)WeakenedMainFlavorValues.Length)
+            return WeakenedMainFlavorValues[index];
+
         int spicy = b.Spicy - b.Dry;
         int sour = b.Sour - b.Spicy;
         int bitter = b.Bitter - b.Sour;
@@ -71,7 +137,6 @@ public static class BerryFacts
         int dry = b.Dry - b.Sweet;
 
         int best = int.MinValue;
-        // tie-break order mirrors FlavorPriority
         foreach (var f in FlavorPriority)
         {
             int v = f switch

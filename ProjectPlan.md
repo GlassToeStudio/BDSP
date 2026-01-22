@@ -1,0 +1,53 @@
+BDSP Core Optimization & Expansion Project Plan
+
+This plan translates the high‑level suggestions from the BDSP Core optimization report into actionable, testable tasks. The focus is on maintaining a lightweight, high‑performance library while adding new features and improving usability.
+
+1. Pruning & Search Performance Enhancements
+   Task ID Task Description Acceptance Criteria & Tests
+   1.1 Design pruning heuristics: Define algorithms that compute upper bounds for level/smoothness based on partial berry selections. Determine how to skip combinations early when they cannot meet filter criteria or top‑K thresholds. Documented heuristics and derived formulas; code prototypes verifying that the heuristics avoid unnecessary calls to PoffinCooker without excluding valid poffins.
+   1.2 Implement pruning in PoffinSearchRunner: Modify the combination enumeration logic to carry partial sums and apply the heuristics. All existing tests pass; new unit tests demonstrate that combinations that cannot satisfy criteria are skipped; benchmark shows reduced number of cooked poffins compared to the baseline for typical filters (e.g., MinLevel, MaxSmoothness).
+   1.3 Predicate early‑evaluation: Identify simple predicate fields (e.g., MinLevel, MaxSmoothness) that can be checked before cooking and update filtering code accordingly. Unit tests show that predicate logic returns identical results when moved upstream; performance benchmarks show improvement.
+   1.4 Benchmark pruning impact: Measure end‑to‑end search time and GC allocations with and without pruning across different berries-per-poffin values and filter settings. Detailed benchmark report showing at least 20% reduction in cook calls under typical filtered searches; regression tests ensure unfiltered searches remain correct.
+2. Resource Pooling & Streaming
+   Task ID Task Description Acceptance Criteria & Tests
+   2.1 Integrate ArrayPool: Use ArrayPool to rent buffers for the berry pool and combination indices in PoffinSearchRunner and other high‑frequency paths. Memory profiling shows reduced allocations during repeated search runs; unit tests confirm no data corruption from reused arrays.
+   2.2 Implement asynchronous streaming search: Expose a new IAsyncEnumerable<Poffin> API that yields poffins as they are found. Use channels or AsyncEnumerable to push results from worker threads. New API documentation; sample code demonstrates iterating over results while search is still running; existing synchronous API continues to function.
+   2.3 Cancellation support: Allow search cancellation via CancellationToken in the streaming API. Unit tests verify that cancellation stops worker threads and that no partial results are missed or duplicated.
+3. SIMD and Micro‑Optimizations
+   Task ID Task Description Acceptance Criteria & Tests
+   3.1 Vectorization feasibility study: Profile PoffinCooker to identify the portion of CPU time spent cooking. Prototype a SIMD implementation using System.Numerics.Vector<int> or hardware intrinsics. Report describing whether SIMD yields measurable speedup; prototype code demonstrating correct results; decision documented on whether to integrate SIMD into production.
+   3.2 Integrate SIMD (if beneficial): Replace scalar arithmetic in PoffinCooker with vectorized operations while preserving correctness and handling edge cases (e.g., clamping, negative penalties). Full test suite passes; benchmarks show improved throughput on supported hardware; fallback code path exists for unsupported platforms.
+4. Feeding Algorithm Improvements
+   Task ID Task Description Acceptance Criteria & Tests
+   4.1 Design branch‑and‑bound heuristics: Define optimistic upper bound functions for contest scores and sheen consumption. Documented heuristics and pseudocode; demonstration that the upper bound never under‑estimates the true potential.
+   4.2 Implement branch‑and‑bound in FeedingOptimizer: Incorporate upper bound checks and explore promising nodes first (e.g., with a priority queue). Unit tests confirm that the optimizer returns identical or better plans compared to the baseline; performance tests show reduced search nodes explored.
+   4.3 Explore alternative search strategies: Implement beam search or A\* variants and compare their performance and quality to the baseline. Comparative report; configuration options allowing users to choose search strategy; acceptance criteria include correct results and performance evaluation.
+   4.4 Memoization: Implement state caching to avoid recomputing subtrees in feeding plans. Unit tests verifying that identical states are recognized and reused; performance benchmarks show improvement on larger inputs.
+5. Functional Extensions
+   Task ID Task Description Acceptance Criteria & Tests
+   5.1 Generalize rule sets: Introduce IPoffinRuleSet interface to encapsulate weakening cycles, smoothness formulas and level caps. Implement BDSP rule set and stub out Generation IV rules using the condensed Poffins guidelines. Type design reviewed and merged; unit tests confirm BDSP behavior remains unchanged; initial Generation IV implementation passes basic tests.
+   5.2 Add variable ingredient support: Extend PoffinCooker to accept 1–N berries. Use loops to apply weakening and penalties iteratively. Unit tests cover combinations of 1–5 berries (beyond four) and ensure correct level and smoothness; search runner updated accordingly.
+   5.3 Provide a BerryCombinations utility: Implement a generator that yields combinations of berries of specified lengths. API documentation and example usage; unit tests verifying correctness and memory usage.
+   5.4 Expand comparers and predicates: Implement additional comparers (lexicographic by multiple stats, rarity‑aware, custom weighting) and predicates (secondary flavor ranges, minimum number of flavors). New comparers and predicates are unit‑tested; Criteria compilation updated to expose new options.
+   5.5 Python interoperability: Expose BDSP.Core via a C API or pythonnet wrapper, and optionally wrap the Python BDSP-Poffin-Factory for .NET. Example script demonstrating calling BDSP.Core functions from Python; integration tests verifying correct results and performance benefits.
+   5.6 Serialization enhancements: Add JSON/YAML serialization for search results and feeding plans; update BDSP.Serialization accordingly. Round‑trip tests verifying that serialized objects can be deserialized with identical data; sample CLI tool saving and loading results.
+   5.7 Documentation and examples: Expand README and XML comments; add examples demonstrating typical workflows (filtering berries, cooking, searching, optimizing feeding). Documentation builds without warnings; examples compile and run; developer feedback indicates clarity.
+6. Project Management
+   Task ID Task Description Acceptance Criteria & Tests
+   6.1 Issue tracking: Create GitHub issues for each task with clear descriptions, acceptance criteria, and labels (e.g., enhancement, performance, documentation). Issues created and cross‑linked to project milestones; tasks assigned to team members.
+   6.2 Milestones and sprints: Organize tasks into milestones (e.g., Pruning & Streaming, Feeding Optimizations, Functional Extensions). Define sprint durations and deliverables. Project board updated with milestones; progress tracked via board columns (To Do, In Progress, Review, Done).
+   6.3 Continuous integration tests: Update CI pipeline to run the expanded test suite and benchmarks; integrate performance regression checks. CI passes for all PRs; alerts triggered if benchmarks regress beyond a threshold.
+   6.4 Coordination with Python repository: Align changes in the C# core library with BDSP-Poffin-Factory. Ensure that algorithms and constants remain synchronized. Shared change log maintained; cross‑repo integration tests pass.
+   How to Use This Plan
+
+Open tasks as GitHub issues in the relevant repository (e.g., GlassToeStudio/BDSP) with the task ID and description. Include links to the optimization report for background and acceptance criteria from this table.
+
+Assign tasks to developers or agents. Use the acceptance criteria to define Definition of Done for each issue.
+
+Track progress via a project board. Move tasks across columns as they progress and update status in issue comments.
+
+Write tests first where practical. Use the provided acceptance criteria to implement unit tests, benchmarks or integration tests.
+
+Review & merge: All code changes should undergo peer review. Verify that performance benchmarks and CI tests pass before merging.
+
+This plan ensures the BDSP.Core library evolves into a more powerful, extensible and performance‑optimized toolkit while providing clear deliverables and measurable outcomes.

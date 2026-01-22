@@ -34,6 +34,29 @@ public sealed class PoffinCookerTests
         Assert.Equal(PoffinType.Foul, poffin.Type);
     }
 
+    [Fact]
+    public void Cook_FoulPoffin_UsesFixedFlavorsAndPriority()
+    {
+        var ids = TestHelpers.Ids(0, 0);
+
+        var poffin = PoffinCooker.Cook(
+            ids,
+            cookTimeSeconds: 40,
+            errors: 0,
+            amityBonus: 0);
+
+        Assert.Equal(PoffinType.Foul, poffin.Type);
+        Assert.Equal((byte)2, poffin.Level);
+        Assert.Equal((byte)2, poffin.SecondLevel);
+        Assert.Equal((byte)2, poffin.Spicy);
+        Assert.Equal((byte)2, poffin.Dry);
+        Assert.Equal((byte)2, poffin.Sweet);
+        Assert.Equal((byte)0, poffin.Bitter);
+        Assert.Equal((byte)0, poffin.Sour);
+        Assert.Equal(Flavor.Spicy, poffin.PrimaryFlavor);
+        Assert.Equal(Flavor.Dry, poffin.SecondaryFlavor);
+    }
+
 
     [Fact]
     public void Cook_Level95OrAbove_IsSuperMild()

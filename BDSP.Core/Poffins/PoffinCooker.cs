@@ -241,8 +241,16 @@ public static class PoffinCooker
             return CreateFoul();
         }
 
-        int level = Math.Max(spicy, Math.Max(dry, Math.Max(sweet, Math.Max(bitter, sour))));
-        int secondLevel = SecondHighest(spicy, dry, sweet, bitter, sour);
+        GetTopTwo(
+            spicy,
+            dry,
+            sweet,
+            bitter,
+            sour,
+            out int level,
+            out int secondLevel,
+            out Flavor primary,
+            out Flavor secondary);
 
         // ---------- smoothness (Gen VIII) ----------
         if (amityBonus > 9) amityBonus = 9;
@@ -274,16 +282,6 @@ public static class PoffinCooker
         else
             type = PoffinType.Overripe;
 
-        // ---------- primary / secondary flavor ----------
-        GetPrimarySecondary(
-            spicy,
-            dry,
-            sweet,
-            bitter,
-            sour,
-            out Flavor primary,
-            out Flavor secondary);
-
         return new Poffin(
             (byte)level,
             (byte)secondLevel,
@@ -303,40 +301,22 @@ public static class PoffinCooker
 
     private static Poffin CreateFoul()
     {
-        int spicy = 0, dry = 0, sweet = 0, bitter = 0, sour = 0;
-        Span<byte> pool = stackalloc byte[5] { 0, 1, 2, 3, 4 };
+        int spicy = 2, dry = 2, sweet = 2, bitter = 0, sour = 0;
 
-        // Fisher-Yates shuffle for 3 picks.
-        for (int i = pool.Length - 1; i > 0; i--)
-        {
-            int j = Random.Shared.Next(i + 1);
-            (pool[i], pool[j]) = (pool[j], pool[i]);
-        }
-
-        for (int i = 0; i < 3; i++)
-        {
-            switch ((Flavor)pool[i])
-            {
-                case Flavor.Spicy: spicy = 2; break;
-                case Flavor.Dry: dry = 2; break;
-                case Flavor.Sweet: sweet = 2; break;
-                case Flavor.Bitter: bitter = 2; break;
-                case Flavor.Sour: sour = 2; break;
-            }
-        }
-
-        GetPrimarySecondary(
+        GetTopTwo(
             spicy,
             dry,
             sweet,
             bitter,
             sour,
+            out int level,
+            out int secondLevel,
             out Flavor primary,
             out Flavor secondary);
 
         return new Poffin(
-            level: 2,
-            secondLevel: 2,
+            level: (byte)level,
+            secondLevel: (byte)secondLevel,
             smoothness: 0,
             spicy: (byte)spicy,
             dry: (byte)dry,
@@ -352,61 +332,67 @@ public static class PoffinCooker
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int Clamp(int v) => v < 0 ? 0 : (v > 100 ? 100 : v);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int SecondHighest(int a, int b, int c, int d, int e)
-    {
-        int max = Math.Max(a, Math.Max(b, Math.Max(c, Math.Max(d, e))));
-        int second = -1;
-
-        if (a != max && a > second) second = a;
-        if (b != max && b > second) second = b;
-        if (c != max && c > second) second = c;
-        if (d != max && d > second) second = d;
-        if (e != max && e > second) second = e;
-
-        return second < 0 ? 0 : second;
-    }
-
-    private static int GetFlavorValue(
-        Flavor f, int spicy, int dry, int sweet, int bitter, int sour)
-        => f switch
-        {
-            Flavor.Spicy => spicy,
-            Flavor.Dry => dry,
-            Flavor.Sweet => sweet,
-            Flavor.Bitter => bitter,
-            Flavor.Sour => sour,
-            _ => 0
-        };
-
-    private static void GetPrimarySecondary(
+    private static void GetTopTwo(
         int spicy,
         int dry,
         int sweet,
         int bitter,
         int sour,
+        out int bestValue,
+        out int secondValue,
         out Flavor primary,
         out Flavor secondary)
     {
         primary = Flavor.Spicy;
         secondary = Flavor.Spicy;
-        int best = -1, second = -1;
+        bestValue = -1;
+        secondValue = -1;
+        bool hasSecond = false;
 
         foreach (var f in FlavorPriority)
         {
-            int v = GetFlavorValue(f, spicy, dry, sweet, bitter, sour);
-            if (v > best)
+            int v = f switch
             {
-                second = best;
+                Flavor.Spicy => spicy,
+                Flavor.Dry => dry,
+                Flavor.Sweet => sweet,
+                Flavor.Bitter => bitter,
+                Flavor.Sour => sour,
+                _ => 0
+            };
+
+            if (v <= 0)
+                continue;
+
+            if (v > bestValue)
+            {
+                secondValue = bestValue;
                 secondary = primary;
-                best = v;
+                bestValue = v;
                 primary = f;
+                hasSecond = secondValue > 0;
             }
-            else if (v > second && v > 0)
+            else if (v == bestValue)
             {
-                second = v;
-                secondary = f;
+                if (!hasSecond)
+                {
+                    secondValue = v;
+                    secondary = f;
+                    hasSecond = true;
+                }
             }
+            else if (v > secondValue)
+            {
+                secondValue = v;
+                secondary = f;
+                hasSecond = true;
+            }
+        }
+
+        if (!hasSecond)
+        {
+            secondary = primary;
+            secondValue = 0;
         }
     }
 }
