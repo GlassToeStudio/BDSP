@@ -459,6 +459,7 @@ public static class PoffinSearchRunner
         }
     }
 
+    // Pruned variant: optimistic bounds can skip cooking entirely.
     private static void ProcessRangeNoPredicatePruned(
         ReadOnlySpan<Berry> source,
         int choose,
@@ -690,6 +691,7 @@ public static class PoffinSearchRunner
         }
     }
 
+    // Pruned variant with predicate filtering after cooking.
     private static void ProcessRangeWithPredicatePruned(
         ReadOnlySpan<Berry> source,
         int choose,
@@ -930,6 +932,7 @@ public static class PoffinSearchRunner
         }
     }
 
+    // Conservative check: returns false only if the combination cannot meet the thresholds.
     private static bool CanSatisfy(
         in PoffinSearchPruning pruning,
         int spicySum,

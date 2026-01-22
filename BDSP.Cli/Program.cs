@@ -113,6 +113,7 @@ var criteria = ParseCriteria(args);
 
 var predicate = PoffinCriteriaCompiler.CompilePredicate(criteria);
 var comparer = PoffinCriteriaCompiler.CompileComparer(criteria);
+var pruning = PoffinCriteriaCompiler.CompilePruning(criteria);
 
 // Build berry pool (all berries for now)
 var berryPool = new BerryId[BerryTable.Count];
@@ -127,7 +128,8 @@ var result = PoffinSearchRunner.Run(
     errors: 0,
     amityBonus: 9,
     comparer: comparer,
-    predicate: predicate
+    predicate: predicate,
+    pruning: pruning
 );
 
 

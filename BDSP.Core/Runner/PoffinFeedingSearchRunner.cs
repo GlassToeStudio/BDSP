@@ -31,6 +31,9 @@ public static class PoffinFeedingSearchRunner
     /// <param name="maxDegreeOfParallelism">
     /// Optional cap on parallel search workers. If null, the search runner uses a sensible default.
     /// </param>
+    /// <param name="pruning">
+    /// Optional pruning hints to skip combinations that cannot meet minimum thresholds.
+    /// </param>
     /// <returns>The optimized feeding plan.</returns>
     public static FeedingPlan Run(
         ReadOnlySpan<BerryId> berryPool,
@@ -42,7 +45,8 @@ public static class PoffinFeedingSearchRunner
         IPoffinComparer comparer,
         PoffinPredicate? predicate = null,
         FeedingOptions? feedingOptions = null,
-        int? maxDegreeOfParallelism = null)
+        int? maxDegreeOfParallelism = null,
+        PoffinSearchPruning? pruning = null)
     {
         // ------------------------------------------------------------
         // 1) Search: find strong candidate Poffins
@@ -56,7 +60,8 @@ public static class PoffinFeedingSearchRunner
             amityBonus: amityBonus,
             comparer: comparer,
             predicate: predicate,
-            maxDegreeOfParallelism: maxDegreeOfParallelism);
+            maxDegreeOfParallelism: maxDegreeOfParallelism,
+            pruning: pruning);
 
         // Defensive: if no candidates, return empty plan.
         // (FeedingPlan ctor is internal; we can construct it here within the same assembly.)

@@ -2,7 +2,8 @@
 
 ## Status (latest)
 
-- 1.1/1.2: Initial pruning heuristics implemented (upper bounds on min level/flavor); test coverage added.
+- 1.1/1.2: Initial pruning heuristics implemented (min level/flavor + max smoothness); test coverage added.
+- 1.3: Criteria compilation now wires pruning into CLI for early evaluation.
 - 4.5: Exclude foul poffins in feeding plans implemented and tested.
 
 This plan translates the high-level suggestions from the BDSP Core optimization report into actionable, testable tasks. The focus is on maintaining a lightweight, high-performance library while adding new features and improving usability.
