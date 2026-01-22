@@ -23,6 +23,7 @@ This plan translates the high‑level suggestions from the BDSP Core optimizatio
    4.2 Implement branch‑and‑bound in FeedingOptimizer: Incorporate upper bound checks and explore promising nodes first (e.g., with a priority queue). Unit tests confirm that the optimizer returns identical or better plans compared to the baseline; performance tests show reduced search nodes explored.
    4.3 Explore alternative search strategies: Implement beam search or A\* variants and compare their performance and quality to the baseline. Comparative report; configuration options allowing users to choose search strategy; acceptance criteria include correct results and performance evaluation.
    4.4 Memoization: Implement state caching to avoid recomputing subtrees in feeding plans. Unit tests verifying that identical states are recognized and reused; performance benchmarks show improvement on larger inputs.
+   4.5 Exclude foul poffins: Ensure feeding plans never include foul poffins since they are unusable in practice. Unit tests confirm foul poffins are skipped even when present in the candidate list.
 5. Functional Extensions
    Task ID Task Description Acceptance Criteria & Tests
    5.1 Generalize rule sets: Introduce IPoffinRuleSet interface to encapsulate weakening cycles, smoothness formulas and level caps. Implement BDSP rule set and stub out Generation IV rules using the condensed Poffins guidelines. Type design reviewed and merged; unit tests confirm BDSP behavior remains unchanged; initial Generation IV implementation passes basic tests.
