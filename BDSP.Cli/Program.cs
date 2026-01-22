@@ -5,6 +5,8 @@ using BDSP.Core.Runner;
 using BDSP.Core.Selection;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using BDSP.Core.Berries.Data;
 
 static (SortField field, SortDirection dir) ParseSort(string value)
@@ -31,6 +33,7 @@ static void ShowHelp()
     Console.WriteLine("  --allowed-berries=cheri,pecha,37");
     Console.WriteLine("  --allowed-berries-file=inventory.txt");
     Console.WriteLine("  --feed");
+    Console.WriteLine("  --no-progress");
     Console.WriteLine("  --json");
     Console.WriteLine();
     Console.WriteLine("Examples:");
@@ -223,6 +226,16 @@ static PoffinCriteria ApplyPreset(string name)
     };
 }
 
+static IDisposable StartProgress(string label, bool enabled)
+{
+    if (!enabled)
+        return new ProgressSpinner(false);
+
+    var spinner = new ProgressSpinner(true);
+    spinner.Start(label);
+    return spinner;
+}
+
 if (args.Any(a => a is "--help" or "-h" or "/?"))
 {
     ShowHelp();
@@ -237,9 +250,31 @@ var pruning = PoffinCriteriaCompiler.CompilePruning(criteria);
 var berryPool = PoffinCriteriaCompiler.CompileBerryPool(criteria);
 
 bool runFeed = args.Any(a => a.Equals("--feed", StringComparison.OrdinalIgnoreCase));
+bool showProgress = !args.Any(a => a.Equals("--no-progress", StringComparison.OrdinalIgnoreCase));
 if (runFeed)
 {
-    var plan = PoffinFeedingSearchRunner.RunWithRecipes(
+    using (StartProgress("Searching + feeding", showProgress))
+    {
+        var plan = PoffinFeedingSearchRunner.RunWithRecipes(
+            berryPool: berryPool,
+            berriesPerPoffin: criteria.BerriesPerPoffin,
+            topK: criteria.TopK,
+            cookTimeSeconds: 40,
+            errors: 0,
+            amityBonus: 9,
+            comparer: comparer,
+            predicate: predicate,
+            pruning: pruning);
+
+        Console.WriteLine(ContestPlanFormatter.Format(plan));
+        return;
+    }
+}
+
+PoffinSearchResult result;
+using (StartProgress("Searching", showProgress))
+{
+    result = PoffinSearchRunner.Run(
         berryPool: berryPool,
         berriesPerPoffin: criteria.BerriesPerPoffin,
         topK: criteria.TopK,
@@ -248,23 +283,9 @@ if (runFeed)
         amityBonus: 9,
         comparer: comparer,
         predicate: predicate,
-        pruning: pruning);
-
-    Console.WriteLine(ContestPlanFormatter.Format(plan));
-    return;
+        pruning: pruning
+    );
 }
-
-var result = PoffinSearchRunner.Run(
-    berryPool: berryPool,
-    berriesPerPoffin: criteria.BerriesPerPoffin,
-    topK: criteria.TopK,
-    cookTimeSeconds: 40,
-    errors: 0,
-    amityBonus: 9,
-    comparer: comparer,
-    predicate: predicate,
-    pruning: pruning
-);
 
 
 
