@@ -1,7 +1,5 @@
 ## **Making Poffins**
 
-Of course! Here is a more concise, Markdown-formatted version of the text you provided.
-
 ### **How to Cook Poffins**
 
 Poffins can be cooked alone or in groups of up to four players. The process involves stirring berry batter in a pot, with the goal of creating the strongest Poffin possible in the shortest time.

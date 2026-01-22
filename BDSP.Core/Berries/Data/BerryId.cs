@@ -9,12 +9,14 @@ namespace BDSP.Core.Berries.Data
     /// <summary>
     /// A lightweight, type-safe wrapper for a berry's unique identifier.
     /// This struct prevents accidental mixing of different types of IDs and improves code clarity.
+    /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:BerryIdTable"]/*' />
     /// </summary>
     public readonly struct BerryId
     {
         /// <summary>
         /// The underlying numeric value of the berry ID.
         /// This value corresponds to the index in the <see cref="BerryTable"/>.
+        /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:BerryIdTable"]/*' />
         /// </summary>
         public readonly ushort Value;
 
