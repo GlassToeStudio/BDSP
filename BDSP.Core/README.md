@@ -119,9 +119,14 @@ var result = PoffinSearchRunner.Run(
 Use a predicate to pre-filter poffins during search:
 ```csharp
 using BDSP.Core.Poffins;
+using BDSP.Core.Poffins.Filters;
 using BDSP.Core.Selection;
 
-PoffinPredicate onlyHighLevel = static (in Poffin p) => p.Level >= 50;
+var filter = new PoffinFilterOptions(
+    excludeFoul: true,
+    minLevel: 50,
+    maxSmoothness: 20);
+PoffinPredicate predicate = PoffinQuery.CompilePredicate(in filter);
 ```
 
 Keep top-K results manually:
