@@ -10,14 +10,14 @@ public static class BerryQuery
     /// Zero-allocation path: writes results into <paramref name="destination"/> and returns count.
     /// destination must be at least BerryTable.Count in length.
     /// </summary>
-    /// <example>
+    /// <remarks>
     /// <code>
     /// Span&lt;BerryId&gt; poolBuf = stackalloc BerryId[BerryTable.Count];
     /// var filter = new BerryFilterOptions(maxSmoothness: 25, maxRarity: 3, minMainFlavorValue: 10);
     /// int count = BerryQuery.Filter(in filter, poolBuf);
     /// var berryPool = poolBuf[..count];
     /// </code>
-    /// </example>
+    /// </remarks>
     public static int Filter(
         in BerryFilterOptions filter,
         Span<BerryId> destination)
@@ -41,7 +41,7 @@ public static class BerryQuery
     }
 
     /// <summary>
-    /// Convenience path: allocates a new array sized to count (<= 65).
+    /// Convenience path: allocates a new array sized to count (≤ 65).
     /// </summary>
     public static BerryId[] Filter(in BerryFilterOptions filter)
     {
