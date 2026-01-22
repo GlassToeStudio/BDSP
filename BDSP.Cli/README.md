@@ -12,4 +12,7 @@ dotnet run --project BDSP.Cli -- --berries=4 --topk=50 --min-level=50 --max-smoo
 
 # Focus on Spicy; exclude foul poffins (default).
 dotnet run --project BDSP.Cli -- --min-spicy=30 --sort=level:desc --then=smoothness:asc
+
+# Pruning-heavy search: tighter thresholds for fast rejection.
+dotnet run --project BDSP.Cli -- --min-level=60 --min-spicy=25 --max-smooth=15
 ```

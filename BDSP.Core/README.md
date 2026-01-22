@@ -103,7 +103,8 @@ for (ushort i = 0; i < (ushort)BerryTable.Count; i++)
 var comparer = new LevelThenSmoothnessComparer();
 var pruning = new BDSP.Core.Runner.PoffinSearchPruning(
     minLevel: 50,
-    minSpicy: 20);
+    minSpicy: 20,
+    maxSmoothness: 20);
 var result = PoffinSearchRunner.Run(
     berryPool: poolBuf,
     berriesPerPoffin: 4,
@@ -137,6 +138,7 @@ Optimize a feeding plan under sheen constraints:
 ```csharp
 using BDSP.Core.Feeding;
 using BDSP.Core.Poffins;
+using BDSP.Core.Runner;
 
 var options = new FeedingOptions
 {
@@ -148,6 +150,29 @@ FeedingPlan plan = FeedingOptimizer.Optimize(best, options);
 Console.WriteLine($"Sheen: {plan.FinalState.Sheen}");
 ```
 Note: foul poffins are skipped and never included in feeding plans.
+
+End-to-end search + feed:
+```csharp
+using BDSP.Core.Berries.Data;
+using BDSP.Core.Runner;
+using BDSP.Core.Selection;
+
+Span<BerryId> poolBuf = stackalloc BerryId[BerryTable.Count];
+for (ushort i = 0; i < (ushort)BerryTable.Count; i++)
+    poolBuf[i] = new BerryId(i);
+
+var comparer = new LevelThenSmoothnessComparer();
+var pruning = new PoffinSearchPruning(minLevel: 50, maxSmoothness: 20);
+var plan = PoffinFeedingSearchRunner.Run(
+    berryPool: poolBuf,
+    berriesPerPoffin: 4,
+    topK: 50,
+    cookTimeSeconds: 40,
+    errors: 0,
+    amityBonus: 9,
+    comparer: comparer,
+    pruning: pruning);
+```
 
 Search all 4-berry combinations (no duplicates), get top 50 poffins, then rank top 5 feeding plans:
 ```csharp

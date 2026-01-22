@@ -216,6 +216,23 @@ A bonus can be earned to make the Poffin smoother (lower value), allowing a Poke
 
 **Implementation note:** The core library currently models the BDSP cap (max bonus 9). Gen IV's max bonus (10) is not modeled in code.
 
+## **Usage Examples**
+
+Run a fast search with min level and smoothness bounds:
+```powershell
+dotnet run --project BDSP.Cli -- --berries=4 --topk=50 --min-level=50 --max-smooth=20
+```
+
+Run a Spicy-focused search:
+```powershell
+dotnet run --project BDSP.Cli -- --min-spicy=30 --sort=level:desc --then=smoothness:asc
+```
+
+Run a pruning-heavy search (filters + smoothness cap):
+```powershell
+dotnet run --project BDSP.Cli -- --min-level=60 --min-spicy=25 --max-smooth=15
+```
+
 ---
 
 #### **Smoothness Range**
