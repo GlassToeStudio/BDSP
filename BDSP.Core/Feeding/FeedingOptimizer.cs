@@ -41,6 +41,8 @@ public static class FeedingOptimizer
             for (int i = node.LastIndex + 1; i < candidates.Length; i++)
             {
                 var p = candidates[i];
+                if (p.Type == Poffins.PoffinType.Foul)
+                    continue;
 
                 if (node.State.Sheen >= options.MaxSheen)
                     continue; // cannot feed any further once capped

@@ -63,6 +63,7 @@ var poffin = PoffinCooker.Cook(
     errors: 0,
     amityBonus: 9);
 ```
+Note: the core library truncates time scaling for speed, and foul poffins are deterministic.
 
 Cook a poffin from unique Berry instances (skip duplicate check):
 ```csharp
@@ -100,6 +101,9 @@ for (ushort i = 0; i < (ushort)BerryTable.Count; i++)
     poolBuf[i] = new BerryId(i);
 
 var comparer = new LevelThenSmoothnessComparer();
+var pruning = new BDSP.Core.Runner.PoffinSearchPruning(
+    minLevel: 50,
+    minSpicy: 20);
 var result = PoffinSearchRunner.Run(
     berryPool: poolBuf,
     berriesPerPoffin: 4,
@@ -107,7 +111,8 @@ var result = PoffinSearchRunner.Run(
     cookTimeSeconds: 40,
     errors: 0,
     amityBonus: 9,
-    comparer: comparer);
+    comparer: comparer,
+    pruning: pruning);
 ```
 
 Use a predicate to pre-filter poffins during search:
@@ -142,6 +147,7 @@ var options = new FeedingOptions
 FeedingPlan plan = FeedingOptimizer.Optimize(best, options);
 Console.WriteLine($"Sheen: {plan.FinalState.Sheen}");
 ```
+Note: foul poffins are skipped and never included in feeding plans.
 
 Search all 4-berry combinations (no duplicates), get top 50 poffins, then rank top 5 feeding plans:
 ```csharp

@@ -96,6 +96,7 @@ This formula applies only when all Berries used in the recipe are unique.
 
 * **Foul Poffin:** The recipe results in a **Foul Poffin** if two or more identical Berries are used, or if all flavors end up at 0. A Foul Poffin gives a +2 boost to three random conditions.
   * **Implementation note:** The core library uses a deterministic foul result (Spicy/Dry/Sweet set to 2, others 0).
+  * **Implementation note:** Foul poffins are never included in feeding plans.
 * **Cook Time Display:** The timer displays hundredths of a second, but the game only registers time in 1/30th of a second intervals. In Generation VIII, a time displayed as "0:47.100" is treated as 48 full seconds.
 
 ### **Poffin Level**

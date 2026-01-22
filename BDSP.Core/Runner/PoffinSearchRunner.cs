@@ -54,7 +54,8 @@ public static class PoffinSearchRunner
         byte amityBonus,
         IPoffinComparer comparer,
         PoffinPredicate? predicate = null,
-        int? maxDegreeOfParallelism = null)
+        int? maxDegreeOfParallelism = null,
+        PoffinSearchPruning? pruning = null)
     {
         if (berriesPerPoffin < 1 || berriesPerPoffin > 4)
             throw new ArgumentOutOfRangeException(nameof(berriesPerPoffin));
@@ -70,6 +71,33 @@ public static class PoffinSearchRunner
         var poolBerries = new Berry[pool.Length];
         for (int i = 0; i < pool.Length; i++)
             poolBerries[i] = BerryTable.Get(pool[i]);
+
+        var pruningOptions = pruning.GetValueOrDefault();
+        bool usePruning = pruning.HasValue && pruningOptions.IsEnabled;
+        int[]? maxSpicySuffix = null;
+        int[]? maxDrySuffix = null;
+        int[]? maxSweetSuffix = null;
+        int[]? maxBitterSuffix = null;
+        int[]? maxSourSuffix = null;
+
+        if (usePruning)
+        {
+            maxSpicySuffix = new int[poolBerries.Length + 1];
+            maxDrySuffix = new int[poolBerries.Length + 1];
+            maxSweetSuffix = new int[poolBerries.Length + 1];
+            maxBitterSuffix = new int[poolBerries.Length + 1];
+            maxSourSuffix = new int[poolBerries.Length + 1];
+
+            for (int i = poolBerries.Length - 1; i >= 0; i--)
+            {
+                ref readonly var b = ref poolBerries[i];
+                maxSpicySuffix[i] = Math.Max(maxSpicySuffix[i + 1], b.Spicy);
+                maxDrySuffix[i] = Math.Max(maxDrySuffix[i + 1], b.Dry);
+                maxSweetSuffix[i] = Math.Max(maxSweetSuffix[i + 1], b.Sweet);
+                maxBitterSuffix[i] = Math.Max(maxBitterSuffix[i + 1], b.Bitter);
+                maxSourSuffix[i] = Math.Max(maxSourSuffix[i + 1], b.Sour);
+            }
+        }
 
         int workers =
             maxDegreeOfParallelism ??
@@ -93,28 +121,71 @@ public static class PoffinSearchRunner
 
                 if (predicate is null)
                 {
-                    ProcessRangeNoPredicate(
-                        poolBerries,
-                        berriesPerPoffin,
-                        range.Start,
-                        range.End,
-                        cookTimeSeconds,
-                        errors,
-                        amityBonus,
-                        localSelector);
+                    if (usePruning)
+                    {
+                        ProcessRangeNoPredicatePruned(
+                            poolBerries,
+                            berriesPerPoffin,
+                            range.Start,
+                            range.End,
+                            cookTimeSeconds,
+                            errors,
+                            amityBonus,
+                            localSelector,
+                            pruningOptions,
+                            maxSpicySuffix!,
+                            maxDrySuffix!,
+                            maxSweetSuffix!,
+                            maxBitterSuffix!,
+                            maxSourSuffix!);
+                    }
+                    else
+                    {
+                        ProcessRangeNoPredicate(
+                            poolBerries,
+                            berriesPerPoffin,
+                            range.Start,
+                            range.End,
+                            cookTimeSeconds,
+                            errors,
+                            amityBonus,
+                            localSelector);
+                    }
                 }
                 else
                 {
-                    ProcessRangeWithPredicate(
-                        poolBerries,
-                        berriesPerPoffin,
-                        range.Start,
-                        range.End,
-                        cookTimeSeconds,
-                        errors,
-                        amityBonus,
-                        localSelector,
-                        predicate);
+                    if (usePruning)
+                    {
+                        ProcessRangeWithPredicatePruned(
+                            poolBerries,
+                            berriesPerPoffin,
+                            range.Start,
+                            range.End,
+                            cookTimeSeconds,
+                            errors,
+                            amityBonus,
+                            localSelector,
+                            predicate,
+                            pruningOptions,
+                            maxSpicySuffix!,
+                            maxDrySuffix!,
+                            maxSweetSuffix!,
+                            maxBitterSuffix!,
+                            maxSourSuffix!);
+                    }
+                    else
+                    {
+                        ProcessRangeWithPredicate(
+                            poolBerries,
+                            berriesPerPoffin,
+                            range.Start,
+                            range.End,
+                            cookTimeSeconds,
+                            errors,
+                            amityBonus,
+                            localSelector,
+                            predicate);
+                    }
                 }
 
                 // Merge local Top-K into global Top-K
@@ -373,5 +444,476 @@ public static class PoffinSearchRunner
                 break;
             }
         }
+    }
+
+    private static void ProcessRangeNoPredicatePruned(
+        ReadOnlySpan<Berry> source,
+        int choose,
+        int start,
+        int end,
+        byte cookTimeSeconds,
+        byte errors,
+        byte amityBonus,
+        TopKPoffinSelector selector,
+        PoffinSearchPruning pruning,
+        int[] maxSpicySuffix,
+        int[] maxDrySuffix,
+        int[] maxSweetSuffix,
+        int[] maxBitterSuffix,
+        int[] maxSourSuffix)
+    {
+        int n = source.Length;
+
+        switch (choose)
+        {
+            case 1:
+            {
+                Span<Berry> buffer = stackalloc Berry[1];
+                for (int i = start; i < end; i++)
+                {
+                    ref readonly var b = ref source[i];
+                    if (!CanSatisfy(pruning, b.Spicy, b.Dry, b.Sweet, b.Bitter, b.Sour, 0, i + 1,
+                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        continue;
+
+                    buffer[0] = b;
+                    var poffin = PoffinCooker.CookFromBerriesUnique(
+                        buffer,
+                        cookTimeSeconds,
+                        errors,
+                        amityBonus);
+                    selector.Consider(in poffin);
+                }
+                break;
+            }
+            case 2:
+            {
+                Span<Berry> buffer = stackalloc Berry[2];
+                for (int i = start; i < end; i++)
+                {
+                    ref readonly var b0 = ref source[i];
+                    int spicy0 = b0.Spicy;
+                    int dry0 = b0.Dry;
+                    int sweet0 = b0.Sweet;
+                    int bitter0 = b0.Bitter;
+                    int sour0 = b0.Sour;
+
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 1, i + 1,
+                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        continue;
+
+                    buffer[0] = b0;
+                    for (int j = i + 1; j < n; j++)
+                    {
+                        ref readonly var b1 = ref source[j];
+                        int spicy = spicy0 + b1.Spicy;
+                        int dry = dry0 + b1.Dry;
+                        int sweet = sweet0 + b1.Sweet;
+                        int bitter = bitter0 + b1.Bitter;
+                        int sour = sour0 + b1.Sour;
+
+                        if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, j + 1,
+                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                            continue;
+
+                        buffer[1] = b1;
+                        var poffin = PoffinCooker.CookFromBerriesUnique(
+                            buffer,
+                            cookTimeSeconds,
+                            errors,
+                            amityBonus);
+                        selector.Consider(in poffin);
+                    }
+                }
+                break;
+            }
+            case 3:
+            {
+                Span<Berry> buffer = stackalloc Berry[3];
+                for (int i = start; i < end; i++)
+                {
+                    ref readonly var b0 = ref source[i];
+                    int spicy0 = b0.Spicy;
+                    int dry0 = b0.Dry;
+                    int sweet0 = b0.Sweet;
+                    int bitter0 = b0.Bitter;
+                    int sour0 = b0.Sour;
+
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 2, i + 1,
+                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        continue;
+
+                    buffer[0] = b0;
+                    for (int j = i + 1; j < n - 1; j++)
+                    {
+                        ref readonly var b1 = ref source[j];
+                        int spicy1 = spicy0 + b1.Spicy;
+                        int dry1 = dry0 + b1.Dry;
+                        int sweet1 = sweet0 + b1.Sweet;
+                        int bitter1 = bitter0 + b1.Bitter;
+                        int sour1 = sour0 + b1.Sour;
+
+                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, 1, j + 1,
+                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                            continue;
+
+                        buffer[1] = b1;
+                        for (int k = j + 1; k < n; k++)
+                        {
+                            ref readonly var b2 = ref source[k];
+                            int spicy = spicy1 + b2.Spicy;
+                            int dry = dry1 + b2.Dry;
+                            int sweet = sweet1 + b2.Sweet;
+                            int bitter = bitter1 + b2.Bitter;
+                            int sour = sour1 + b2.Sour;
+
+                            if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, k + 1,
+                                    maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                                continue;
+
+                            buffer[2] = b2;
+                            var poffin = PoffinCooker.CookFromBerriesUnique(
+                                buffer,
+                                cookTimeSeconds,
+                                errors,
+                                amityBonus);
+                            selector.Consider(in poffin);
+                        }
+                    }
+                }
+                break;
+            }
+            case 4:
+            {
+                Span<Berry> buffer = stackalloc Berry[4];
+                for (int i = start; i < end; i++)
+                {
+                    ref readonly var b0 = ref source[i];
+                    int spicy0 = b0.Spicy;
+                    int dry0 = b0.Dry;
+                    int sweet0 = b0.Sweet;
+                    int bitter0 = b0.Bitter;
+                    int sour0 = b0.Sour;
+
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 3, i + 1,
+                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        continue;
+
+                    buffer[0] = b0;
+                    for (int j = i + 1; j < n - 2; j++)
+                    {
+                        ref readonly var b1 = ref source[j];
+                        int spicy1 = spicy0 + b1.Spicy;
+                        int dry1 = dry0 + b1.Dry;
+                        int sweet1 = sweet0 + b1.Sweet;
+                        int bitter1 = bitter0 + b1.Bitter;
+                        int sour1 = sour0 + b1.Sour;
+
+                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, 2, j + 1,
+                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                            continue;
+
+                        buffer[1] = b1;
+                        for (int k = j + 1; k < n - 1; k++)
+                        {
+                            ref readonly var b2 = ref source[k];
+                            int spicy2 = spicy1 + b2.Spicy;
+                            int dry2 = dry1 + b2.Dry;
+                            int sweet2 = sweet1 + b2.Sweet;
+                            int bitter2 = bitter1 + b2.Bitter;
+                            int sour2 = sour1 + b2.Sour;
+
+                            if (!CanSatisfy(pruning, spicy2, dry2, sweet2, bitter2, sour2, 1, k + 1,
+                                    maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                                continue;
+
+                            buffer[2] = b2;
+                            for (int l = k + 1; l < n; l++)
+                            {
+                                ref readonly var b3 = ref source[l];
+                                int spicy = spicy2 + b3.Spicy;
+                                int dry = dry2 + b3.Dry;
+                                int sweet = sweet2 + b3.Sweet;
+                                int bitter = bitter2 + b3.Bitter;
+                                int sour = sour2 + b3.Sour;
+
+                                if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, l + 1,
+                                        maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                                    continue;
+
+                                buffer[3] = b3;
+                                var poffin = PoffinCooker.CookFromBerriesUnique(
+                                    buffer,
+                                    cookTimeSeconds,
+                                    errors,
+                                    amityBonus);
+                                selector.Consider(in poffin);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    private static void ProcessRangeWithPredicatePruned(
+        ReadOnlySpan<Berry> source,
+        int choose,
+        int start,
+        int end,
+        byte cookTimeSeconds,
+        byte errors,
+        byte amityBonus,
+        TopKPoffinSelector selector,
+        PoffinPredicate predicate,
+        PoffinSearchPruning pruning,
+        int[] maxSpicySuffix,
+        int[] maxDrySuffix,
+        int[] maxSweetSuffix,
+        int[] maxBitterSuffix,
+        int[] maxSourSuffix)
+    {
+        int n = source.Length;
+
+        switch (choose)
+        {
+            case 1:
+            {
+                Span<Berry> buffer = stackalloc Berry[1];
+                for (int i = start; i < end; i++)
+                {
+                    ref readonly var b = ref source[i];
+                    if (!CanSatisfy(pruning, b.Spicy, b.Dry, b.Sweet, b.Bitter, b.Sour, 0, i + 1,
+                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        continue;
+
+                    buffer[0] = b;
+                    var poffin = PoffinCooker.CookFromBerriesUnique(
+                        buffer,
+                        cookTimeSeconds,
+                        errors,
+                        amityBonus);
+                    if (!predicate(in poffin))
+                        continue;
+                    selector.Consider(in poffin);
+                }
+                break;
+            }
+            case 2:
+            {
+                Span<Berry> buffer = stackalloc Berry[2];
+                for (int i = start; i < end; i++)
+                {
+                    ref readonly var b0 = ref source[i];
+                    int spicy0 = b0.Spicy;
+                    int dry0 = b0.Dry;
+                    int sweet0 = b0.Sweet;
+                    int bitter0 = b0.Bitter;
+                    int sour0 = b0.Sour;
+
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 1, i + 1,
+                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        continue;
+
+                    buffer[0] = b0;
+                    for (int j = i + 1; j < n; j++)
+                    {
+                        ref readonly var b1 = ref source[j];
+                        int spicy = spicy0 + b1.Spicy;
+                        int dry = dry0 + b1.Dry;
+                        int sweet = sweet0 + b1.Sweet;
+                        int bitter = bitter0 + b1.Bitter;
+                        int sour = sour0 + b1.Sour;
+
+                        if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, j + 1,
+                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                            continue;
+
+                        buffer[1] = b1;
+                        var poffin = PoffinCooker.CookFromBerriesUnique(
+                            buffer,
+                            cookTimeSeconds,
+                            errors,
+                            amityBonus);
+                        if (!predicate(in poffin))
+                            continue;
+                        selector.Consider(in poffin);
+                    }
+                }
+                break;
+            }
+            case 3:
+            {
+                Span<Berry> buffer = stackalloc Berry[3];
+                for (int i = start; i < end; i++)
+                {
+                    ref readonly var b0 = ref source[i];
+                    int spicy0 = b0.Spicy;
+                    int dry0 = b0.Dry;
+                    int sweet0 = b0.Sweet;
+                    int bitter0 = b0.Bitter;
+                    int sour0 = b0.Sour;
+
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 2, i + 1,
+                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        continue;
+
+                    buffer[0] = b0;
+                    for (int j = i + 1; j < n - 1; j++)
+                    {
+                        ref readonly var b1 = ref source[j];
+                        int spicy1 = spicy0 + b1.Spicy;
+                        int dry1 = dry0 + b1.Dry;
+                        int sweet1 = sweet0 + b1.Sweet;
+                        int bitter1 = bitter0 + b1.Bitter;
+                        int sour1 = sour0 + b1.Sour;
+
+                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, 1, j + 1,
+                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                            continue;
+
+                        buffer[1] = b1;
+                        for (int k = j + 1; k < n; k++)
+                        {
+                            ref readonly var b2 = ref source[k];
+                            int spicy = spicy1 + b2.Spicy;
+                            int dry = dry1 + b2.Dry;
+                            int sweet = sweet1 + b2.Sweet;
+                            int bitter = bitter1 + b2.Bitter;
+                            int sour = sour1 + b2.Sour;
+
+                            if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, k + 1,
+                                    maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                                continue;
+
+                            buffer[2] = b2;
+                            var poffin = PoffinCooker.CookFromBerriesUnique(
+                                buffer,
+                                cookTimeSeconds,
+                                errors,
+                                amityBonus);
+                            if (!predicate(in poffin))
+                                continue;
+                            selector.Consider(in poffin);
+                        }
+                    }
+                }
+                break;
+            }
+            case 4:
+            {
+                Span<Berry> buffer = stackalloc Berry[4];
+                for (int i = start; i < end; i++)
+                {
+                    ref readonly var b0 = ref source[i];
+                    int spicy0 = b0.Spicy;
+                    int dry0 = b0.Dry;
+                    int sweet0 = b0.Sweet;
+                    int bitter0 = b0.Bitter;
+                    int sour0 = b0.Sour;
+
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 3, i + 1,
+                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        continue;
+
+                    buffer[0] = b0;
+                    for (int j = i + 1; j < n - 2; j++)
+                    {
+                        ref readonly var b1 = ref source[j];
+                        int spicy1 = spicy0 + b1.Spicy;
+                        int dry1 = dry0 + b1.Dry;
+                        int sweet1 = sweet0 + b1.Sweet;
+                        int bitter1 = bitter0 + b1.Bitter;
+                        int sour1 = sour0 + b1.Sour;
+
+                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, 2, j + 1,
+                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                            continue;
+
+                        buffer[1] = b1;
+                        for (int k = j + 1; k < n - 1; k++)
+                        {
+                            ref readonly var b2 = ref source[k];
+                            int spicy2 = spicy1 + b2.Spicy;
+                            int dry2 = dry1 + b2.Dry;
+                            int sweet2 = sweet1 + b2.Sweet;
+                            int bitter2 = bitter1 + b2.Bitter;
+                            int sour2 = sour1 + b2.Sour;
+
+                            if (!CanSatisfy(pruning, spicy2, dry2, sweet2, bitter2, sour2, 1, k + 1,
+                                    maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                                continue;
+
+                            buffer[2] = b2;
+                            for (int l = k + 1; l < n; l++)
+                            {
+                                ref readonly var b3 = ref source[l];
+                                int spicy = spicy2 + b3.Spicy;
+                                int dry = dry2 + b3.Dry;
+                                int sweet = sweet2 + b3.Sweet;
+                                int bitter = bitter2 + b3.Bitter;
+                                int sour = sour2 + b3.Sour;
+
+                                if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, l + 1,
+                                        maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                                    continue;
+
+                                buffer[3] = b3;
+                                var poffin = PoffinCooker.CookFromBerriesUnique(
+                                    buffer,
+                                    cookTimeSeconds,
+                                    errors,
+                                    amityBonus);
+                                if (!predicate(in poffin))
+                                    continue;
+                                selector.Consider(in poffin);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    private static bool CanSatisfy(
+        in PoffinSearchPruning pruning,
+        int spicySum,
+        int drySum,
+        int sweetSum,
+        int bitterSum,
+        int sourSum,
+        int remainingSlots,
+        int nextIndex,
+        int[] maxSpicySuffix,
+        int[] maxDrySuffix,
+        int[] maxSweetSuffix,
+        int[] maxBitterSuffix,
+        int[] maxSourSuffix)
+    {
+        int spicyMax = spicySum + maxSpicySuffix[nextIndex] * remainingSlots;
+        int dryMax = drySum + maxDrySuffix[nextIndex] * remainingSlots;
+        int sweetMax = sweetSum + maxSweetSuffix[nextIndex] * remainingSlots;
+        int bitterMax = bitterSum + maxBitterSuffix[nextIndex] * remainingSlots;
+        int sourMax = sourSum + maxSourSuffix[nextIndex] * remainingSlots;
+
+        if (pruning.HasMinSpicy && spicyMax < pruning.MinSpicy) return false;
+        if (pruning.HasMinDry && dryMax < pruning.MinDry) return false;
+        if (pruning.HasMinSweet && sweetMax < pruning.MinSweet) return false;
+        if (pruning.HasMinBitter && bitterMax < pruning.MinBitter) return false;
+        if (pruning.HasMinSour && sourMax < pruning.MinSour) return false;
+
+        if (pruning.HasMinLevel)
+        {
+            int maxLevel = spicyMax;
+            if (dryMax > maxLevel) maxLevel = dryMax;
+            if (sweetMax > maxLevel) maxLevel = sweetMax;
+            if (bitterMax > maxLevel) maxLevel = bitterMax;
+            if (sourMax > maxLevel) maxLevel = sourMax;
+            if (maxLevel < pruning.MinLevel) return false;
+        }
+
+        return true;
     }
 }

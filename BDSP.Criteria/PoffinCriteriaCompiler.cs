@@ -44,4 +44,15 @@ public static class PoffinCriteriaCompiler
             c.SecondarySort,
             c.SecondaryDirection);
     }
+
+    public static BDSP.Core.Runner.PoffinSearchPruning CompilePruning(PoffinCriteria c)
+    {
+        return new BDSP.Core.Runner.PoffinSearchPruning(
+            minLevel: c.MinLevel,
+            minSpicy: c.MinSpicy,
+            minDry: c.MinDry,
+            minSweet: c.MinSweet,
+            minBitter: c.MinBitter,
+            minSour: c.MinSour);
+    }
 }
