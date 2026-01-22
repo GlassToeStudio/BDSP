@@ -70,6 +70,69 @@ public static class FeedingOptimizer
         return BuildBestPlan(bestNodes, options, candidates);
     }
 
+    /// <summary>
+    /// Finds the optimal feeding plan that maximizes contest stats
+    /// and secondarily maximizes sheen usage (recipe-aware).
+    /// </summary>
+    public static FeedingPlan Optimize(
+        ReadOnlySpan<Poffins.PoffinRecipe> candidates,
+        FeedingOptions options)
+    {
+        var bestNodes = new List<FeedingNode>();
+        var candidateStats = new ContestStats[candidates.Length];
+        for (int i = 0; i < candidates.Length; i++)
+            candidateStats[i] = ContestStatsCalculator.FromPoffin(candidates[i].Poffin);
+
+        var stack = new Stack<FeedingNode>();
+
+        var initial = new FeedingNode(
+            new FeedingState(0, default),
+            lastIndex: -1,
+            parent: null);
+
+        stack.Push(initial);
+
+        int explored = 0;
+
+        while (stack.Count > 0)
+        {
+            if (++explored > options.MaxNodes)
+                break;
+
+            var node = stack.Pop();
+
+            for (int i = node.LastIndex + 1; i < candidates.Length; i++)
+            {
+                var p = candidates[i].Poffin;
+                if (p.Type == Poffins.PoffinType.Foul)
+                    continue;
+
+                if (node.State.Sheen >= options.MaxSheen)
+                    continue;
+
+                int newSheen = node.State.Sheen + p.Smoothness;
+                if (newSheen > options.MaxSheen)
+                    newSheen = options.MaxSheen;
+
+                var newStats =
+                    node.State.Stats +
+                    candidateStats[i];
+
+                var newState = new FeedingState(newSheen, newStats);
+                var newNode = new FeedingNode(newState, i, node);
+
+                if (IsDominated(newNode, bestNodes))
+                    continue;
+
+                PruneDominated(newNode, bestNodes);
+                bestNodes.Add(newNode);
+
+                stack.Push(newNode);
+            }
+        }
+        return BuildBestPlan(bestNodes, options, candidates);
+    }
+
     private static bool IsDominated(
         FeedingNode candidate,
         List<FeedingNode> nodes)
@@ -142,6 +205,53 @@ public static class FeedingOptimizer
 
         poffins.Reverse();
         return new FeedingPlan(poffins, best.State);
+    }
+
+    private static FeedingPlan BuildBestPlan(
+        List<FeedingNode> nodes,
+        FeedingOptions options,
+        ReadOnlySpan<Poffins.PoffinRecipe> candidates)
+    {
+        if (nodes.Count == 0)
+            return new FeedingPlan(new List<Poffins.PoffinRecipe>(0), new FeedingState(0, default));
+
+        FeedingNode best = nodes[0];
+        int bestScore = options.Score(best.State.Stats);
+        int bestCount = CountPoffins(best);
+
+        foreach (var n in nodes)
+        {
+            int curScore = options.Score(n.State.Stats);
+
+            if (curScore > bestScore ||
+               (curScore == bestScore &&
+                n.State.Sheen > best.State.Sheen))
+            {
+                best = n;
+                bestScore = curScore;
+                bestCount = CountPoffins(n);
+                continue;
+            }
+
+            if (curScore == bestScore &&
+                n.State.Sheen == best.State.Sheen)
+            {
+                int curCount = CountPoffins(n);
+                if (curCount < bestCount)
+                {
+                    best = n;
+                    bestCount = curCount;
+                }
+            }
+        }
+
+        var recipes = new List<Poffins.PoffinRecipe>();
+
+        for (var n = best; n.Parent != null; n = n.Parent)
+            recipes.Add(candidates[n.LastIndex]);
+
+        recipes.Reverse();
+        return new FeedingPlan(recipes, best.State);
     }
 
     private static int CountPoffins(FeedingNode node)

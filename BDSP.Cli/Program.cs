@@ -1,4 +1,5 @@
 ﻿using BDSP.Criteria;
+using BDSP.Cli.Formatting;
 using BDSP.Core.Poffins;
 using BDSP.Core.Runner;
 using BDSP.Core.Selection;
@@ -29,6 +30,7 @@ static void ShowHelp()
     Console.WriteLine("  --sort=field:asc|desc --then=field:asc|desc");
     Console.WriteLine("  --allowed-berries=cheri,pecha,37");
     Console.WriteLine("  --allowed-berries-file=inventory.txt");
+    Console.WriteLine("  --feed");
     Console.WriteLine("  --json");
     Console.WriteLine();
     Console.WriteLine("Examples:");
@@ -142,6 +144,9 @@ static PoffinCriteria ParseCriteria(string[] args)
                 c = c with { MaxBerryRarity = int.Parse(value!) };
                 break;
 
+            case "--feed":
+                break;
+
             case "--berries":
                 c = c with { BerriesPerPoffin = int.Parse(value!) };
                 break;
@@ -230,6 +235,24 @@ var predicate = PoffinCriteriaCompiler.CompilePredicate(criteria);
 var comparer = PoffinCriteriaCompiler.CompileComparer(criteria);
 var pruning = PoffinCriteriaCompiler.CompilePruning(criteria);
 var berryPool = PoffinCriteriaCompiler.CompileBerryPool(criteria);
+
+bool runFeed = args.Any(a => a.Equals("--feed", StringComparison.OrdinalIgnoreCase));
+if (runFeed)
+{
+    var plan = PoffinFeedingSearchRunner.RunWithRecipes(
+        berryPool: berryPool,
+        berriesPerPoffin: criteria.BerriesPerPoffin,
+        topK: criteria.TopK,
+        cookTimeSeconds: 40,
+        errors: 0,
+        amityBonus: 9,
+        comparer: comparer,
+        predicate: predicate,
+        pruning: pruning);
+
+    Console.WriteLine(ContestPlanFormatter.Format(plan));
+    return;
+}
 
 var result = PoffinSearchRunner.Run(
     berryPool: berryPool,

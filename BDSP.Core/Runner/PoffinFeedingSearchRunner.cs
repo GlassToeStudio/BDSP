@@ -69,7 +69,7 @@ public static class PoffinFeedingSearchRunner
         if (candidates is null || candidates.Length == 0)
         {
             return new FeedingPlan(
-                [],
+                new List<Poffin>(0),
                 new FeedingState(0, default));
         }
 
@@ -89,6 +89,55 @@ public static class PoffinFeedingSearchRunner
             // Reconstruct the plan with clamped sheen.
             var poffinsCopy = plan.Poffins as List<Poffin>
                               ?? [.. plan.Poffins];
+
+            plan = new FeedingPlan(
+                poffinsCopy,
+                new FeedingState(255, plan.FinalState.Stats));
+        }
+
+        return plan;
+    }
+
+    public static FeedingPlan RunWithRecipes(
+        ReadOnlySpan<BerryId> berryPool,
+        int berriesPerPoffin,
+        int topK,
+        byte cookTimeSeconds,
+        byte errors,
+        byte amityBonus,
+        IPoffinComparer comparer,
+        PoffinPredicate? predicate = null,
+        FeedingOptions? feedingOptions = null,
+        int? maxDegreeOfParallelism = null,
+        PoffinSearchPruning? pruning = null)
+    {
+        var search = PoffinSearchRunner.RunWithRecipes(
+            berryPool: berryPool,
+            berriesPerPoffin: berriesPerPoffin,
+            topK: topK,
+            cookTimeSeconds: cookTimeSeconds,
+            errors: errors,
+            amityBonus: amityBonus,
+            comparer: comparer,
+            predicate: predicate,
+            maxDegreeOfParallelism: maxDegreeOfParallelism,
+            pruning: pruning);
+
+        var candidates = search.TopRecipes;
+        if (candidates is null || candidates.Length == 0)
+        {
+            return new FeedingPlan(
+                new List<PoffinRecipe>(0),
+                new FeedingState(0, default));
+        }
+
+        var opts = feedingOptions ?? new FeedingOptions { MaxSheen = 255 };
+        var plan = FeedingOptimizer.Optimize(candidates, opts);
+
+        if (plan.FinalState.Sheen > 255)
+        {
+            var poffinsCopy = plan.Recipes as List<PoffinRecipe>
+                              ?? [.. plan.Recipes];
 
             plan = new FeedingPlan(
                 poffinsCopy,
