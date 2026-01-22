@@ -42,6 +42,9 @@ public static class PoffinSearchRunner
     /// <param name="maxDegreeOfParallelism">
     /// Optional limit for parallel execution. If null, a sensible default is used.
     /// </param>
+    /// <param name="pruning">
+    /// Optional pruning hints to skip combinations that cannot meet minimum thresholds.
+    /// </param>
     /// <returns>
     /// A deterministic <see cref="PoffinSearchResult"/> containing the best Poffins found.
     /// </returns>
@@ -79,14 +82,19 @@ public static class PoffinSearchRunner
         int[]? maxSweetSuffix = null;
         int[]? maxBitterSuffix = null;
         int[]? maxSourSuffix = null;
+        int[]? minSmoothnessSuffix = null;
 
         if (usePruning)
         {
+            // Suffix maxima provide optimistic upper bounds for remaining flavor sums.
             maxSpicySuffix = new int[poolBerries.Length + 1];
             maxDrySuffix = new int[poolBerries.Length + 1];
             maxSweetSuffix = new int[poolBerries.Length + 1];
             maxBitterSuffix = new int[poolBerries.Length + 1];
             maxSourSuffix = new int[poolBerries.Length + 1];
+            // Suffix minima provide optimistic lower bounds for smoothness.
+            minSmoothnessSuffix = new int[poolBerries.Length + 1];
+            minSmoothnessSuffix[poolBerries.Length] = int.MaxValue;
 
             for (int i = poolBerries.Length - 1; i >= 0; i--)
             {
@@ -96,6 +104,7 @@ public static class PoffinSearchRunner
                 maxSweetSuffix[i] = Math.Max(maxSweetSuffix[i + 1], b.Sweet);
                 maxBitterSuffix[i] = Math.Max(maxBitterSuffix[i + 1], b.Bitter);
                 maxSourSuffix[i] = Math.Max(maxSourSuffix[i + 1], b.Sour);
+                minSmoothnessSuffix[i] = Math.Min(minSmoothnessSuffix[i + 1], b.Smoothness);
             }
         }
 
@@ -123,6 +132,7 @@ public static class PoffinSearchRunner
                 {
                     if (usePruning)
                     {
+                        // Pruned path avoids cooking when bounds cannot satisfy filters.
                         ProcessRangeNoPredicatePruned(
                             poolBerries,
                             berriesPerPoffin,
@@ -137,7 +147,8 @@ public static class PoffinSearchRunner
                             maxDrySuffix!,
                             maxSweetSuffix!,
                             maxBitterSuffix!,
-                            maxSourSuffix!);
+                            maxSourSuffix!,
+                            minSmoothnessSuffix!);
                     }
                     else
                     {
@@ -156,6 +167,7 @@ public static class PoffinSearchRunner
                 {
                     if (usePruning)
                     {
+                        // Predicate path keeps pruning separate to avoid extra delegate hops.
                         ProcessRangeWithPredicatePruned(
                             poolBerries,
                             berriesPerPoffin,
@@ -171,7 +183,8 @@ public static class PoffinSearchRunner
                             maxDrySuffix!,
                             maxSweetSuffix!,
                             maxBitterSuffix!,
-                            maxSourSuffix!);
+                            maxSourSuffix!,
+                            minSmoothnessSuffix!);
                     }
                     else
                     {
@@ -460,7 +473,8 @@ public static class PoffinSearchRunner
         int[] maxDrySuffix,
         int[] maxSweetSuffix,
         int[] maxBitterSuffix,
-        int[] maxSourSuffix)
+        int[] maxSourSuffix,
+        int[] minSmoothnessSuffix)
     {
         int n = source.Length;
 
@@ -472,8 +486,9 @@ public static class PoffinSearchRunner
                 for (int i = start; i < end; i++)
                 {
                     ref readonly var b = ref source[i];
-                    if (!CanSatisfy(pruning, b.Spicy, b.Dry, b.Sweet, b.Bitter, b.Sour, 0, i + 1,
-                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                    if (!CanSatisfy(pruning, b.Spicy, b.Dry, b.Sweet, b.Bitter, b.Sour, b.Smoothness, 0, i + 1,
+                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                            maxSourSuffix, minSmoothnessSuffix))
                         continue;
 
                     buffer[0] = b;
@@ -497,9 +512,11 @@ public static class PoffinSearchRunner
                     int sweet0 = b0.Sweet;
                     int bitter0 = b0.Bitter;
                     int sour0 = b0.Sour;
+                    int smooth0 = b0.Smoothness;
 
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 1, i + 1,
-                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 1, i + 1,
+                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                            maxSourSuffix, minSmoothnessSuffix))
                         continue;
 
                     buffer[0] = b0;
@@ -511,9 +528,11 @@ public static class PoffinSearchRunner
                         int sweet = sweet0 + b1.Sweet;
                         int bitter = bitter0 + b1.Bitter;
                         int sour = sour0 + b1.Sour;
+                        int smooth = smooth0 + b1.Smoothness;
 
-                        if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, j + 1,
-                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, j + 1,
+                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                                maxSourSuffix, minSmoothnessSuffix))
                             continue;
 
                         buffer[1] = b1;
@@ -538,9 +557,11 @@ public static class PoffinSearchRunner
                     int sweet0 = b0.Sweet;
                     int bitter0 = b0.Bitter;
                     int sour0 = b0.Sour;
+                    int smooth0 = b0.Smoothness;
 
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 2, i + 1,
-                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 2, i + 1,
+                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                            maxSourSuffix, minSmoothnessSuffix))
                         continue;
 
                     buffer[0] = b0;
@@ -552,9 +573,11 @@ public static class PoffinSearchRunner
                         int sweet1 = sweet0 + b1.Sweet;
                         int bitter1 = bitter0 + b1.Bitter;
                         int sour1 = sour0 + b1.Sour;
+                        int smooth1 = smooth0 + b1.Smoothness;
 
-                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, 1, j + 1,
-                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, smooth1, 1, j + 1,
+                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                                maxSourSuffix, minSmoothnessSuffix))
                             continue;
 
                         buffer[1] = b1;
@@ -566,9 +589,11 @@ public static class PoffinSearchRunner
                             int sweet = sweet1 + b2.Sweet;
                             int bitter = bitter1 + b2.Bitter;
                             int sour = sour1 + b2.Sour;
+                            int smooth = smooth1 + b2.Smoothness;
 
-                            if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, k + 1,
-                                    maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                            if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, k + 1,
+                                    choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
+                                    maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
                                 continue;
 
                             buffer[2] = b2;
@@ -594,9 +619,11 @@ public static class PoffinSearchRunner
                     int sweet0 = b0.Sweet;
                     int bitter0 = b0.Bitter;
                     int sour0 = b0.Sour;
+                    int smooth0 = b0.Smoothness;
 
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 3, i + 1,
-                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 3, i + 1,
+                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                            maxSourSuffix, minSmoothnessSuffix))
                         continue;
 
                     buffer[0] = b0;
@@ -608,9 +635,11 @@ public static class PoffinSearchRunner
                         int sweet1 = sweet0 + b1.Sweet;
                         int bitter1 = bitter0 + b1.Bitter;
                         int sour1 = sour0 + b1.Sour;
+                        int smooth1 = smooth0 + b1.Smoothness;
 
-                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, 2, j + 1,
-                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, smooth1, 2, j + 1,
+                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                                maxSourSuffix, minSmoothnessSuffix))
                             continue;
 
                         buffer[1] = b1;
@@ -622,9 +651,11 @@ public static class PoffinSearchRunner
                             int sweet2 = sweet1 + b2.Sweet;
                             int bitter2 = bitter1 + b2.Bitter;
                             int sour2 = sour1 + b2.Sour;
+                            int smooth2 = smooth1 + b2.Smoothness;
 
-                            if (!CanSatisfy(pruning, spicy2, dry2, sweet2, bitter2, sour2, 1, k + 1,
-                                    maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                            if (!CanSatisfy(pruning, spicy2, dry2, sweet2, bitter2, sour2, smooth2, 1, k + 1,
+                                    choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
+                                    maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
                                 continue;
 
                             buffer[2] = b2;
@@ -636,9 +667,11 @@ public static class PoffinSearchRunner
                                 int sweet = sweet2 + b3.Sweet;
                                 int bitter = bitter2 + b3.Bitter;
                                 int sour = sour2 + b3.Sour;
+                                int smooth = smooth2 + b3.Smoothness;
 
-                                if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, l + 1,
-                                        maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                                if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, l + 1,
+                                        choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
+                                        maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
                                     continue;
 
                                 buffer[3] = b3;
@@ -672,7 +705,8 @@ public static class PoffinSearchRunner
         int[] maxDrySuffix,
         int[] maxSweetSuffix,
         int[] maxBitterSuffix,
-        int[] maxSourSuffix)
+        int[] maxSourSuffix,
+        int[] minSmoothnessSuffix)
     {
         int n = source.Length;
 
@@ -684,8 +718,9 @@ public static class PoffinSearchRunner
                 for (int i = start; i < end; i++)
                 {
                     ref readonly var b = ref source[i];
-                    if (!CanSatisfy(pruning, b.Spicy, b.Dry, b.Sweet, b.Bitter, b.Sour, 0, i + 1,
-                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                    if (!CanSatisfy(pruning, b.Spicy, b.Dry, b.Sweet, b.Bitter, b.Sour, b.Smoothness, 0, i + 1,
+                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                            maxSourSuffix, minSmoothnessSuffix))
                         continue;
 
                     buffer[0] = b;
@@ -711,9 +746,11 @@ public static class PoffinSearchRunner
                     int sweet0 = b0.Sweet;
                     int bitter0 = b0.Bitter;
                     int sour0 = b0.Sour;
+                    int smooth0 = b0.Smoothness;
 
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 1, i + 1,
-                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 1, i + 1,
+                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                            maxSourSuffix, minSmoothnessSuffix))
                         continue;
 
                     buffer[0] = b0;
@@ -725,9 +762,11 @@ public static class PoffinSearchRunner
                         int sweet = sweet0 + b1.Sweet;
                         int bitter = bitter0 + b1.Bitter;
                         int sour = sour0 + b1.Sour;
+                        int smooth = smooth0 + b1.Smoothness;
 
-                        if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, j + 1,
-                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, j + 1,
+                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                                maxSourSuffix, minSmoothnessSuffix))
                             continue;
 
                         buffer[1] = b1;
@@ -754,9 +793,11 @@ public static class PoffinSearchRunner
                     int sweet0 = b0.Sweet;
                     int bitter0 = b0.Bitter;
                     int sour0 = b0.Sour;
+                    int smooth0 = b0.Smoothness;
 
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 2, i + 1,
-                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 2, i + 1,
+                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                            maxSourSuffix, minSmoothnessSuffix))
                         continue;
 
                     buffer[0] = b0;
@@ -768,9 +809,11 @@ public static class PoffinSearchRunner
                         int sweet1 = sweet0 + b1.Sweet;
                         int bitter1 = bitter0 + b1.Bitter;
                         int sour1 = sour0 + b1.Sour;
+                        int smooth1 = smooth0 + b1.Smoothness;
 
-                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, 1, j + 1,
-                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, smooth1, 1, j + 1,
+                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                                maxSourSuffix, minSmoothnessSuffix))
                             continue;
 
                         buffer[1] = b1;
@@ -782,9 +825,11 @@ public static class PoffinSearchRunner
                             int sweet = sweet1 + b2.Sweet;
                             int bitter = bitter1 + b2.Bitter;
                             int sour = sour1 + b2.Sour;
+                            int smooth = smooth1 + b2.Smoothness;
 
-                            if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, k + 1,
-                                    maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                            if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, k + 1,
+                                    choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
+                                    maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
                                 continue;
 
                             buffer[2] = b2;
@@ -812,9 +857,11 @@ public static class PoffinSearchRunner
                     int sweet0 = b0.Sweet;
                     int bitter0 = b0.Bitter;
                     int sour0 = b0.Sour;
+                    int smooth0 = b0.Smoothness;
 
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, 3, i + 1,
-                            maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 3, i + 1,
+                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                            maxSourSuffix, minSmoothnessSuffix))
                         continue;
 
                     buffer[0] = b0;
@@ -826,9 +873,11 @@ public static class PoffinSearchRunner
                         int sweet1 = sweet0 + b1.Sweet;
                         int bitter1 = bitter0 + b1.Bitter;
                         int sour1 = sour0 + b1.Sour;
+                        int smooth1 = smooth0 + b1.Smoothness;
 
-                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, 2, j + 1,
-                                maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, smooth1, 2, j + 1,
+                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
+                                maxSourSuffix, minSmoothnessSuffix))
                             continue;
 
                         buffer[1] = b1;
@@ -840,9 +889,11 @@ public static class PoffinSearchRunner
                             int sweet2 = sweet1 + b2.Sweet;
                             int bitter2 = bitter1 + b2.Bitter;
                             int sour2 = sour1 + b2.Sour;
+                            int smooth2 = smooth1 + b2.Smoothness;
 
-                            if (!CanSatisfy(pruning, spicy2, dry2, sweet2, bitter2, sour2, 1, k + 1,
-                                    maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                            if (!CanSatisfy(pruning, spicy2, dry2, sweet2, bitter2, sour2, smooth2, 1, k + 1,
+                                    choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
+                                    maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
                                 continue;
 
                             buffer[2] = b2;
@@ -854,9 +905,11 @@ public static class PoffinSearchRunner
                                 int sweet = sweet2 + b3.Sweet;
                                 int bitter = bitter2 + b3.Bitter;
                                 int sour = sour2 + b3.Sour;
+                                int smooth = smooth2 + b3.Smoothness;
 
-                                if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, 0, l + 1,
-                                        maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix, maxSourSuffix))
+                                if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, l + 1,
+                                        choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
+                                        maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
                                     continue;
 
                                 buffer[3] = b3;
@@ -884,14 +937,19 @@ public static class PoffinSearchRunner
         int sweetSum,
         int bitterSum,
         int sourSum,
+        int smoothnessSum,
         int remainingSlots,
         int nextIndex,
+        int totalBerries,
+        byte amityBonus,
         int[] maxSpicySuffix,
         int[] maxDrySuffix,
         int[] maxSweetSuffix,
         int[] maxBitterSuffix,
-        int[] maxSourSuffix)
+        int[] maxSourSuffix,
+        int[] minSmoothnessSuffix)
     {
+        // Upper bounds for flavor totals (optimistic best case).
         int spicyMax = spicySum + maxSpicySuffix[nextIndex] * remainingSlots;
         int dryMax = drySum + maxDrySuffix[nextIndex] * remainingSlots;
         int sweetMax = sweetSum + maxSweetSuffix[nextIndex] * remainingSlots;
@@ -912,6 +970,21 @@ public static class PoffinSearchRunner
             if (bitterMax > maxLevel) maxLevel = bitterMax;
             if (sourMax > maxLevel) maxLevel = sourMax;
             if (maxLevel < pruning.MinLevel) return false;
+        }
+
+        if (pruning.HasMaxSmoothness)
+        {
+            // Lower bound for smoothness (optimistic best case).
+            int minSmoothnessSum = smoothnessSum;
+            if (remainingSlots > 0)
+            {
+                int minPer = minSmoothnessSuffix[nextIndex];
+                if (minPer != int.MaxValue)
+                    minSmoothnessSum += minPer * remainingSlots;
+            }
+
+            int bestSmoothness = (minSmoothnessSum / totalBerries) - totalBerries - amityBonus;
+            if (bestSmoothness > pruning.MaxSmoothness) return false;
         }
 
         return true;

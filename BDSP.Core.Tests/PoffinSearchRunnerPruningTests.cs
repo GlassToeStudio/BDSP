@@ -23,7 +23,8 @@ public sealed class PoffinSearchRunnerPruningTests
         PoffinPredicate predicate = static (in Poffin p) =>
             p.Type != PoffinType.Foul &&
             p.Level >= 10 &&
-            p.Spicy >= 10;
+            p.Spicy >= 10 &&
+            p.Smoothness <= 30;
 
         var comparer = new LevelThenSmoothnessComparer();
 
@@ -46,7 +47,7 @@ public sealed class PoffinSearchRunnerPruningTests
             amityBonus: 0,
             comparer: comparer,
             predicate: predicate,
-            pruning: new PoffinSearchPruning(minLevel: 10, minSpicy: 10));
+            pruning: new PoffinSearchPruning(minLevel: 10, minSpicy: 10, maxSmoothness: 30));
 
         Assert.Equal(baseline.TopPoffins.Length, pruned.TopPoffins.Length);
         for (int i = 0; i < baseline.TopPoffins.Length; i++)

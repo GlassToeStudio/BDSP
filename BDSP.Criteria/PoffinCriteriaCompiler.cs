@@ -53,6 +53,7 @@ public static class PoffinCriteriaCompiler
             minDry: c.MinDry,
             minSweet: c.MinSweet,
             minBitter: c.MinBitter,
-            minSour: c.MinSour);
+            minSour: c.MinSour,
+            maxSmoothness: c.MaxSmoothness);
     }
 }
