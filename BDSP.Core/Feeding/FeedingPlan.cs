@@ -18,4 +18,9 @@ public sealed class FeedingPlan
         Poffins = poffins;
         FinalState = finalState;
     }
+
+    public override string ToString()
+    {
+        return $"Poffins {Poffins.Count}, {FinalState}";
+    }
 }

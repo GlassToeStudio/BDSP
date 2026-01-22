@@ -100,5 +100,10 @@ namespace BDSP.Core.Contest
                 SatAdd(a.Cleverness, b.Cleverness),
                 SatAdd(a.Toughness, b.Toughness));
         }
+
+        public override string ToString()
+        {
+            return $"Cool {Coolness} / Beauty {Beauty} / Cute {Cuteness} / Clever {Cleverness} / Tough {Toughness}";
+        }
     }
 }

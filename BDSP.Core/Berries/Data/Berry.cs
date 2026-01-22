@@ -68,5 +68,10 @@ namespace BDSP.Core.Berries.Data
                 _ => 0
             };
         }
+
+        public override string ToString()
+        {
+            return $"{BerryNames.GetName(Id)} (Id {Id.Value}, Rarity {Rarity}, Smooth {Smoothness}, Spicy {Spicy}, Dry {Dry}, Sweet {Sweet}, Bitter {Bitter}, Sour {Sour})";
+        }
     }
 }

@@ -84,5 +84,10 @@ namespace BDSP.Core.Poffins
             PrimaryFlavor = primaryFlavor;
             SecondaryFlavor = secondaryFlavor;
         }
+
+        public override string ToString()
+        {
+            return $"{Type} L{Level} (Sm {Smoothness}) [{Spicy},{Dry},{Sweet},{Bitter},{Sour}]";
+        }
     }
 }

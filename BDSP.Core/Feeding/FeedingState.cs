@@ -20,5 +20,10 @@ namespace BDSP.Core.Feeding
             Stats = stats;
         }
 
+        public override string ToString()
+        {
+            return $"Sheen {Sheen}, {Stats}";
+        }
+
     }
 }
