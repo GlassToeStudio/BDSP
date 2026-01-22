@@ -7,11 +7,9 @@ public sealed record PoffinCriteria
 {
     // ---- Berry selection ----
     public IReadOnlyList<BerryId>? AllowedBerries { get; init; }
-    public bool AllowDuplicates { get; init; } = true;
 
     // ---- Search scope ----
     public int BerriesPerPoffin { get; init; } = 4;
-    public bool SearchAllPermutations { get; init; } = true;
 
     // ---- Filters ----
     public bool ExcludeFoul { get; init; } = true;

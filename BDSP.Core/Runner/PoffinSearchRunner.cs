@@ -952,6 +952,9 @@ public static class PoffinSearchRunner
         int[] maxSourSuffix,
         int[] minSmoothnessSuffix)
     {
+        if (remainingSlots > 0 && nextIndex >= totalBerries)
+            return false;
+
         // Upper bounds for flavor totals (optimistic best case).
         int spicyMax = spicySum + maxSpicySuffix[nextIndex] * remainingSlots;
         int dryMax = drySum + maxDrySuffix[nextIndex] * remainingSlots;

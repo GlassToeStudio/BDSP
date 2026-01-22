@@ -1,6 +1,10 @@
 ﻿using BDSP.Core.Poffins;
 using BDSP.Core.Selection;
 
+using System.Collections.Generic;
+using BDSP.Core.Berries;
+using BDSP.Core.Berries.Data;
+
 namespace BDSP.Criteria;
 
 public static class PoffinCriteriaCompiler
@@ -55,5 +59,25 @@ public static class PoffinCriteriaCompiler
             minBitter: c.MinBitter,
             minSour: c.MinSour,
             maxSmoothness: c.MaxSmoothness);
+    }
+
+    public static BerryId[] CompileBerryPool(PoffinCriteria c)
+    {
+        if (c.AllowedBerries is { Count: > 0 })
+        {
+            var seen = new HashSet<BerryId>();
+            var list = new List<BerryId>(c.AllowedBerries.Count);
+            foreach (var id in c.AllowedBerries)
+            {
+                if (seen.Add(id))
+                    list.Add(id);
+            }
+            return list.ToArray();
+        }
+
+        var pool = new BerryId[BerryTable.Count];
+        for (ushort i = 0; i < BerryTable.Count; i++)
+            pool[i] = new BerryId(i);
+        return pool;
     }
 }

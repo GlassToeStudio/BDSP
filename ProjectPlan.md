@@ -79,15 +79,15 @@ This plan translates the high-level suggestions from the BDSP Core optimization 
 Findings (ordered by severity)
 
 High: PoffinSearchRunner smoothness pruning can overflow when remainingSlots > 0 and nextIndex == source.Length, because minSmoothnessSuffix[nextIndex] is set to int.MaxValue and then multiplied. This can produce negative values and incorrect pruning decisions. PoffinSearchRunner.cs (line 97) and PoffinSearchRunner.cs (line 985)
-Medium: Several PoffinCriteria fields are defined but never used anywhere in core/search, so callers can set them with no effect (behavioral inconsistency): AllowedBerries, AllowDuplicates, and SearchAllPermutations. PoffinCriteria.cs (line 9), PoffinCriteria.cs (line 10), PoffinCriteria.cs (line 14)
+Medium: Several PoffinCriteria fields are defined but never used anywhere in core/search, so callers can set them with no effect (behavioral inconsistency): AllowedBerries. PoffinCriteria.cs (line 9)
 Medium: CoreGuards is compiled but never referenced; the intended debug-only checks are effectively dead code. CoreGuards.cs (line 8)
 Low: BerryCombinations appears unused inside the repo now that PoffinSearchRunner implements its own combination loops, which makes this file either redundant or an unused public API. BerryCombinations.cs (line 9)
 Low: PoffinCooker.CookUnique is internal but not used in the repo; if it’s not part of an intended public/internal API, it’s dead code. PoffinCooker.cs (line 48)
 Questions / assumptions
 
-Should AllowedBerries, AllowDuplicates, and SearchAllPermutations be enforced in search, or are they placeholders for future work?
+Should AllowedBerries be enforced in search, or is it a placeholder for future work?
 Do you want to keep BerryCombinations as part of the public API despite not being used internally?
 If you want, I can:
 
 Fix the smoothness pruning overflow safely (check nextIndex >= n or guard minPer == int.MaxValue before multiplication).
-Wire AllowedBerries/AllowDuplicates/SearchAllPermutations into the search or remove them if they’re not planned.
+Wire AllowedBerries into the search or remove it if it’s not planned.

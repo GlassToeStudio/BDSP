@@ -1,5 +1,4 @@
 ﻿using BDSP.Criteria;
-using BDSP.Core.Berries.Data;
 using BDSP.Core.Poffins;
 using BDSP.Core.Runner;
 using BDSP.Core.Selection;
@@ -114,11 +113,7 @@ var criteria = ParseCriteria(args);
 var predicate = PoffinCriteriaCompiler.CompilePredicate(criteria);
 var comparer = PoffinCriteriaCompiler.CompileComparer(criteria);
 var pruning = PoffinCriteriaCompiler.CompilePruning(criteria);
-
-// Build berry pool (all berries for now)
-var berryPool = new BerryId[BerryTable.Count];
-for (ushort i = 0; i < BerryTable.Count; i++)
-    berryPool[i] = new BerryId(i);
+var berryPool = PoffinCriteriaCompiler.CompileBerryPool(criteria);
 
 var result = PoffinSearchRunner.Run(
     berryPool: berryPool,
