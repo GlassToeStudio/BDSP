@@ -126,6 +126,7 @@ public static class PoffinSearchRunner
             workerIndex =>
             {
                 var localSelector = new TopKPoffinSelector(topK, comparer);
+                var sink = new PoffinSelectorSink(localSelector);
                 var range = ranges[workerIndex];
 
                 if (predicate is null)
@@ -141,7 +142,7 @@ public static class PoffinSearchRunner
                             cookTimeSeconds,
                             errors,
                             amityBonus,
-                            localSelector,
+                            ref sink,
                             pruningOptions,
                             maxSpicySuffix!,
                             maxDrySuffix!,
@@ -160,7 +161,7 @@ public static class PoffinSearchRunner
                             cookTimeSeconds,
                             errors,
                             amityBonus,
-                            localSelector);
+                            ref sink);
                     }
                 }
                 else
@@ -176,7 +177,7 @@ public static class PoffinSearchRunner
                             cookTimeSeconds,
                             errors,
                             amityBonus,
-                            localSelector,
+                            ref sink,
                             predicate,
                             pruningOptions,
                             maxSpicySuffix!,
@@ -196,7 +197,7 @@ public static class PoffinSearchRunner
                             cookTimeSeconds,
                             errors,
                             amityBonus,
-                            localSelector,
+                            ref sink,
                             predicate);
                     }
                 }
@@ -290,13 +291,14 @@ public static class PoffinSearchRunner
             workerIndex =>
             {
                 var localSelector = new TopKPoffinRecipeSelector(topK, comparer);
+                var sink = new PoffinRecipeSelectorSink(localSelector);
                 var range = ranges[workerIndex];
 
                 if (predicate is null)
                 {
                     if (usePruning)
                     {
-                        ProcessRangeNoPredicatePrunedRecipes(
+                        ProcessRangeNoPredicatePruned(
                             poolBerries,
                             berriesPerPoffin,
                             range.Start,
@@ -304,7 +306,7 @@ public static class PoffinSearchRunner
                             cookTimeSeconds,
                             errors,
                             amityBonus,
-                            localSelector,
+                            ref sink,
                             pruningOptions,
                             maxSpicySuffix!,
                             maxDrySuffix!,
@@ -315,7 +317,7 @@ public static class PoffinSearchRunner
                     }
                     else
                     {
-                        ProcessRangeNoPredicateRecipes(
+                        ProcessRangeNoPredicate(
                             poolBerries,
                             berriesPerPoffin,
                             range.Start,
@@ -323,14 +325,14 @@ public static class PoffinSearchRunner
                             cookTimeSeconds,
                             errors,
                             amityBonus,
-                            localSelector);
+                            ref sink);
                     }
                 }
                 else
                 {
                     if (usePruning)
                     {
-                        ProcessRangeWithPredicatePrunedRecipes(
+                        ProcessRangeWithPredicatePruned(
                             poolBerries,
                             berriesPerPoffin,
                             range.Start,
@@ -338,7 +340,7 @@ public static class PoffinSearchRunner
                             cookTimeSeconds,
                             errors,
                             amityBonus,
-                            localSelector,
+                            ref sink,
                             predicate,
                             pruningOptions,
                             maxSpicySuffix!,
@@ -350,7 +352,7 @@ public static class PoffinSearchRunner
                     }
                     else
                     {
-                        ProcessRangeWithPredicateRecipes(
+                        ProcessRangeWithPredicate(
                             poolBerries,
                             berriesPerPoffin,
                             range.Start,
@@ -358,7 +360,7 @@ public static class PoffinSearchRunner
                             cookTimeSeconds,
                             errors,
                             amityBonus,
-                            localSelector,
+                            ref sink,
                             predicate);
                     }
                 }
@@ -386,6 +388,27 @@ public static class PoffinSearchRunner
         public int End { get; }
     }
 
+    private interface IPoffinSink
+    {
+        bool WantsRecipes { get; }
+        void Consider(in Poffin poffin);
+        void Consider(in Poffin poffin, ReadOnlySpan<BerryId> berries);
+    }
+
+    private readonly struct PoffinSelectorSink(TopKPoffinSelector selector) : IPoffinSink
+    {
+        public bool WantsRecipes => false;
+        public void Consider(in Poffin poffin) => selector.Consider(in poffin);
+        public void Consider(in Poffin poffin, ReadOnlySpan<BerryId> berries) => selector.Consider(in poffin);
+    }
+
+    private readonly struct PoffinRecipeSelectorSink(TopKPoffinRecipeSelector selector) : IPoffinSink
+    {
+        public bool WantsRecipes => true;
+        public void Consider(in Poffin poffin) => selector.Consider(in poffin, ReadOnlySpan<BerryId>.Empty);
+        public void Consider(in Poffin poffin, ReadOnlySpan<BerryId> berries) => selector.Consider(in poffin, berries);
+    }
+
     // ------------------------------------------------------------
     // Helper: partition first-index range across workers
     // ------------------------------------------------------------
@@ -407,7 +430,7 @@ public static class PoffinSearchRunner
         return ranges;
     }
 
-    private static void ProcessRangeNoPredicate(
+    private static void ProcessRangeNoPredicate<TSink>(
         ReadOnlySpan<Berry> source,
         int choose,
         int start,
@@ -415,42 +438,58 @@ public static class PoffinSearchRunner
         byte cookTimeSeconds,
         byte errors,
         byte amityBonus,
-        TopKPoffinSelector selector)
+        ref TSink sink)
+        where TSink : struct, IPoffinSink
     {
         int n = source.Length;
+        bool wantsRecipes = sink.WantsRecipes;
 
         switch (choose)
         {
             case 1:
             {
                 Span<Berry> buffer = stackalloc Berry[1];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[1] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
+                    if (wantsRecipes)
+                        ids[0] = buffer[0].Id;
                     var poffin = PoffinCooker.CookFromBerriesUnique(
                         buffer,
                         cookTimeSeconds,
                         errors,
                         amityBonus);
-                    selector.Consider(in poffin);
+                    if (wantsRecipes)
+                        sink.Consider(in poffin, ids);
+                    else
+                        sink.Consider(in poffin);
                 }
                 break;
             }
             case 2:
             {
                 Span<Berry> buffer = stackalloc Berry[2];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[2] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
+                    if (wantsRecipes)
+                        ids[0] = buffer[0].Id;
                     for (int j = i + 1; j < n; j++)
                     {
                         buffer[1] = source[j];
+                        if (wantsRecipes)
+                            ids[1] = buffer[1].Id;
                         var poffin = PoffinCooker.CookFromBerriesUnique(
                             buffer,
                             cookTimeSeconds,
                             errors,
                             amityBonus);
-                        selector.Consider(in poffin);
+                        if (wantsRecipes)
+                            sink.Consider(in poffin, ids);
+                        else
+                            sink.Consider(in poffin);
                     }
                 }
                 break;
@@ -458,21 +497,31 @@ public static class PoffinSearchRunner
             case 3:
             {
                 Span<Berry> buffer = stackalloc Berry[3];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[3] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
+                    if (wantsRecipes)
+                        ids[0] = buffer[0].Id;
                     for (int j = i + 1; j < n - 1; j++)
                     {
                         buffer[1] = source[j];
+                        if (wantsRecipes)
+                            ids[1] = buffer[1].Id;
                         for (int k = j + 1; k < n; k++)
                         {
                             buffer[2] = source[k];
+                            if (wantsRecipes)
+                                ids[2] = buffer[2].Id;
                             var poffin = PoffinCooker.CookFromBerriesUnique(
                                 buffer,
                                 cookTimeSeconds,
                                 errors,
                                 amityBonus);
-                            selector.Consider(in poffin);
+                            if (wantsRecipes)
+                                sink.Consider(in poffin, ids);
+                            else
+                                sink.Consider(in poffin);
                         }
                     }
                 }
@@ -481,24 +530,36 @@ public static class PoffinSearchRunner
             case 4:
             {
                 Span<Berry> buffer = stackalloc Berry[4];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[4] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
+                    if (wantsRecipes)
+                        ids[0] = buffer[0].Id;
                     for (int j = i + 1; j < n - 2; j++)
                     {
                         buffer[1] = source[j];
+                        if (wantsRecipes)
+                            ids[1] = buffer[1].Id;
                         for (int k = j + 1; k < n - 1; k++)
                         {
                             buffer[2] = source[k];
+                            if (wantsRecipes)
+                                ids[2] = buffer[2].Id;
                             for (int l = k + 1; l < n; l++)
                             {
                                 buffer[3] = source[l];
+                                if (wantsRecipes)
+                                    ids[3] = buffer[3].Id;
                                 var poffin = PoffinCooker.CookFromBerriesUnique(
                                     buffer,
                                     cookTimeSeconds,
                                     errors,
                                     amityBonus);
-                                selector.Consider(in poffin);
+                                if (wantsRecipes)
+                                    sink.Consider(in poffin, ids);
+                                else
+                                    sink.Consider(in poffin);
                             }
                         }
                     }
@@ -508,7 +569,7 @@ public static class PoffinSearchRunner
         }
     }
 
-    private static void ProcessRangeWithPredicate(
+    private static void ProcessRangeWithPredicate<TSink>(
         ReadOnlySpan<Berry> source,
         int choose,
         int start,
@@ -516,19 +577,24 @@ public static class PoffinSearchRunner
         byte cookTimeSeconds,
         byte errors,
         byte amityBonus,
-        TopKPoffinSelector selector,
+        ref TSink sink,
         PoffinPredicate predicate)
+        where TSink : struct, IPoffinSink
     {
         int n = source.Length;
+        bool wantsRecipes = sink.WantsRecipes;
 
         switch (choose)
         {
             case 1:
             {
                 Span<Berry> buffer = stackalloc Berry[1];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[1] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
+                    if (wantsRecipes)
+                        ids[0] = buffer[0].Id;
                     var poffin = PoffinCooker.CookFromBerriesUnique(
                         buffer,
                         cookTimeSeconds,
@@ -536,19 +602,27 @@ public static class PoffinSearchRunner
                         amityBonus);
                     if (!predicate(in poffin))
                         continue;
-                    selector.Consider(in poffin);
+                    if (wantsRecipes)
+                        sink.Consider(in poffin, ids);
+                    else
+                        sink.Consider(in poffin);
                 }
                 break;
             }
             case 2:
             {
                 Span<Berry> buffer = stackalloc Berry[2];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[2] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
+                    if (wantsRecipes)
+                        ids[0] = buffer[0].Id;
                     for (int j = i + 1; j < n; j++)
                     {
                         buffer[1] = source[j];
+                        if (wantsRecipes)
+                            ids[1] = buffer[1].Id;
                         var poffin = PoffinCooker.CookFromBerriesUnique(
                             buffer,
                             cookTimeSeconds,
@@ -556,7 +630,10 @@ public static class PoffinSearchRunner
                             amityBonus);
                         if (!predicate(in poffin))
                             continue;
-                        selector.Consider(in poffin);
+                        if (wantsRecipes)
+                            sink.Consider(in poffin, ids);
+                        else
+                            sink.Consider(in poffin);
                     }
                 }
                 break;
@@ -564,15 +641,22 @@ public static class PoffinSearchRunner
             case 3:
             {
                 Span<Berry> buffer = stackalloc Berry[3];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[3] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
+                    if (wantsRecipes)
+                        ids[0] = buffer[0].Id;
                     for (int j = i + 1; j < n - 1; j++)
                     {
                         buffer[1] = source[j];
+                        if (wantsRecipes)
+                            ids[1] = buffer[1].Id;
                         for (int k = j + 1; k < n; k++)
                         {
                             buffer[2] = source[k];
+                            if (wantsRecipes)
+                                ids[2] = buffer[2].Id;
                             var poffin = PoffinCooker.CookFromBerriesUnique(
                                 buffer,
                                 cookTimeSeconds,
@@ -580,7 +664,10 @@ public static class PoffinSearchRunner
                                 amityBonus);
                             if (!predicate(in poffin))
                                 continue;
-                            selector.Consider(in poffin);
+                            if (wantsRecipes)
+                                sink.Consider(in poffin, ids);
+                            else
+                                sink.Consider(in poffin);
                         }
                     }
                 }
@@ -589,18 +676,27 @@ public static class PoffinSearchRunner
             case 4:
             {
                 Span<Berry> buffer = stackalloc Berry[4];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[4] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     buffer[0] = source[i];
+                    if (wantsRecipes)
+                        ids[0] = buffer[0].Id;
                     for (int j = i + 1; j < n - 2; j++)
                     {
                         buffer[1] = source[j];
+                        if (wantsRecipes)
+                            ids[1] = buffer[1].Id;
                         for (int k = j + 1; k < n - 1; k++)
                         {
                             buffer[2] = source[k];
+                            if (wantsRecipes)
+                                ids[2] = buffer[2].Id;
                             for (int l = k + 1; l < n; l++)
                             {
                                 buffer[3] = source[l];
+                                if (wantsRecipes)
+                                    ids[3] = buffer[3].Id;
                                 var poffin = PoffinCooker.CookFromBerriesUnique(
                                     buffer,
                                     cookTimeSeconds,
@@ -608,7 +704,10 @@ public static class PoffinSearchRunner
                                     amityBonus);
                                 if (!predicate(in poffin))
                                     continue;
-                                selector.Consider(in poffin);
+                                if (wantsRecipes)
+                                    sink.Consider(in poffin, ids);
+                                else
+                                    sink.Consider(in poffin);
                             }
                         }
                     }
@@ -619,7 +718,7 @@ public static class PoffinSearchRunner
     }
 
     // Pruned variant: optimistic bounds can skip cooking entirely.
-    private static void ProcessRangeNoPredicatePruned(
+    private static void ProcessRangeNoPredicatePruned<TSink>(
         ReadOnlySpan<Berry> source,
         int choose,
         int start,
@@ -627,7 +726,7 @@ public static class PoffinSearchRunner
         byte cookTimeSeconds,
         byte errors,
         byte amityBonus,
-        TopKPoffinSelector selector,
+        ref TSink sink,
         PoffinSearchPruning pruning,
         int[] maxSpicySuffix,
         int[] maxDrySuffix,
@@ -635,14 +734,17 @@ public static class PoffinSearchRunner
         int[] maxBitterSuffix,
         int[] maxSourSuffix,
         int[] minSmoothnessSuffix)
+        where TSink : struct, IPoffinSink
     {
         int n = source.Length;
+        bool wantsRecipes = sink.WantsRecipes;
 
         switch (choose)
         {
             case 1:
             {
                 Span<Berry> buffer = stackalloc Berry[1];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[1] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     ref readonly var b = ref source[i];
@@ -652,18 +754,24 @@ public static class PoffinSearchRunner
                         continue;
 
                     buffer[0] = b;
+                    if (wantsRecipes)
+                        ids[0] = b.Id;
                     var poffin = PoffinCooker.CookFromBerriesUnique(
                         buffer,
                         cookTimeSeconds,
                         errors,
                         amityBonus);
-                    selector.Consider(in poffin);
+                    if (wantsRecipes)
+                        sink.Consider(in poffin, ids);
+                    else
+                        sink.Consider(in poffin);
                 }
                 break;
             }
             case 2:
             {
                 Span<Berry> buffer = stackalloc Berry[2];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[2] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     ref readonly var b0 = ref source[i];
@@ -680,6 +788,8 @@ public static class PoffinSearchRunner
                         continue;
 
                     buffer[0] = b0;
+                    if (wantsRecipes)
+                        ids[0] = b0.Id;
                     for (int j = i + 1; j < n; j++)
                     {
                         ref readonly var b1 = ref source[j];
@@ -696,12 +806,17 @@ public static class PoffinSearchRunner
                             continue;
 
                         buffer[1] = b1;
+                        if (wantsRecipes)
+                            ids[1] = b1.Id;
                         var poffin = PoffinCooker.CookFromBerriesUnique(
                             buffer,
                             cookTimeSeconds,
                             errors,
                             amityBonus);
-                        selector.Consider(in poffin);
+                        if (wantsRecipes)
+                            sink.Consider(in poffin, ids);
+                        else
+                            sink.Consider(in poffin);
                     }
                 }
                 break;
@@ -709,6 +824,7 @@ public static class PoffinSearchRunner
             case 3:
             {
                 Span<Berry> buffer = stackalloc Berry[3];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[3] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     ref readonly var b0 = ref source[i];
@@ -725,6 +841,8 @@ public static class PoffinSearchRunner
                         continue;
 
                     buffer[0] = b0;
+                    if (wantsRecipes)
+                        ids[0] = b0.Id;
                     for (int j = i + 1; j < n - 1; j++)
                     {
                         ref readonly var b1 = ref source[j];
@@ -741,6 +859,8 @@ public static class PoffinSearchRunner
                             continue;
 
                         buffer[1] = b1;
+                        if (wantsRecipes)
+                            ids[1] = b1.Id;
                         for (int k = j + 1; k < n; k++)
                         {
                             ref readonly var b2 = ref source[k];
@@ -757,12 +877,17 @@ public static class PoffinSearchRunner
                                 continue;
 
                             buffer[2] = b2;
+                            if (wantsRecipes)
+                                ids[2] = b2.Id;
                             var poffin = PoffinCooker.CookFromBerriesUnique(
                                 buffer,
                                 cookTimeSeconds,
                                 errors,
                                 amityBonus);
-                            selector.Consider(in poffin);
+                            if (wantsRecipes)
+                                sink.Consider(in poffin, ids);
+                            else
+                                sink.Consider(in poffin);
                         }
                     }
                 }
@@ -771,6 +896,7 @@ public static class PoffinSearchRunner
             case 4:
             {
                 Span<Berry> buffer = stackalloc Berry[4];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[4] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     ref readonly var b0 = ref source[i];
@@ -787,6 +913,8 @@ public static class PoffinSearchRunner
                         continue;
 
                     buffer[0] = b0;
+                    if (wantsRecipes)
+                        ids[0] = b0.Id;
                     for (int j = i + 1; j < n - 2; j++)
                     {
                         ref readonly var b1 = ref source[j];
@@ -803,6 +931,8 @@ public static class PoffinSearchRunner
                             continue;
 
                         buffer[1] = b1;
+                        if (wantsRecipes)
+                            ids[1] = b1.Id;
                         for (int k = j + 1; k < n - 1; k++)
                         {
                             ref readonly var b2 = ref source[k];
@@ -819,6 +949,8 @@ public static class PoffinSearchRunner
                                 continue;
 
                             buffer[2] = b2;
+                            if (wantsRecipes)
+                                ids[2] = b2.Id;
                             for (int l = k + 1; l < n; l++)
                             {
                                 ref readonly var b3 = ref source[l];
@@ -835,12 +967,17 @@ public static class PoffinSearchRunner
                                     continue;
 
                                 buffer[3] = b3;
+                                if (wantsRecipes)
+                                    ids[3] = b3.Id;
                                 var poffin = PoffinCooker.CookFromBerriesUnique(
                                     buffer,
                                     cookTimeSeconds,
                                     errors,
                                     amityBonus);
-                                selector.Consider(in poffin);
+                                if (wantsRecipes)
+                                    sink.Consider(in poffin, ids);
+                                else
+                                    sink.Consider(in poffin);
                             }
                         }
                     }
@@ -851,7 +988,7 @@ public static class PoffinSearchRunner
     }
 
     // Pruned variant with predicate filtering after cooking.
-    private static void ProcessRangeWithPredicatePruned(
+    private static void ProcessRangeWithPredicatePruned<TSink>(
         ReadOnlySpan<Berry> source,
         int choose,
         int start,
@@ -859,7 +996,7 @@ public static class PoffinSearchRunner
         byte cookTimeSeconds,
         byte errors,
         byte amityBonus,
-        TopKPoffinSelector selector,
+        ref TSink sink,
         PoffinPredicate predicate,
         PoffinSearchPruning pruning,
         int[] maxSpicySuffix,
@@ -868,14 +1005,17 @@ public static class PoffinSearchRunner
         int[] maxBitterSuffix,
         int[] maxSourSuffix,
         int[] minSmoothnessSuffix)
+        where TSink : struct, IPoffinSink
     {
         int n = source.Length;
+        bool wantsRecipes = sink.WantsRecipes;
 
         switch (choose)
         {
             case 1:
             {
                 Span<Berry> buffer = stackalloc Berry[1];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[1] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     ref readonly var b = ref source[i];
@@ -885,6 +1025,8 @@ public static class PoffinSearchRunner
                         continue;
 
                     buffer[0] = b;
+                    if (wantsRecipes)
+                        ids[0] = b.Id;
                     var poffin = PoffinCooker.CookFromBerriesUnique(
                         buffer,
                         cookTimeSeconds,
@@ -892,13 +1034,17 @@ public static class PoffinSearchRunner
                         amityBonus);
                     if (!predicate(in poffin))
                         continue;
-                    selector.Consider(in poffin);
+                    if (wantsRecipes)
+                        sink.Consider(in poffin, ids);
+                    else
+                        sink.Consider(in poffin);
                 }
                 break;
             }
             case 2:
             {
                 Span<Berry> buffer = stackalloc Berry[2];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[2] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     ref readonly var b0 = ref source[i];
@@ -915,6 +1061,8 @@ public static class PoffinSearchRunner
                         continue;
 
                     buffer[0] = b0;
+                    if (wantsRecipes)
+                        ids[0] = b0.Id;
                     for (int j = i + 1; j < n; j++)
                     {
                         ref readonly var b1 = ref source[j];
@@ -931,6 +1079,8 @@ public static class PoffinSearchRunner
                             continue;
 
                         buffer[1] = b1;
+                        if (wantsRecipes)
+                            ids[1] = b1.Id;
                         var poffin = PoffinCooker.CookFromBerriesUnique(
                             buffer,
                             cookTimeSeconds,
@@ -938,7 +1088,10 @@ public static class PoffinSearchRunner
                             amityBonus);
                         if (!predicate(in poffin))
                             continue;
-                        selector.Consider(in poffin);
+                        if (wantsRecipes)
+                            sink.Consider(in poffin, ids);
+                        else
+                            sink.Consider(in poffin);
                     }
                 }
                 break;
@@ -946,6 +1099,7 @@ public static class PoffinSearchRunner
             case 3:
             {
                 Span<Berry> buffer = stackalloc Berry[3];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[3] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     ref readonly var b0 = ref source[i];
@@ -962,6 +1116,8 @@ public static class PoffinSearchRunner
                         continue;
 
                     buffer[0] = b0;
+                    if (wantsRecipes)
+                        ids[0] = b0.Id;
                     for (int j = i + 1; j < n - 1; j++)
                     {
                         ref readonly var b1 = ref source[j];
@@ -978,6 +1134,8 @@ public static class PoffinSearchRunner
                             continue;
 
                         buffer[1] = b1;
+                        if (wantsRecipes)
+                            ids[1] = b1.Id;
                         for (int k = j + 1; k < n; k++)
                         {
                             ref readonly var b2 = ref source[k];
@@ -994,6 +1152,8 @@ public static class PoffinSearchRunner
                                 continue;
 
                             buffer[2] = b2;
+                            if (wantsRecipes)
+                                ids[2] = b2.Id;
                             var poffin = PoffinCooker.CookFromBerriesUnique(
                                 buffer,
                                 cookTimeSeconds,
@@ -1001,7 +1161,10 @@ public static class PoffinSearchRunner
                                 amityBonus);
                             if (!predicate(in poffin))
                                 continue;
-                            selector.Consider(in poffin);
+                            if (wantsRecipes)
+                                sink.Consider(in poffin, ids);
+                            else
+                                sink.Consider(in poffin);
                         }
                     }
                 }
@@ -1010,6 +1173,7 @@ public static class PoffinSearchRunner
             case 4:
             {
                 Span<Berry> buffer = stackalloc Berry[4];
+                Span<BerryId> ids = wantsRecipes ? stackalloc BerryId[4] : Span<BerryId>.Empty;
                 for (int i = start; i < end; i++)
                 {
                     ref readonly var b0 = ref source[i];
@@ -1026,6 +1190,8 @@ public static class PoffinSearchRunner
                         continue;
 
                     buffer[0] = b0;
+                    if (wantsRecipes)
+                        ids[0] = b0.Id;
                     for (int j = i + 1; j < n - 2; j++)
                     {
                         ref readonly var b1 = ref source[j];
@@ -1042,6 +1208,8 @@ public static class PoffinSearchRunner
                             continue;
 
                         buffer[1] = b1;
+                        if (wantsRecipes)
+                            ids[1] = b1.Id;
                         for (int k = j + 1; k < n - 1; k++)
                         {
                             ref readonly var b2 = ref source[k];
@@ -1058,6 +1226,8 @@ public static class PoffinSearchRunner
                                 continue;
 
                             buffer[2] = b2;
+                            if (wantsRecipes)
+                                ids[2] = b2.Id;
                             for (int l = k + 1; l < n; l++)
                             {
                                 ref readonly var b3 = ref source[l];
@@ -1074,6 +1244,8 @@ public static class PoffinSearchRunner
                                     continue;
 
                                 buffer[3] = b3;
+                                if (wantsRecipes)
+                                    ids[3] = b3.Id;
                                 var poffin = PoffinCooker.CookFromBerriesUnique(
                                     buffer,
                                     cookTimeSeconds,
@@ -1081,7 +1253,10 @@ public static class PoffinSearchRunner
                                     amityBonus);
                                 if (!predicate(in poffin))
                                     continue;
-                                selector.Consider(in poffin);
+                                if (wantsRecipes)
+                                    sink.Consider(in poffin, ids);
+                                else
+                                    sink.Consider(in poffin);
                             }
                         }
                     }
@@ -1091,743 +1266,6 @@ public static class PoffinSearchRunner
         }
     }
 
-    private static void ProcessRangeNoPredicateRecipes(
-        ReadOnlySpan<Berry> source,
-        int choose,
-        int start,
-        int end,
-        byte cookTimeSeconds,
-        byte errors,
-        byte amityBonus,
-        TopKPoffinRecipeSelector selector)
-    {
-        int n = source.Length;
-
-        switch (choose)
-        {
-            case 1:
-            {
-                Span<Berry> buffer = stackalloc Berry[1];
-                Span<BerryId> ids = stackalloc BerryId[1];
-                for (int i = start; i < end; i++)
-                {
-                    buffer[0] = source[i];
-                    ids[0] = buffer[0].Id;
-                    var poffin = PoffinCooker.CookFromBerriesUnique(
-                        buffer,
-                        cookTimeSeconds,
-                        errors,
-                        amityBonus);
-                    selector.Consider(in poffin, ids);
-                }
-                break;
-            }
-            case 2:
-            {
-                Span<Berry> buffer = stackalloc Berry[2];
-                Span<BerryId> ids = stackalloc BerryId[2];
-                for (int i = start; i < end; i++)
-                {
-                    buffer[0] = source[i];
-                    ids[0] = buffer[0].Id;
-                    for (int j = i + 1; j < n; j++)
-                    {
-                        buffer[1] = source[j];
-                        ids[1] = buffer[1].Id;
-                        var poffin = PoffinCooker.CookFromBerriesUnique(
-                            buffer,
-                            cookTimeSeconds,
-                            errors,
-                            amityBonus);
-                        selector.Consider(in poffin, ids);
-                    }
-                }
-                break;
-            }
-            case 3:
-            {
-                Span<Berry> buffer = stackalloc Berry[3];
-                Span<BerryId> ids = stackalloc BerryId[3];
-                for (int i = start; i < end; i++)
-                {
-                    buffer[0] = source[i];
-                    ids[0] = buffer[0].Id;
-                    for (int j = i + 1; j < n - 1; j++)
-                    {
-                        buffer[1] = source[j];
-                        ids[1] = buffer[1].Id;
-                        for (int k = j + 1; k < n; k++)
-                        {
-                            buffer[2] = source[k];
-                            ids[2] = buffer[2].Id;
-                            var poffin = PoffinCooker.CookFromBerriesUnique(
-                                buffer,
-                                cookTimeSeconds,
-                                errors,
-                                amityBonus);
-                            selector.Consider(in poffin, ids);
-                        }
-                    }
-                }
-                break;
-            }
-            case 4:
-            {
-                Span<Berry> buffer = stackalloc Berry[4];
-                Span<BerryId> ids = stackalloc BerryId[4];
-                for (int i = start; i < end; i++)
-                {
-                    buffer[0] = source[i];
-                    ids[0] = buffer[0].Id;
-                    for (int j = i + 1; j < n - 2; j++)
-                    {
-                        buffer[1] = source[j];
-                        ids[1] = buffer[1].Id;
-                        for (int k = j + 1; k < n - 1; k++)
-                        {
-                            buffer[2] = source[k];
-                            ids[2] = buffer[2].Id;
-                            for (int l = k + 1; l < n; l++)
-                            {
-                                buffer[3] = source[l];
-                                ids[3] = buffer[3].Id;
-                                var poffin = PoffinCooker.CookFromBerriesUnique(
-                                    buffer,
-                                    cookTimeSeconds,
-                                    errors,
-                                    amityBonus);
-                                selector.Consider(in poffin, ids);
-                            }
-                        }
-                    }
-                }
-                break;
-            }
-        }
-    }
-
-    private static void ProcessRangeWithPredicateRecipes(
-        ReadOnlySpan<Berry> source,
-        int choose,
-        int start,
-        int end,
-        byte cookTimeSeconds,
-        byte errors,
-        byte amityBonus,
-        TopKPoffinRecipeSelector selector,
-        PoffinPredicate predicate)
-    {
-        int n = source.Length;
-
-        switch (choose)
-        {
-            case 1:
-            {
-                Span<Berry> buffer = stackalloc Berry[1];
-                Span<BerryId> ids = stackalloc BerryId[1];
-                for (int i = start; i < end; i++)
-                {
-                    buffer[0] = source[i];
-                    ids[0] = buffer[0].Id;
-                    var poffin = PoffinCooker.CookFromBerriesUnique(
-                        buffer,
-                        cookTimeSeconds,
-                        errors,
-                        amityBonus);
-                    if (!predicate(in poffin))
-                        continue;
-                    selector.Consider(in poffin, ids);
-                }
-                break;
-            }
-            case 2:
-            {
-                Span<Berry> buffer = stackalloc Berry[2];
-                Span<BerryId> ids = stackalloc BerryId[2];
-                for (int i = start; i < end; i++)
-                {
-                    buffer[0] = source[i];
-                    ids[0] = buffer[0].Id;
-                    for (int j = i + 1; j < n; j++)
-                    {
-                        buffer[1] = source[j];
-                        ids[1] = buffer[1].Id;
-                        var poffin = PoffinCooker.CookFromBerriesUnique(
-                            buffer,
-                            cookTimeSeconds,
-                            errors,
-                            amityBonus);
-                        if (!predicate(in poffin))
-                            continue;
-                        selector.Consider(in poffin, ids);
-                    }
-                }
-                break;
-            }
-            case 3:
-            {
-                Span<Berry> buffer = stackalloc Berry[3];
-                Span<BerryId> ids = stackalloc BerryId[3];
-                for (int i = start; i < end; i++)
-                {
-                    buffer[0] = source[i];
-                    ids[0] = buffer[0].Id;
-                    for (int j = i + 1; j < n - 1; j++)
-                    {
-                        buffer[1] = source[j];
-                        ids[1] = buffer[1].Id;
-                        for (int k = j + 1; k < n; k++)
-                        {
-                            buffer[2] = source[k];
-                            ids[2] = buffer[2].Id;
-                            var poffin = PoffinCooker.CookFromBerriesUnique(
-                                buffer,
-                                cookTimeSeconds,
-                                errors,
-                                amityBonus);
-                            if (!predicate(in poffin))
-                                continue;
-                            selector.Consider(in poffin, ids);
-                        }
-                    }
-                }
-                break;
-            }
-            case 4:
-            {
-                Span<Berry> buffer = stackalloc Berry[4];
-                Span<BerryId> ids = stackalloc BerryId[4];
-                for (int i = start; i < end; i++)
-                {
-                    buffer[0] = source[i];
-                    ids[0] = buffer[0].Id;
-                    for (int j = i + 1; j < n - 2; j++)
-                    {
-                        buffer[1] = source[j];
-                        ids[1] = buffer[1].Id;
-                        for (int k = j + 1; k < n - 1; k++)
-                        {
-                            buffer[2] = source[k];
-                            ids[2] = buffer[2].Id;
-                            for (int l = k + 1; l < n; l++)
-                            {
-                                buffer[3] = source[l];
-                                ids[3] = buffer[3].Id;
-                                var poffin = PoffinCooker.CookFromBerriesUnique(
-                                    buffer,
-                                    cookTimeSeconds,
-                                    errors,
-                                    amityBonus);
-                                if (!predicate(in poffin))
-                                    continue;
-                                selector.Consider(in poffin, ids);
-                            }
-                        }
-                    }
-                }
-                break;
-            }
-        }
-    }
-
-    private static void ProcessRangeNoPredicatePrunedRecipes(
-        ReadOnlySpan<Berry> source,
-        int choose,
-        int start,
-        int end,
-        byte cookTimeSeconds,
-        byte errors,
-        byte amityBonus,
-        TopKPoffinRecipeSelector selector,
-        PoffinSearchPruning pruning,
-        int[] maxSpicySuffix,
-        int[] maxDrySuffix,
-        int[] maxSweetSuffix,
-        int[] maxBitterSuffix,
-        int[] maxSourSuffix,
-        int[] minSmoothnessSuffix)
-    {
-        int n = source.Length;
-
-        switch (choose)
-        {
-            case 1:
-            {
-                Span<Berry> buffer = stackalloc Berry[1];
-                Span<BerryId> ids = stackalloc BerryId[1];
-                for (int i = start; i < end; i++)
-                {
-                    ref readonly var b = ref source[i];
-                    if (!CanSatisfy(pruning, b.Spicy, b.Dry, b.Sweet, b.Bitter, b.Sour, b.Smoothness, 0, i + 1,
-                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                            maxSourSuffix, minSmoothnessSuffix))
-                        continue;
-
-                    buffer[0] = b;
-                    ids[0] = b.Id;
-                    var poffin = PoffinCooker.CookFromBerriesUnique(
-                        buffer,
-                        cookTimeSeconds,
-                        errors,
-                        amityBonus);
-                    selector.Consider(in poffin, ids);
-                }
-                break;
-            }
-            case 2:
-            {
-                Span<Berry> buffer = stackalloc Berry[2];
-                Span<BerryId> ids = stackalloc BerryId[2];
-                for (int i = start; i < end; i++)
-                {
-                    ref readonly var b0 = ref source[i];
-                    int spicy0 = b0.Spicy;
-                    int dry0 = b0.Dry;
-                    int sweet0 = b0.Sweet;
-                    int bitter0 = b0.Bitter;
-                    int sour0 = b0.Sour;
-                    int smooth0 = b0.Smoothness;
-
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 1, i + 1,
-                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                            maxSourSuffix, minSmoothnessSuffix))
-                        continue;
-
-                    buffer[0] = b0;
-                    ids[0] = b0.Id;
-                    for (int j = i + 1; j < n; j++)
-                    {
-                        ref readonly var b1 = ref source[j];
-                        int spicy = spicy0 + b1.Spicy;
-                        int dry = dry0 + b1.Dry;
-                        int sweet = sweet0 + b1.Sweet;
-                        int bitter = bitter0 + b1.Bitter;
-                        int sour = sour0 + b1.Sour;
-                        int smooth = smooth0 + b1.Smoothness;
-
-                        if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, j + 1,
-                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                                maxSourSuffix, minSmoothnessSuffix))
-                            continue;
-
-                        buffer[1] = b1;
-                        ids[1] = b1.Id;
-                        var poffin = PoffinCooker.CookFromBerriesUnique(
-                            buffer,
-                            cookTimeSeconds,
-                            errors,
-                            amityBonus);
-                        selector.Consider(in poffin, ids);
-                    }
-                }
-                break;
-            }
-            case 3:
-            {
-                Span<Berry> buffer = stackalloc Berry[3];
-                Span<BerryId> ids = stackalloc BerryId[3];
-                for (int i = start; i < end; i++)
-                {
-                    ref readonly var b0 = ref source[i];
-                    int spicy0 = b0.Spicy;
-                    int dry0 = b0.Dry;
-                    int sweet0 = b0.Sweet;
-                    int bitter0 = b0.Bitter;
-                    int sour0 = b0.Sour;
-                    int smooth0 = b0.Smoothness;
-
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 2, i + 1,
-                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                            maxSourSuffix, minSmoothnessSuffix))
-                        continue;
-
-                    buffer[0] = b0;
-                    ids[0] = b0.Id;
-                    for (int j = i + 1; j < n - 1; j++)
-                    {
-                        ref readonly var b1 = ref source[j];
-                        int spicy1 = spicy0 + b1.Spicy;
-                        int dry1 = dry0 + b1.Dry;
-                        int sweet1 = sweet0 + b1.Sweet;
-                        int bitter1 = bitter0 + b1.Bitter;
-                        int sour1 = sour0 + b1.Sour;
-                        int smooth1 = smooth0 + b1.Smoothness;
-
-                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, smooth1, 1, j + 1,
-                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                                maxSourSuffix, minSmoothnessSuffix))
-                            continue;
-
-                        buffer[1] = b1;
-                        ids[1] = b1.Id;
-                        for (int k = j + 1; k < n; k++)
-                        {
-                            ref readonly var b2 = ref source[k];
-                            int spicy = spicy1 + b2.Spicy;
-                            int dry = dry1 + b2.Dry;
-                            int sweet = sweet1 + b2.Sweet;
-                            int bitter = bitter1 + b2.Bitter;
-                            int sour = sour1 + b2.Sour;
-                            int smooth = smooth1 + b2.Smoothness;
-
-                            if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, k + 1,
-                                    choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
-                                    maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
-                                continue;
-
-                            buffer[2] = b2;
-                            ids[2] = b2.Id;
-                            var poffin = PoffinCooker.CookFromBerriesUnique(
-                                buffer,
-                                cookTimeSeconds,
-                                errors,
-                                amityBonus);
-                            selector.Consider(in poffin, ids);
-                        }
-                    }
-                }
-                break;
-            }
-            case 4:
-            {
-                Span<Berry> buffer = stackalloc Berry[4];
-                Span<BerryId> ids = stackalloc BerryId[4];
-                for (int i = start; i < end; i++)
-                {
-                    ref readonly var b0 = ref source[i];
-                    int spicy0 = b0.Spicy;
-                    int dry0 = b0.Dry;
-                    int sweet0 = b0.Sweet;
-                    int bitter0 = b0.Bitter;
-                    int sour0 = b0.Sour;
-                    int smooth0 = b0.Smoothness;
-
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 3, i + 1,
-                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                            maxSourSuffix, minSmoothnessSuffix))
-                        continue;
-
-                    buffer[0] = b0;
-                    ids[0] = b0.Id;
-                    for (int j = i + 1; j < n - 2; j++)
-                    {
-                        ref readonly var b1 = ref source[j];
-                        int spicy1 = spicy0 + b1.Spicy;
-                        int dry1 = dry0 + b1.Dry;
-                        int sweet1 = sweet0 + b1.Sweet;
-                        int bitter1 = bitter0 + b1.Bitter;
-                        int sour1 = sour0 + b1.Sour;
-                        int smooth1 = smooth0 + b1.Smoothness;
-
-                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, smooth1, 2, j + 1,
-                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                                maxSourSuffix, minSmoothnessSuffix))
-                            continue;
-
-                        buffer[1] = b1;
-                        ids[1] = b1.Id;
-                        for (int k = j + 1; k < n - 1; k++)
-                        {
-                            ref readonly var b2 = ref source[k];
-                            int spicy2 = spicy1 + b2.Spicy;
-                            int dry2 = dry1 + b2.Dry;
-                            int sweet2 = sweet1 + b2.Sweet;
-                            int bitter2 = bitter1 + b2.Bitter;
-                            int sour2 = sour1 + b2.Sour;
-                            int smooth2 = smooth1 + b2.Smoothness;
-
-                            if (!CanSatisfy(pruning, spicy2, dry2, sweet2, bitter2, sour2, smooth2, 1, k + 1,
-                                    choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
-                                    maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
-                                continue;
-
-                            buffer[2] = b2;
-                            ids[2] = b2.Id;
-                            for (int l = k + 1; l < n; l++)
-                            {
-                                ref readonly var b3 = ref source[l];
-                                int spicy = spicy2 + b3.Spicy;
-                                int dry = dry2 + b3.Dry;
-                                int sweet = sweet2 + b3.Sweet;
-                                int bitter = bitter2 + b3.Bitter;
-                                int sour = sour2 + b3.Sour;
-                                int smooth = smooth2 + b3.Smoothness;
-
-                                if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, l + 1,
-                                        choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
-                                        maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
-                                    continue;
-
-                                buffer[3] = b3;
-                                ids[3] = b3.Id;
-                                var poffin = PoffinCooker.CookFromBerriesUnique(
-                                    buffer,
-                                    cookTimeSeconds,
-                                    errors,
-                                    amityBonus);
-                                selector.Consider(in poffin, ids);
-                            }
-                        }
-                    }
-                }
-                break;
-            }
-        }
-    }
-
-    private static void ProcessRangeWithPredicatePrunedRecipes(
-        ReadOnlySpan<Berry> source,
-        int choose,
-        int start,
-        int end,
-        byte cookTimeSeconds,
-        byte errors,
-        byte amityBonus,
-        TopKPoffinRecipeSelector selector,
-        PoffinPredicate predicate,
-        PoffinSearchPruning pruning,
-        int[] maxSpicySuffix,
-        int[] maxDrySuffix,
-        int[] maxSweetSuffix,
-        int[] maxBitterSuffix,
-        int[] maxSourSuffix,
-        int[] minSmoothnessSuffix)
-    {
-        int n = source.Length;
-
-        switch (choose)
-        {
-            case 1:
-            {
-                Span<Berry> buffer = stackalloc Berry[1];
-                Span<BerryId> ids = stackalloc BerryId[1];
-                for (int i = start; i < end; i++)
-                {
-                    ref readonly var b = ref source[i];
-                    if (!CanSatisfy(pruning, b.Spicy, b.Dry, b.Sweet, b.Bitter, b.Sour, b.Smoothness, 0, i + 1,
-                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                            maxSourSuffix, minSmoothnessSuffix))
-                        continue;
-
-                    buffer[0] = b;
-                    ids[0] = b.Id;
-                    var poffin = PoffinCooker.CookFromBerriesUnique(
-                        buffer,
-                        cookTimeSeconds,
-                        errors,
-                        amityBonus);
-                    if (!predicate(in poffin))
-                        continue;
-                    selector.Consider(in poffin, ids);
-                }
-                break;
-            }
-            case 2:
-            {
-                Span<Berry> buffer = stackalloc Berry[2];
-                Span<BerryId> ids = stackalloc BerryId[2];
-                for (int i = start; i < end; i++)
-                {
-                    ref readonly var b0 = ref source[i];
-                    int spicy0 = b0.Spicy;
-                    int dry0 = b0.Dry;
-                    int sweet0 = b0.Sweet;
-                    int bitter0 = b0.Bitter;
-                    int sour0 = b0.Sour;
-                    int smooth0 = b0.Smoothness;
-
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 1, i + 1,
-                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                            maxSourSuffix, minSmoothnessSuffix))
-                        continue;
-
-                    buffer[0] = b0;
-                    ids[0] = b0.Id;
-                    for (int j = i + 1; j < n; j++)
-                    {
-                        ref readonly var b1 = ref source[j];
-                        int spicy = spicy0 + b1.Spicy;
-                        int dry = dry0 + b1.Dry;
-                        int sweet = sweet0 + b1.Sweet;
-                        int bitter = bitter0 + b1.Bitter;
-                        int sour = sour0 + b1.Sour;
-                        int smooth = smooth0 + b1.Smoothness;
-
-                        if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, j + 1,
-                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                                maxSourSuffix, minSmoothnessSuffix))
-                            continue;
-
-                        buffer[1] = b1;
-                        ids[1] = b1.Id;
-                        var poffin = PoffinCooker.CookFromBerriesUnique(
-                            buffer,
-                            cookTimeSeconds,
-                            errors,
-                            amityBonus);
-                        if (!predicate(in poffin))
-                            continue;
-                        selector.Consider(in poffin, ids);
-                    }
-                }
-                break;
-            }
-            case 3:
-            {
-                Span<Berry> buffer = stackalloc Berry[3];
-                Span<BerryId> ids = stackalloc BerryId[3];
-                for (int i = start; i < end; i++)
-                {
-                    ref readonly var b0 = ref source[i];
-                    int spicy0 = b0.Spicy;
-                    int dry0 = b0.Dry;
-                    int sweet0 = b0.Sweet;
-                    int bitter0 = b0.Bitter;
-                    int sour0 = b0.Sour;
-                    int smooth0 = b0.Smoothness;
-
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 2, i + 1,
-                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                            maxSourSuffix, minSmoothnessSuffix))
-                        continue;
-
-                    buffer[0] = b0;
-                    ids[0] = b0.Id;
-                    for (int j = i + 1; j < n - 1; j++)
-                    {
-                        ref readonly var b1 = ref source[j];
-                        int spicy1 = spicy0 + b1.Spicy;
-                        int dry1 = dry0 + b1.Dry;
-                        int sweet1 = sweet0 + b1.Sweet;
-                        int bitter1 = bitter0 + b1.Bitter;
-                        int sour1 = sour0 + b1.Sour;
-                        int smooth1 = smooth0 + b1.Smoothness;
-
-                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, smooth1, 1, j + 1,
-                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                                maxSourSuffix, minSmoothnessSuffix))
-                            continue;
-
-                        buffer[1] = b1;
-                        ids[1] = b1.Id;
-                        for (int k = j + 1; k < n; k++)
-                        {
-                            ref readonly var b2 = ref source[k];
-                            int spicy = spicy1 + b2.Spicy;
-                            int dry = dry1 + b2.Dry;
-                            int sweet = sweet1 + b2.Sweet;
-                            int bitter = bitter1 + b2.Bitter;
-                            int sour = sour1 + b2.Sour;
-                            int smooth = smooth1 + b2.Smoothness;
-
-                            if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, k + 1,
-                                    choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
-                                    maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
-                                continue;
-
-                            buffer[2] = b2;
-                            ids[2] = b2.Id;
-                            var poffin = PoffinCooker.CookFromBerriesUnique(
-                                buffer,
-                                cookTimeSeconds,
-                                errors,
-                                amityBonus);
-                            if (!predicate(in poffin))
-                                continue;
-                            selector.Consider(in poffin, ids);
-                        }
-                    }
-                }
-                break;
-            }
-            case 4:
-            {
-                Span<Berry> buffer = stackalloc Berry[4];
-                Span<BerryId> ids = stackalloc BerryId[4];
-                for (int i = start; i < end; i++)
-                {
-                    ref readonly var b0 = ref source[i];
-                    int spicy0 = b0.Spicy;
-                    int dry0 = b0.Dry;
-                    int sweet0 = b0.Sweet;
-                    int bitter0 = b0.Bitter;
-                    int sour0 = b0.Sour;
-                    int smooth0 = b0.Smoothness;
-
-                    if (!CanSatisfy(pruning, spicy0, dry0, sweet0, bitter0, sour0, smooth0, 3, i + 1,
-                            choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                            maxSourSuffix, minSmoothnessSuffix))
-                        continue;
-
-                    buffer[0] = b0;
-                    ids[0] = b0.Id;
-                    for (int j = i + 1; j < n - 2; j++)
-                    {
-                        ref readonly var b1 = ref source[j];
-                        int spicy1 = spicy0 + b1.Spicy;
-                        int dry1 = dry0 + b1.Dry;
-                        int sweet1 = sweet0 + b1.Sweet;
-                        int bitter1 = bitter0 + b1.Bitter;
-                        int sour1 = sour0 + b1.Sour;
-                        int smooth1 = smooth0 + b1.Smoothness;
-
-                        if (!CanSatisfy(pruning, spicy1, dry1, sweet1, bitter1, sour1, smooth1, 2, j + 1,
-                                choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix, maxBitterSuffix,
-                                maxSourSuffix, minSmoothnessSuffix))
-                            continue;
-
-                        buffer[1] = b1;
-                        ids[1] = b1.Id;
-                        for (int k = j + 1; k < n - 1; k++)
-                        {
-                            ref readonly var b2 = ref source[k];
-                            int spicy2 = spicy1 + b2.Spicy;
-                            int dry2 = dry1 + b2.Dry;
-                            int sweet2 = sweet1 + b2.Sweet;
-                            int bitter2 = bitter1 + b2.Bitter;
-                            int sour2 = sour1 + b2.Sour;
-                            int smooth2 = smooth1 + b2.Smoothness;
-
-                            if (!CanSatisfy(pruning, spicy2, dry2, sweet2, bitter2, sour2, smooth2, 1, k + 1,
-                                    choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
-                                    maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
-                                continue;
-
-                            buffer[2] = b2;
-                            ids[2] = b2.Id;
-                            for (int l = k + 1; l < n; l++)
-                            {
-                                ref readonly var b3 = ref source[l];
-                                int spicy = spicy2 + b3.Spicy;
-                                int dry = dry2 + b3.Dry;
-                                int sweet = sweet2 + b3.Sweet;
-                                int bitter = bitter2 + b3.Bitter;
-                                int sour = sour2 + b3.Sour;
-                                int smooth = smooth2 + b3.Smoothness;
-
-                                if (!CanSatisfy(pruning, spicy, dry, sweet, bitter, sour, smooth, 0, l + 1,
-                                        choose, amityBonus, maxSpicySuffix, maxDrySuffix, maxSweetSuffix,
-                                        maxBitterSuffix, maxSourSuffix, minSmoothnessSuffix))
-                                    continue;
-
-                                buffer[3] = b3;
-                                ids[3] = b3.Id;
-                                var poffin = PoffinCooker.CookFromBerriesUnique(
-                                    buffer,
-                                    cookTimeSeconds,
-                                    errors,
-                                    amityBonus);
-                                if (!predicate(in poffin))
-                                    continue;
-                                selector.Consider(in poffin, ids);
-                            }
-                        }
-                    }
-                }
-                break;
-            }
-        }
-    }
 
     // Conservative check: returns false only if the combination cannot meet the thresholds.
     private static bool CanSatisfy(
