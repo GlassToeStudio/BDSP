@@ -4,7 +4,7 @@ namespace BDSP.Core.Berries
 {
     /// <summary>
     /// Berry names are indexed by by <see cref="BerryId.Value"/>.
-    /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:BerryIdTable"]/*' />
+    /// <include file='BerryDocs.xml' path='doc/members/member[@name="T:BerryIdTable"]/*' />
     /// </summary>
     /// <remarks>
     /// Berry names are sorted alphabetically by default.
@@ -82,7 +82,7 @@ namespace BDSP.Core.Berries
 
         /// <summary>
         /// Returns the display name for the given berry ID.
-        /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:BerryIdTable"]/*' />
+        /// <include file='BerryDocs.xml' path='doc/members/member[@name="T:BerryIdTable"]/*' />
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string GetName(BerryId id) => Names[id.Value];

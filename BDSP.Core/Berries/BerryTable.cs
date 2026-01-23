@@ -150,20 +150,20 @@ namespace BDSP.Core.Berries
 
         /// <summary>
         /// Returns a read-only span of all berries in ID order.
-        /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:FullBerryTable"]/*' />
+        /// <include file='BerryDocs.xml' path='doc/members/member[@name="T:FullBerryTable"]/*' />
         /// </summary>
         public static ReadOnlySpan<Berry> All => Berries;
 
         /// <summary>
         /// Returns a read-only span of base berries in ID order.
         /// Base berries include only the five flavor values and smoothness.
-        /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:FullBerryTable"]/*' />
+        /// <include file='BerryDocs.xml' path='doc/members/member[@name="T:FullBerryTable"]/*' />
         /// </summary>
         public static ReadOnlySpan<BerryBase> BaseAll => BaseBerries;
 
         /// <summary>
         /// Retrieves a berry by its ID.
-        /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:FullBerryTable"]/*' />
+        /// <include file='BerryDocs.xml' path='doc/members/member[@name="T:FullBerryTable"]/*' />
         /// </summary>
         /// <param name="id">The berry identifier.</param>
         /// <returns>The corresponding <see cref="Berry"/>.</returns>
@@ -177,7 +177,7 @@ namespace BDSP.Core.Berries
 
         /// <summary>
         /// Retrieves the base berry by its ID.
-        /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:FullBerryTable"]/*' />
+        /// <include file='BerryDocs.xml' path='doc/members/member[@name="T:FullBerryTable"]/*' />
         /// </summary>
         public static ref readonly BerryBase GetBase(in BerryId id)
         {

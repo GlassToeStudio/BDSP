@@ -4,10 +4,9 @@ namespace BDSP.Core.Berries
     /// Flavor categories used by berries and poffins.
     /// </summary>
     /// <remarks>
-    /// The flavor weakening cycle is as follows:
     /// Flavor X is weakened by Flavor Y:
     /// <br/>X -> Y <br/>
-    /// Spicy → Dry → Sweet → Bitter → Sour → Spicy
+    /// <include file='BerryDocs.xml' path='doc/members/member[@name="T:FlavorPreference"]/*' />
     /// </remarks>
     public enum Flavor : byte
     {
