@@ -1,94 +1,119 @@
-# BDSP Core Optimization & Expansion Project Plan
+# BDSP Poffin Factory (C#) - Capability and Performance Plan
 
-## Status (latest)
+## Goals
+- New Core library from scratch: berries, poffins, cooking, contest stats, eating plans.
+- Hard-coded berry table with compile-time data and precomputed derived fields.
+- Fast filtering/sorting on any attribute for berries, poffins, and contest stats.
+- Low allocations and low memory: struct data, precomputed tables, pooled buffers in hot paths.
+- CLI/UI only after Core is complete and validated.
 
-- 1.1/1.2: Initial pruning heuristics implemented (min level/flavor + max smoothness); test coverage added.
-- 1.3: Criteria compilation now wires pruning into CLI for early evaluation.
-- 1.4: Benchmarks re-run; results available in `BenchmarkDotNet.Artifacts/results`.
-- 4.5: Exclude foul poffins in feeding plans implemented and tested.
-- Berry inventory support: AllowedBerries now builds the search pool (CLI + criteria helper).
+## Rules to Implement (from README.md)
+- Flavor weakness cycle:
+  - Spicy weakened by Dry, Dry by Sweet, Sweet by Bitter, Bitter by Sour, Sour by Spicy.
+- Cooking formula for unique-berry recipes:
+  - Sum flavor vectors across berries.
+  - Apply weakness subtraction per flavor.
+  - For each negative flavor, subtract 1 from all five flavors.
+  - Apply time/error modifier: flavor = trunc( flavor * (60 / cookTimeSeconds) - (burns + spills) ).
+  - Clamp negatives to 0 and cap to max flavor (Gen VIII cap = 100).
+- Foul poffin:
+  - Triggered by duplicate berries or if all flavors <= 0.
+  - Deterministic foul flavors: Spicy/Dry/Sweet = 2, Bitter/Sour = 0.
+  - Excluded from eating plans.
+- Poffin level: strongest flavor value; max 100.
+- Smoothness: floor(average berry smoothness) - number of berries - bonus reduction (BDSP cap 9).
+- Two-flavor naming priority: Spicy > Dry > Sweet > Bitter > Sour.
+- Eating plan:
+  - Each poffin adds its flavor values to contest stats and smoothness to sheen.
+  - Sheen starts at 0, caps at 255, and blocks further eating when maxed.
+  - Final contest stats cap at 255.
+  - Nature modifiers: liked flavor 1.1x, disliked flavor 0.9x (truncation).
 
-This plan translates the high-level suggestions from the BDSP Core optimization report into actionable, testable tasks. The focus is on maintaining a lightweight, high-performance library while adding new features and improving usability.
+## Performance Principles
+- Prefer readonly structs and fixed-size storage for flavor vectors.
+- Precompute and store:
+  - weakened flavor vectors
+  - main flavor and priority order
+  - rarity and smoothness
+  - sort keys for common queries
+- Avoid allocations in inner loops; use `Span<int>` and pooled buffers where safe.
+- Ensure filters compile into simple predicates over arrays.
+- No LINQ in hot paths.
 
-## 1. Pruning & Search Performance Enhancements
+## Core Architecture (C#)
+- `BDSP.Core`
+  - Data: `BerryId` enum, `Berry` readonly struct, `BerryTable` static arrays.
+  - Flavor math: `Flavor` enum, weaken-cycle helpers, vector utilities.
+  - Cooking: `PoffinCooker`, `Poffin` readonly struct, `PoffinRecipe` as fixed-size value type.
+  - Contest: `ContestStats` readonly struct and `EatingPlanRunner`.
+  - Query: `BerryQuery`, `PoffinQuery`, `ContestStatsQuery` with compiled predicates.
+  - Search: combination/permutation enumerators, top-K selection, pruning hooks.
+- `BDSP.Core.Tests` with rule parity and invariants.
+- `BDSP.Core.Benchmarks` for cooking, filtering, sorting, and search.
 
-| Task ID | Task Description                                                                                                                                                                                                                   | Acceptance Criteria & Tests                                                                                                                                                                                                                    |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1.1     | Design pruning heuristics: Define algorithms that compute upper bounds for level/smoothness based on partial berry selections. Determine how to skip combinations early when they cannot meet filter criteria or top-K thresholds. | Documented heuristics and derived formulas; code prototypes verifying that the heuristics avoid unnecessary calls to PoffinCooker without excluding valid poffins.                                                                             |
-| 1.2     | Implement pruning in PoffinSearchRunner: Modify the combination enumeration logic to carry partial sums and apply the heuristics.                                                                                                  | All existing tests pass; new unit tests demonstrate that combinations that cannot satisfy criteria are skipped; benchmark shows reduced number of cooked poffins compared to the baseline for typical filters (e.g., MinLevel, MaxSmoothness). |
-| 1.3     | Predicate early-evaluation: Identify simple predicate fields (e.g., MinLevel, MaxSmoothness) that can be checked before cooking and update filtering code accordingly.                                                             | Unit tests show that predicate logic returns identical results when moved upstream; performance benchmarks show improvement.                                                                                                                   |
-| 1.4     | Benchmark pruning impact: Measure end-to-end search time and GC allocations with and without pruning across different berries-per-poffin values and filter settings.                                                               | Detailed benchmark report showing at least 20% reduction in cook calls under typical filtered searches; regression tests ensure unfiltered searches remain correct.                                                                            |
+## Step-by-Step Plan (Small, Verifiable)
 
-## 2. Resource Pooling & Streaming
+### Phase 0: Data and Golden Vectors
+1) Build the berry table for BDSP.
+   - Outputs: `BerryTable` static arrays for all 65 berries.
+   - Tests: count, hash stability, and sample berries (Ganlon, Enigma).
+2) Produce golden vectors aligned with README rules.
+   - Outputs: JSON fixtures for cooking and eating-plan results.
+   - Tests: README examples and edge cases (foul, cap, negative penalty).
 
-| Task ID | Task Description                                                                                                                                                                               | Acceptance Criteria & Tests                                                                                                                           |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2.1     | Integrate ArrayPool: Use ArrayPool to rent buffers for the berry pool and combination indices in PoffinSearchRunner and other high-frequency paths.                                            | Memory profiling shows reduced allocations during repeated search runs; unit tests confirm no data corruption from reused arrays.                     |
-| 2.2     | Implement asynchronous streaming search: Expose a new IAsyncEnumerable<Poffin> API that yields poffins as they are found. Use channels or AsyncEnumerable to push results from worker threads. | New API documentation; sample code demonstrates iterating over results while search is still running; existing synchronous API continues to function. |
-| 2.3     | Cancellation support: Allow search cancellation via CancellationToken in the streaming API.                                                                                                    | Unit tests verify that cancellation stops worker threads and that no partial results are missed or duplicated.                                        |
+### Phase 1: Berry Model and Tables
+3) Implement `BerryId`, `Berry` struct, and `BerryTable`.
+   - Compile-time arrays for flavor values, smoothness, rarity, main flavor, weakened values, and sort keys.
+   - Tests: Ganlon values, weakened values, rarity, main flavor, smoothness.
+4) Implement `BerryQuery` (filter + sort).
+   - Filters: rarity range, smoothness range, main flavor, num flavors, weakened main flavor, any flavor value bounds.
+   - Sorting: multi-key sort by any attribute.
+   - Tests: count and ordering parity with reference cases.
+   - Benchmarks: filter throughput vs list size with zero allocations in hot path.
 
-## 3. SIMD and Micro-Optimizations
+### Phase 2: Cooking and Poffin Model
+5) Implement `PoffinCooker` with README rules.
+   - Steps: weaken, negative penalty, cook-time modifier with truncation, spills/burns, clamp, smoothness.
+   - Tests: README examples and foul rules.
+6) Implement `Poffin` struct and naming.
+   - Fields: flavor vector, smoothness, level, second level, main flavor, rarity, num flavors.
+   - Tests: name classification and two-flavor priority.
 
-| Task ID | Task Description                                                                                                                                                                                   | Acceptance Criteria & Tests                                                                                                                                               |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3.1     | Vectorization feasibility study: Profile PoffinCooker to identify the portion of CPU time spent cooking. Prototype a SIMD implementation using System.Numerics.Vector<int> or hardware intrinsics. | Report describing whether SIMD yields measurable speedup; prototype code demonstrating correct results; decision documented on whether to integrate SIMD into production. |
-| 3.2     | Integrate SIMD (if beneficial): Replace scalar arithmetic in PoffinCooker with vectorized operations while preserving correctness and handling edge cases (e.g., clamping, negative penalties).    | Full test suite passes; benchmarks show improved throughput on supported hardware; fallback code path exists for unsupported platforms.                                   |
+### Phase 3: Poffin Query and Sorting
+7) Implement `PoffinQuery` with compiled predicates.
+   - Filters: level/second level bounds, num flavors, rarity, any flavor min, max-N similar.
+   - Sorting: multi-key sort by any attribute.
+   - Tests: parity with sample sets and edge cases.
+   - Benchmarks: filter+sort throughput.
 
-## 4. Feeding Algorithm Improvements
+### Phase 4: Contest Stats and Eating Plans
+8) Implement `ContestStats` and `EatingPlanRunner`.
+   - Feeding loop: stop at sheen >= 255, still apply final poffin boosts, cap at 255.
+   - Include nature modifiers (1.1x/0.9x with truncation).
+   - Tests: golden vectors and invariants (caps, sheen, ordering).
 
-| Task ID | Task Description                                                                                                                                                                                | Acceptance Criteria & Tests                                                                                                                                 |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 4.1     | Design branch-and-bound heuristics: Define optimistic upper bound functions for contest scores and sheen consumption.                                                                           | Documented heuristics and pseudocode; demonstration that the upper bound never under-estimates the true potential.                                          |
-| 4.2     | Implement branch-and-bound in FeedingOptimizer: Incorporate upper bound checks and explore promising nodes first (e.g., with a priority queue).                                                 | Unit tests confirm that the optimizer returns identical or better plans compared to the baseline; performance tests show reduced search nodes explored.     |
-| 4.3     | Explore alternative search strategies: Implement beam search or A\* variants and compare their performance and quality to the baseline.                                                         | Comparative report; configuration options allowing users to choose search strategy; acceptance criteria include correct results and performance evaluation. |
-| 4.4     | Memoization: Implement state caching to avoid recomputing subtrees in feeding plans.                                                                                                            | Unit tests verifying that identical states are recognized and reused; performance benchmarks show improvement on larger inputs.                             |
-| 4.5     | Exclude foul poffins: Ensure feeding plans never include foul poffins since they are unusable in practice. Unit tests confirm foul poffins are skipped even when present in the candidate list. |
+### Phase 5: Search and Enumeration
+9) Implement combination/permutation enumerators for berries and poffins.
+   - Tests: combination counts and deterministic ordering.
+10) Implement search helpers (top-K, pruning hooks).
+   - Benchmarks: cooking throughput and search speed baseline.
 
-## 5. Functional Extensions
+### Phase 6: Performance Pass
+11) Optimize hot paths.
+   - Use `Span<int>`, fixed-size arrays, static tables, and pooled buffers.
+   - Avoid allocations in loops; precompute weakened values and sort keys.
+   - Benchmarks: compare before/after and set targets.
 
-| Task ID | Task Description                                                                                                                                                                                                               | Acceptance Criteria & Tests                                                                                                                   |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| 5.1     | Generalize rule sets: Introduce IPoffinRuleSet interface to encapsulate weakening cycles, smoothness formulas and level caps. Implement BDSP rule set and stub out Generation IV rules using the condensed Poffins guidelines. | Type design reviewed and merged; unit tests confirm BDSP behavior remains unchanged; initial Generation IV implementation passes basic tests. |
-| 5.2     | Add variable ingredient support: Extend PoffinCooker to accept 1–N berries. Use loops to apply weakening and penalties iteratively.                                                                                            | Unit tests cover combinations of 1–5 berries (beyond four) and ensure correct level and smoothness; search runner updated accordingly.        |
-| 5.3     | Provide a BerryCombinations utility: Implement a generator that yields combinations of berries of specified lengths.                                                                                                           | API documentation and example usage; unit tests verifying correctness and memory usage.                                                       |
-| 5.4     | Expand comparers and predicates: Implement additional comparers (lexicographic by multiple stats, rarity-aware, custom weighting) and predicates (secondary flavor ranges, minimum number of flavors).                         | New comparers and predicates are unit-tested; Criteria compilation updated to expose new options.                                             |
-| 5.5     | Python interoperability: Expose BDSP.Core via a C API or pythonnet wrapper, and optionally wrap the Python BDSP-Poffin-Factory for .NET.                                                                                       | Example script demonstrating calling BDSP.Core functions from Python; integration tests verifying correct results and performance benefits.   |
-| 5.6     | Serialization enhancements: Add JSON/YAML serialization for search results and feeding plans; update BDSP.Serialization accordingly.                                                                                           | Round-trip tests verifying that serialized objects can be deserialized with identical data; sample CLI tool saving and loading results.       |
-| 5.7     | Documentation and examples: Expand README and XML comments; add examples demonstrating typical workflows (filtering berries, cooking, searching, optimizing feeding).                                                          | Documentation builds without warnings; examples compile and run; developer feedback indicates clarity.                                        |
+### Phase 7: CLI/UI (After Core)
+12) CLI with query arguments and output formats.
+13) UI after CLI validation.
 
-## 6. Project Management
+## Test and Benchmark Strategy
+- Unit tests: correctness of rules, edge cases, and golden fixtures.
+- Property tests: invariants like non-negative values, caps, and ordering rules.
+- Benchmarks: cooking 1-4 berry recipes, filter+sort, and search end-to-end.
 
-| Task ID | Task Description                                                                                                                                                            | Acceptance Criteria & Tests                                                                                   |
-| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| 6.1     | Issue tracking: Create GitHub issues for each task with clear descriptions, acceptance criteria, and labels (e.g., enhancement, performance, documentation).                | Issues created and cross-linked to project milestones; tasks assigned to team members.                        |
-| 6.2     | Milestones and sprints: Organize tasks into milestones (e.g., Pruning & Streaming, Feeding Optimizations, Functional Extensions). Define sprint durations and deliverables. | Project board updated with milestones; progress tracked via board columns (To Do, In Progress, Review, Done). |
-| 6.3     | Continuous integration tests: Update CI pipeline to run the expanded test suite and benchmarks; integrate performance regression checks.                                    | CI passes for all PRs; alerts triggered if benchmarks regress beyond a threshold.                             |
-| 6.4     | Coordination with Python repository: Align changes in the C# core library with BDSP-Poffin-Factory. Ensure that algorithms and constants remain synchronized.               | Shared change log maintained; cross-repo integration tests pass.                                              |
-
-## How to Use This Plan
-
-1. **Open tasks as GitHub issues** in the relevant repository (e.g., GlassToeStudio/BDSP) with the task ID and description. Include links to the optimization report for background and acceptance criteria from this table.
-
-2. **Assign tasks to developers or agents.** Use the acceptance criteria to define Definition of Done for each issue.
-
-3. **Track progress via a project board.** Move tasks across columns as they progress and update status in issue comments.
-
-4. **Write tests first where practical.** Use the provided acceptance criteria to implement unit tests, benchmarks or integration tests.
-
-5. **Review & merge:** All code changes should undergo peer review. Verify that performance benchmarks and CI tests pass before merging.
-
-Findings (ordered by severity)
-
-High: PoffinSearchRunner smoothness pruning can overflow when remainingSlots > 0 and nextIndex == source.Length, because minSmoothnessSuffix[nextIndex] is set to int.MaxValue and then multiplied. This can produce negative values and incorrect pruning decisions. PoffinSearchRunner.cs (line 97) and PoffinSearchRunner.cs (line 985)
-Medium: Several PoffinCriteria fields are defined but never used anywhere in core/search, so callers can set them with no effect (behavioral inconsistency): AllowedBerries. PoffinCriteria.cs (line 9)
-Medium: CoreGuards is compiled but never referenced; the intended debug-only checks are effectively dead code. CoreGuards.cs (line 8)
-Low: BerryCombinations appears unused inside the repo now that PoffinSearchRunner implements its own combination loops, which makes this file either redundant or an unused public API. BerryCombinations.cs (line 9)
-Low: PoffinCooker.CookUnique is internal but not used in the repo; if it’s not part of an intended public/internal API, it’s dead code. PoffinCooker.cs (line 48)
-Questions / assumptions
-
-Should AllowedBerries be enforced in search, or is it a placeholder for future work?
-Do you want to keep BerryCombinations as part of the public API despite not being used internally?
-If you want, I can:
-
-Fix the smoothness pruning overflow safely (check nextIndex >= n or guard minPer == int.MaxValue before multiplication).
-Wire AllowedBerries into the search or remove it if it’s not planned.
+## Open Questions to Resolve Before Coding
+- Should cook time be modeled as seconds or 1/30 sec ticks for BDSP?
+- Is smoothness bonus a fixed input parameter or always maxed at 9?
+- Do we want optional Gen IV caps (99) and bonus (10), or BDSP-only?
