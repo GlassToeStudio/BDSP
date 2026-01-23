@@ -23,11 +23,21 @@ namespace BDSP.Tools
         private static readonly string SourColor = Rgb(255, 230, 0);
         private static readonly string SmoothColor = Rgb(220, 220, 220);
 
+        private static readonly string[] EmojiTable =
+        [
+            " 🌶️ ",
+            " 🍇 ",
+            " 🍑 ",
+            " 🍐 ",
+            " 🍋 "
+        ];
+
         /// <summary>
         /// Formats a berry string with ANSI colors.
         /// </summary>
         public static string Format(in Berry berry)
         {
+            var emoji = EmojiTable[(int)berry.MainFlavor];
             var name = BerryNames.GetName(berry.Id);
             if (name.EndsWith(" Berry", StringComparison.Ordinal))
             {
@@ -45,14 +55,15 @@ namespace BDSP.Tools
                 ColorizeValue(Flavor.Bitter, berry.Bitter, berry.MainFlavor),
                 ColorizeValue(Flavor.Sour, berry.Sour, berry.MainFlavor));
 
-            var flavorName = $"{Italic}{berry.MainFlavor, -6}{NoItalic}";
+            var flavorName = $"{Italic}{berry.MainFlavor,-6}{NoItalic}";
 
             return string.Format(
                 CultureInfo.InvariantCulture,
-                "{0}{1,-7}{2} {3}{4}{2} ({5,2}) - Flavors {6} {7}Smoothness:{2} {8,2} {9}Rarity:{2} {10,2}",
+                "{0} {1}{2,-7}{3} {4}{5}{3} ({6,2}) - Flavors {7} {8}Smoothness:{3} {9,2} {10}Rarity:{3} {11,2}",
+                emoji,
                 Bold,
                 name,
-                Reset, // 0, 1, 2
+                Reset,
                 mainColor,
                 flavorName,
                 berry.Smoothness,

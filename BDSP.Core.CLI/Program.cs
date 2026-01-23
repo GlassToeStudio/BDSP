@@ -1,9 +1,8 @@
 ﻿using System;
 using BDSP.Core.Berries;
 
-var ids = new[] { new BerryId(18), new BerryId(16), new BerryId(52) };
-foreach (var id in ids)
+for (ushort i = 0; i < 65; i++)
 {
-    ref readonly var berry = ref BerryTable.Get(id);
+    ref readonly var berry = ref BerryTable.Get(new BerryId(i));
     Console.WriteLine(BDSP.Tools.BerryAnsiFormatter.Format(berry));
 }
