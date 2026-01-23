@@ -6,6 +6,46 @@ namespace BDSP.Core.Tests.Berries
     public class BerryTableTests
     {
         [Fact]
+        public void CountMatchesTables()
+        {
+            Assert.Equal(BerryTable.Count, BerryTable.All.Length);
+            Assert.Equal(BerryTable.Count, BerryTable.BaseAll.Length);
+        }
+
+        [Fact]
+        public void BaseTableMatchesFullTable()
+        {
+            for (var i = 0; i < BerryTable.Count; i++)
+            {
+                var id = new BerryId((ushort)i);
+                ref readonly var full = ref BerryTable.Get(id);
+                ref readonly var core = ref BerryTable.GetBase(id);
+
+                Assert.Equal(full.Id.Value, core.Id.Value);
+                Assert.Equal(full.Spicy, core.Spicy);
+                Assert.Equal(full.Dry, core.Dry);
+                Assert.Equal(full.Sweet, core.Sweet);
+                Assert.Equal(full.Bitter, core.Bitter);
+                Assert.Equal(full.Sour, core.Sour);
+                Assert.Equal(full.Smoothness, core.Smoothness);
+            }
+        }
+
+        [Fact]
+        public void NamesTableCoversAllIds()
+        {
+            var seen = new HashSet<string>();
+            for (var i = 0; i < BerryTable.Count; i++)
+            {
+                var name = BerryNames.GetName(new BerryId((ushort)i));
+                Assert.False(string.IsNullOrWhiteSpace(name));
+                seen.Add(name);
+            }
+
+            Assert.Equal(BerryTable.Count, seen.Count);
+        }
+
+        [Fact]
         public void AllBerriesHaveCorrectDerivedFields()
         {
             foreach (var berry in BerryTable.All)
@@ -37,6 +77,104 @@ namespace BDSP.Core.Tests.Berries
                 Assert.Equal(secondaryFlavor, berry.SecondaryFlavor);
                 Assert.Equal(secondaryValue, berry.SecondaryFlavorValue);
             }
+        }
+
+        [Fact]
+        public void GetFlavor_ReturnsCorrectValues()
+        {
+            ref readonly var ganlon = ref BerryTable.Get(new BerryId(18));
+            Assert.Equal(0, ganlon.GetFlavor(Flavor.Spicy));
+            Assert.Equal(30, ganlon.GetFlavor(Flavor.Dry));
+            Assert.Equal(10, ganlon.GetFlavor(Flavor.Sweet));
+            Assert.Equal(30, ganlon.GetFlavor(Flavor.Bitter));
+            Assert.Equal(0, ganlon.GetFlavor(Flavor.Sour));
+            Assert.Equal(0, ganlon.GetFlavor(Flavor.None));
+
+            ref readonly var ganlonBase = ref BerryTable.GetBase(new BerryId(18));
+            Assert.Equal(0, ganlonBase.GetFlavor(Flavor.Spicy));
+            Assert.Equal(30, ganlonBase.GetFlavor(Flavor.Dry));
+            Assert.Equal(10, ganlonBase.GetFlavor(Flavor.Sweet));
+            Assert.Equal(30, ganlonBase.GetFlavor(Flavor.Bitter));
+            Assert.Equal(0, ganlonBase.GetFlavor(Flavor.Sour));
+            Assert.Equal(0, ganlonBase.GetFlavor(Flavor.None));
+        }
+
+        [Fact]
+        public void SingleFlavorBerriesHaveNoSecondary()
+        {
+            foreach (var berry in BerryTable.All)
+            {
+                if (berry.NumFlavors == 1)
+                {
+                    Assert.Equal(Flavor.None, berry.SecondaryFlavor);
+                    Assert.Equal(0, berry.SecondaryFlavorValue);
+                }
+            }
+        }
+
+        [Fact]
+        public void NameOrdering_IsOrdinal()
+        {
+            var aguav = BerryNames.GetName(new BerryId(0));
+            var apicot = BerryNames.GetName(new BerryId(1));
+            Assert.True(string.CompareOrdinal(aguav, apicot) < 0);
+        }
+
+        [Fact]
+        public void SpotCheck_Ganlon()
+        {
+            ref readonly var berry = ref BerryTable.Get(new BerryId(18));
+            Assert.Equal("Ganlon Berry", BerryNames.GetName(berry.Id));
+            Assert.Equal(Flavor.Dry, berry.MainFlavor);
+            Assert.Equal(30, berry.MainFlavorValue);
+            Assert.Equal(Flavor.Bitter, berry.SecondaryFlavor);
+            Assert.Equal(30, berry.SecondaryFlavorValue);
+            Assert.Equal(40, berry.Smoothness);
+            Assert.Equal(9, berry.Rarity);
+            Assert.Equal(3, berry.NumFlavors);
+            Assert.Equal(0, berry.Spicy);
+            Assert.Equal(30, berry.Dry);
+            Assert.Equal(10, berry.Sweet);
+            Assert.Equal(30, berry.Bitter);
+            Assert.Equal(0, berry.Sour);
+        }
+
+        [Fact]
+        public void SpotCheck_Enigma()
+        {
+            ref readonly var berry = ref BerryTable.Get(new BerryId(16));
+            Assert.Equal("Enigma Berry", BerryNames.GetName(berry.Id));
+            Assert.Equal(Flavor.Spicy, berry.MainFlavor);
+            Assert.Equal(40, berry.MainFlavorValue);
+            Assert.Equal(Flavor.Dry, berry.SecondaryFlavor);
+            Assert.Equal(10, berry.SecondaryFlavorValue);
+            Assert.Equal(60, berry.Smoothness);
+            Assert.Equal(15, berry.Rarity);
+            Assert.Equal(2, berry.NumFlavors);
+            Assert.Equal(40, berry.Spicy);
+            Assert.Equal(10, berry.Dry);
+            Assert.Equal(0, berry.Sweet);
+            Assert.Equal(0, berry.Bitter);
+            Assert.Equal(0, berry.Sour);
+        }
+
+        [Fact]
+        public void SpotCheck_Rowap()
+        {
+            ref readonly var berry = ref BerryTable.Get(new BerryId(52));
+            Assert.Equal("Rowap Berry", BerryNames.GetName(berry.Id));
+            Assert.Equal(Flavor.Sour, berry.MainFlavor);
+            Assert.Equal(40, berry.MainFlavorValue);
+            Assert.Equal(Flavor.Spicy, berry.SecondaryFlavor);
+            Assert.Equal(10, berry.SecondaryFlavorValue);
+            Assert.Equal(60, berry.Smoothness);
+            Assert.Equal(15, berry.Rarity);
+            Assert.Equal(2, berry.NumFlavors);
+            Assert.Equal(10, berry.Spicy);
+            Assert.Equal(0, berry.Dry);
+            Assert.Equal(0, berry.Sweet);
+            Assert.Equal(0, berry.Bitter);
+            Assert.Equal(40, berry.Sour);
         }
 
         private static (Flavor Flavor, byte Value) GetMainFlavor((Flavor Flavor, byte Value)[] values)

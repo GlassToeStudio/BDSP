@@ -65,3 +65,14 @@ ref readonly var baseBerry = ref BerryTable.GetBase(new BerryId(18)); // Ganlon
 var spicy = baseBerry.Spicy;
 var smoothness = baseBerry.Smoothness;
 ```
+
+## Capabilities Checklist
+- Fixed berry data table (65 berries) with stable IDs.
+- Base cooking data (`BerryBase`) for low-allocation hot paths.
+- Full metadata (`Berry`) for filtering, sorting, and pruning.
+- O(1) name lookup by `BerryId`.
+- Range filtering on all flavor values, smoothness, rarity, derived values, and num flavors.
+- Flavor mask include/exclude filtering.
+- Main/secondary flavor filtering.
+- Multi-key sorting on all berry attributes and name.
+- Comprehensive unit tests for table integrity, derived values, name mapping, filtering, and sorting.
