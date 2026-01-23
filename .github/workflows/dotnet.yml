@@ -9,20 +9,22 @@ on:
 jobs:
   build-and-test:
     runs-on: windows-latest
+
+    env:
+      Solution_Name: BDSP.slnx                        # Replace with your solution name, i.e. MyWpfApp.sln.
+      Test_Project_Path: BDSP.Core.Tests\BDSP.Core.Tests.csproj
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Install .NET Core
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
 
-      - name: Restore
-        run: dotnet restore BDSP.slnx
+      - name: Setup MSBuild.exe
+        uses: microsoft/setup-msbuild@v2
 
-      - name: Build
-        run: dotnet build BDSP.slnx -c Release --no-restore
-
-      - name: Test
-        run: dotnet test BDSP.slnx -c Release --no-build
+      - name: Execute All Tests
+        run: dotnet test
