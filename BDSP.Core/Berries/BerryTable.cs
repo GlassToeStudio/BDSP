@@ -3,15 +3,17 @@ using System.Diagnostics;
 
 namespace BDSP.Core.Berries
 {
+    /// <summary>
+    /// Canonical berry data tables for BDSP (Generation VIII).
+    /// </summary>
     public static class BerryTable
     {
-                /// <summary>Total number of berries supported by BDSP.</summary>
+        /// <summary>Total number of berries.</summary>
         public const int Count = 65;
 
-    /// <summary>
-    /// Canonical, immutable berry data table for BDSP (Generation VIII).
-    /// Index corresponds exactly to <see cref="BerryId.Value"/>.
-    /// </summary>
+        /// <summary>
+        /// Full berry metadata indexed by <see cref="BerryId.Value"/>.
+        /// </summary>
         private static readonly Berry[] Berries =
         {
             //  aguav   (Bitter) 25 - Flavors [  0,   0,   0,  15,   0] Rarity:  3, Main: Bitter(15) Secondary: None(0) NumFlavors: 1
@@ -155,6 +157,7 @@ namespace BDSP.Core.Berries
         /// <summary>
         /// Returns a read-only span of base berries in ID order.
         /// Base berries include only the five flavor values and smoothness.
+        /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:FullBerryTable"]/*' />
         /// </summary>
         public static ReadOnlySpan<BerryBase> BaseAll => BaseBerries;
 
@@ -174,6 +177,7 @@ namespace BDSP.Core.Berries
 
         /// <summary>
         /// Retrieves the base berry by its ID.
+        /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:FullBerryTable"]/*' />
         /// </summary>
         public static ref readonly BerryBase GetBase(in BerryId id)
         {

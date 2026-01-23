@@ -3,9 +3,12 @@ using System.Runtime.CompilerServices;
 namespace BDSP.Core.Berries
 {
     /// <summary>
-    /// Names are sorted alphabetically A-Z - names are indexed by BerryId.Value.
+    /// Berry names are indexed by by <see cref="BerryId.Value"/>.
     /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:BerryIdTable"]/*' />
     /// </summary>
+    /// <remarks>
+    /// Berry names are sorted alphabetically by default.
+    /// </remarks>
     public static class BerryNames
     {
         private static readonly string[] Names =
@@ -78,7 +81,7 @@ namespace BDSP.Core.Berries
         };
 
         /// <summary>
-        /// Names are sorted alphabetically A-Z - names are indexed by BerryId.Value.
+        /// Returns the display name for the given berry ID.
         /// <include file='BerryDocs.xml' path='docs/members/member[@name="T:BerryIdTable"]/*' />
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
