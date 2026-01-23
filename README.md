@@ -14,6 +14,10 @@ low allocations, fast lookups, and deterministic results.
 - Class diagram: `docs/Berries.Diagrams.md`
 - Data tables / reference notes: `BDSP.Core/BerryDocs.xml`
 
+## Fixtures
+- `BDSP.Core.Tests/Fixtures/poffin_cook_cases.json` contains golden cooking cases (README examples + custom berry sets).
+- Naming convention: `README_<RecipeName>_<BerryList>_<Time>` for README-derived cases, and descriptive names for custom cases.
+
 ## Quick Example
 ```csharp
 var options = new BerryFilterOptions(minRarity: 5, maxRarity: 9);

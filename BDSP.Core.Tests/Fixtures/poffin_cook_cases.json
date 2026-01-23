@@ -1,0 +1,68 @@
+﻿{
+  "cases": [
+    {
+      "name": "README_BlueBerry_BlukNanabWepear_60s",
+      "cookTimeSeconds": 60,
+      "burns": 0,
+      "spills": 0,
+      "berries": [
+        { "id": 5 },
+        { "id": 34 },
+        { "id": 62 }
+      ],
+      "expected": {
+        "flavors": [0, 0, 0, 8, 8],
+        "smoothness": 17,
+        "isFoul": false
+      }
+    },
+    {
+      "name": "README_BlueBerry_BlukNanabWepear_40s",
+      "cookTimeSeconds": 40,
+      "burns": 0,
+      "spills": 0,
+      "berries": [
+        { "id": 5 },
+        { "id": 34 },
+        { "id": 62 }
+      ],
+      "expected": {
+        "flavors": [0, 0, 0, 12, 12],
+        "smoothness": 17,
+        "isFoul": false
+      }
+    },
+    {
+      "name": "Foul_Duplicate_Berries",
+      "cookTimeSeconds": 60,
+      "burns": 0,
+      "spills": 0,
+      "berries": [
+        { "id": 18 },
+        { "id": 18 }
+      ],
+      "expected": {
+        "flavors": [2, 2, 2, 0, 0],
+        "smoothness": 0,
+        "isFoul": true
+      }
+    },
+    {
+      "name": "Hondew_Spelon_Petaya_Enigma_40s",
+      "cookTimeSeconds": 40,
+      "burns": 0,
+      "spills": 0,
+      "berries": [
+        { "id": 21 },
+        { "id": 56 },
+        { "id": 43 },
+        { "id": 16 }
+      ],
+      "expected": {
+        "flavors": [100, 42, 0, 42, 0],
+        "smoothness": 25,
+        "isFoul": false
+      }
+    }
+  ]
+}
