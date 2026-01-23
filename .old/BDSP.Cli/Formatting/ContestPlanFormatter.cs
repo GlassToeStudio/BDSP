@@ -139,7 +139,7 @@ public static class ContestPlanFormatter
         int total = 0;
         foreach (var r in plan.Recipes)
         {
-            foreach (var id in r.Berries)
+            foreach (var id in r.Berries.Span)
                 total += BerryTable.Get(id).Rarity;
         }
         return total;
@@ -153,7 +153,7 @@ public static class ContestPlanFormatter
         var set = new HashSet<ushort>();
         foreach (var r in plan.Recipes)
         {
-            foreach (var id in r.Berries)
+            foreach (var id in r.Berries.Span)
                 set.Add(id.Value);
         }
         return set.Count;
@@ -164,7 +164,8 @@ public static class ContestPlanFormatter
         const int width = 75;
         var p = recipe.Poffin;
         int rarity = 0;
-        foreach (var id in recipe.Berries)
+        var berries = recipe.Berries.ToArray();
+        foreach (var id in berries)
             rarity += BerryTable.Get(id).Rarity;
 
         yield return new string('-', width);
@@ -173,7 +174,7 @@ public static class ContestPlanFormatter
         yield return $"* {FormatFlavorName(p.PrimaryFlavor),-6} {FormatFlavorName(p.SecondaryFlavor),-6} ({p.Level}, {p.SecondLevel})";
         yield return "* Berries used:";
 
-        foreach (var id in recipe.Berries)
+        foreach (var id in berries)
         {
             ref readonly var b = ref BerryTable.Get(id);
             var mainFlavor = BerryFacts.GetMainFlavor(in b);
