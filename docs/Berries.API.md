@@ -26,6 +26,18 @@ Canonical data tables.
 ### BerryNames
 Name lookup by `BerryId`.
 
+### BerryAnsiFormatter (BDSP.Tools)
+ANSI-colored formatter for terminal output.
+
+### ANSI Formatter Example
+```csharp
+using BDSP.Core.Berries;
+using BDSP.Core.CLI;
+
+ref readonly var berry = ref BerryTable.Get(new BerryId(18));
+Console.WriteLine(BerryAnsiFormatter.Format(berry));
+```
+
 ### BerryFilterOptions
 Immutable struct of optional filter bounds and masks.
 

@@ -3,9 +3,10 @@
 This repo contains a fresh C# implementation of BDSP Poffin mechanics with a focus on
 low allocations, fast lookups, and deterministic results.
 
-## What’s Here
+## What's Here
 - `BDSP.Core`: Core data structures and algorithms (berries, cooking, queries).
 - `BDSP.Core.Tests`: Unit tests for data integrity and filtering/sorting.
+- `BDSP.Core.CLI`: Console helpers (ANSI-colored berry output).
 - `docs/`: API reference and diagrams.
 
 ## Berry Docs
