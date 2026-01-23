@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="BDSP.Core.Tests/BDSP.Core.Tests.csproj" />
   <Project Path="BDSP.Core/BDSP.Core.csproj" />
 </Solution>
