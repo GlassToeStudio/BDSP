@@ -22,4 +22,10 @@
     <ProjectReference Include="..\BDSP.Core\BDSP.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Fixtures\poffin_cook_cases.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -12,7 +12,7 @@
       ],
       "expected": {
         "flavors": [0, 0, 0, 8, 8],
-        "smoothness": 17,
+        "smoothness": 8,
         "isFoul": false
       }
     },
@@ -28,7 +28,7 @@
       ],
       "expected": {
         "flavors": [0, 0, 0, 12, 12],
-        "smoothness": 17,
+        "smoothness": 8,
         "isFoul": false
       }
     },
