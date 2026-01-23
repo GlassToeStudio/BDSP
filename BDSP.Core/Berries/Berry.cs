@@ -81,5 +81,36 @@ namespace BDSP.Core.Berries
             };
         }
 
+        /// <summary>
+        /// Returns a aligned, human-readable description of the berry.
+        /// </summary>
+        /// <remarks>
+        /// Example: ganlon  Dry    ( 30) - Flavors [  0,  30,  10,  30,   0] Smoothness: 40 Rarity:  9
+        /// </remarks>
+        public override string ToString()
+        {
+            var name = BerryNames.GetName(Id);
+            if (name.EndsWith(" Berry", StringComparison.Ordinal))
+            {
+                name = name[..^6];
+            }
+
+            name = name.ToLowerInvariant();
+
+            return string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "{0,-7} {1,-6} ({2,2}) - Flavors [{3,3}, {4,3}, {5,3}, {6,3}, {7,3}] Smoothness: {8,2}, Rarity: {9,2}",
+                name,
+                MainFlavor,
+                MainFlavorValue,
+                Spicy,
+                Dry,
+                Sweet,
+                Bitter,
+                Sour,
+                Smoothness,
+                Rarity);
+        }
+
     }
 }

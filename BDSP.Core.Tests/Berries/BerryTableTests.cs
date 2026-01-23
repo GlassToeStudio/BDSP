@@ -187,6 +187,14 @@ namespace BDSP.Core.Tests.Berries
             Assert.Equal(40, berry.Sour);
         }
 
+        [Fact]
+        public void ToString_FormatAligned()
+        {
+            ref readonly var ganlon = ref BerryTable.Get(new BerryId(18));
+            var expected = "ganlon  Dry    (30) - Flavors [  0,  30,  10,  30,   0] Smoothness: 40, Rarity:  9";
+            Assert.Equal(expected, ganlon.ToString());
+        }
+
         private static (Flavor Flavor, byte Value) GetMainFlavor((Flavor Flavor, byte Value)[] values)
         {
             var bestFlavor = Flavor.Spicy;
