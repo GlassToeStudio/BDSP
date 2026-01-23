@@ -28,6 +28,11 @@ namespace BDSP.Core.Tests.Berries
                 Assert.Equal(full.Bitter, core.Bitter);
                 Assert.Equal(full.Sour, core.Sour);
                 Assert.Equal(full.Smoothness, core.Smoothness);
+                Assert.Equal((sbyte)(full.Spicy - full.Dry), core.WeakSpicy);
+                Assert.Equal((sbyte)(full.Dry - full.Sweet), core.WeakDry);
+                Assert.Equal((sbyte)(full.Sweet - full.Bitter), core.WeakSweet);
+                Assert.Equal((sbyte)(full.Bitter - full.Sour), core.WeakBitter);
+                Assert.Equal((sbyte)(full.Sour - full.Spicy), core.WeakSour);
             }
         }
 
@@ -97,6 +102,11 @@ namespace BDSP.Core.Tests.Berries
             Assert.Equal(30, ganlonBase.GetFlavor(Flavor.Bitter));
             Assert.Equal(0, ganlonBase.GetFlavor(Flavor.Sour));
             Assert.Equal(0, ganlonBase.GetFlavor(Flavor.None));
+            Assert.Equal(-30, ganlonBase.GetWeakenedFlavor(Flavor.Spicy));
+            Assert.Equal(20, ganlonBase.GetWeakenedFlavor(Flavor.Dry));
+            Assert.Equal(-20, ganlonBase.GetWeakenedFlavor(Flavor.Sweet));
+            Assert.Equal(30, ganlonBase.GetWeakenedFlavor(Flavor.Bitter));
+            Assert.Equal(0, ganlonBase.GetWeakenedFlavor(Flavor.Sour));
         }
 
         [Fact]

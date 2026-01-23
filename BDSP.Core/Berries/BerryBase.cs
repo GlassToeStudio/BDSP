@@ -3,7 +3,8 @@ using System.Runtime.CompilerServices;
 namespace BDSP.Core.Berries
 {
     /// <summary>
-    /// Minimal berry data required for cooking (flavors + smoothness).
+    /// Minimal berry data required for cooking (flavors + smoothness),
+    /// plus precomputed weakened flavor values.
     /// </summary>
     public readonly struct BerryBase
     {
@@ -21,6 +22,16 @@ namespace BDSP.Core.Berries
         public readonly byte Sour;
         /// <summary>Smoothness value.</summary>
         public readonly byte Smoothness;
+        /// <summary>Spicy value after per-berry weakness subtraction.</summary>
+        public readonly sbyte WeakSpicy;
+        /// <summary>Dry value after per-berry weakness subtraction.</summary>
+        public readonly sbyte WeakDry;
+        /// <summary>Sweet value after per-berry weakness subtraction.</summary>
+        public readonly sbyte WeakSweet;
+        /// <summary>Bitter value after per-berry weakness subtraction.</summary>
+        public readonly sbyte WeakBitter;
+        /// <summary>Sour value after per-berry weakness subtraction.</summary>
+        public readonly sbyte WeakSour;
 
         public BerryBase(
             BerryId id,
@@ -29,7 +40,12 @@ namespace BDSP.Core.Berries
             byte sweet,
             byte bitter,
             byte sour,
-            byte smoothness)
+            byte smoothness,
+            sbyte weakSpicy,
+            sbyte weakDry,
+            sbyte weakSweet,
+            sbyte weakBitter,
+            sbyte weakSour)
         {
             Id = id;
             Spicy = spicy;
@@ -38,6 +54,11 @@ namespace BDSP.Core.Berries
             Bitter = bitter;
             Sour = sour;
             Smoothness = smoothness;
+            WeakSpicy = weakSpicy;
+            WeakDry = weakDry;
+            WeakSweet = weakSweet;
+            WeakBitter = weakBitter;
+            WeakSour = weakSour;
         }
 
         /// <summary>
@@ -53,6 +74,23 @@ namespace BDSP.Core.Berries
                 Flavor.Sweet => Sweet,
                 Flavor.Bitter => Bitter,
                 Flavor.Sour => Sour,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        /// Returns the weakened value for the given flavor.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public sbyte GetWeakenedFlavor(Flavor flavor)
+        {
+            return flavor switch
+            {
+                Flavor.Spicy => WeakSpicy,
+                Flavor.Dry => WeakDry,
+                Flavor.Sweet => WeakSweet,
+                Flavor.Bitter => WeakBitter,
+                Flavor.Sour => WeakSour,
                 _ => 0
             };
         }

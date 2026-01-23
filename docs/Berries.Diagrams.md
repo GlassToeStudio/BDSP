@@ -24,6 +24,11 @@ classDiagram
         +byte Bitter
         +byte Sour
         +byte Smoothness
+        +sbyte WeakSpicy
+        +sbyte WeakDry
+        +sbyte WeakSweet
+        +sbyte WeakBitter
+        +sbyte WeakSour
     }
 
     class Berry {

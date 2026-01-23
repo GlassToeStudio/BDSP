@@ -11,7 +11,7 @@ Enum with five flavors plus None. Used by berries and queries.
 Lightweight identifier. The numeric value is an index into berry tables.
 
 ### BerryBase
-Minimal data used by cooking (flavors + smoothness).
+Minimal data used by cooking (flavors + smoothness), plus precomputed weakened values.
 
 ### Berry
 Full metadata used for filtering, sorting, pruning, and display.
@@ -59,11 +59,24 @@ var count = BerryQuery.Execute(BerryTable.All, buffer, options, sortKeys);
 var results = buffer[..count];
 ```
 
+### Sort only
+```csharp
+var sortKeys = new[]
+{
+    new BerrySortKey(BerrySortField.MainFlavorValue, descending: true),
+    new BerrySortKey(BerrySortField.Smoothness)
+};
+Span<Berry> buffer = stackalloc Berry[BerryTable.Count];
+var count = BerryQuery.Execute(BerryTable.All, buffer, default, sortKeys);
+var results = buffer[..count];
+```
+
 ### Base table for cooking
 ```csharp
 ref readonly var baseBerry = ref BerryTable.GetBase(new BerryId(18)); // Ganlon
 var spicy = baseBerry.Spicy;
 var smoothness = baseBerry.Smoothness;
+var weakDry = baseBerry.WeakDry;
 ```
 
 ## Capabilities Checklist
@@ -76,3 +89,4 @@ var smoothness = baseBerry.Smoothness;
 - Main/secondary flavor filtering.
 - Multi-key sorting on all berry attributes and name.
 - Comprehensive unit tests for table integrity, derived values, name mapping, filtering, and sorting.
+- Precomputed weakened flavor values on `BerryBase` for faster cooking.

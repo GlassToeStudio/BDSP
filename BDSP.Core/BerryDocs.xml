@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <doc>
   <members>
     <member name="T:BerryIdTable">
@@ -34,75 +34,74 @@ ID | Name            | ID | Name            | ID | Name
     <member name="T:FullBerryTable">
       <para>
 <code>
-ID  Name    Flavor  Smoothness  Spicy    Dry   Sweet  Bitter Sour      Rarity
---  ------  ------  ----------  ---------------------------------     ------
-0   aguav   Bitter  25          [  0,     0,     0,    15,     0]        3
-1   apicot  Dry     40          [ 10,    30,     0,     0,    30]        9
-2   aspear  Sour    25          [  0,     0,     0,     0,    10]        3
-3   babiri  Spicy   35          [ 25,    10,     0,     0,     0]        7
-4   belue   Sour    35          [ 10,     0,     0,     0,    30]        7
-5   bluk    Dry     20          [  0,    10,    10,     0,     0]        1
-6   charti  Dry     35          [ 10,    20,     0,     0,     0]        7
-7   cheri   Spicy   25          [ 10,     0,     0,     0,     0]        3
-8   chesto  Dry     25          [  0,    10,     0,     0,     0]        3
-9   chilan  Dry     35          [  0,    25,    10,     0,     0]        7
-10  chople  Spicy   30          [ 15,     0,     0,    10,     0]        5
-11  coba    Bitter  30          [  0,    10,     0,    15,     0]        5
-12  colbur  Sour    35          [  0,     0,     0,    10,    20]        7
-13  cornn   Dry     30          [  0,    20,    10,     0,     0]        5
-14  custap  Sweet   60          [  0,     0,    40,    10,     0]       15
-15  durin   Bitter  35          [  0,     0,     0,    30,    10]        7
-16  enigma  Spicy   60          [ 40,    10,     0,     0,     0]       15
-17  figy    Spicy   25          [ 15,     0,     0,     0,     0]        3
-18  ganlon  Dry     40          [  0,    30,    10,    30,     0]        9
-19  grepa   Dry     20          [  0,    10,    10,     0,    10]        1
-20  haban   Bitter  35          [  0,     0,    10,    20,     0]        7
-21  hondew  Spicy   20          [ 10,    10,     0,    10,     0]        1
-22  iapapa  Sour    25          [  0,     0,     0,     0,    15]        3
-23  jaboca  Bitter  60          [  0,     0,     0,    40,    10]       15
-24  kasib   Sweet   35          [  0,    10,    20,     0,     0]        7
-25  kebia   Dry     30          [  0,    15,     0,     0,    10]        5
-26  kelpsy  Dry     20          [  0,    10,     0,    10,    10]        1
-27  lansat  Spicy   50          [ 30,    10,    30,    10,    30]       11
-28  leppa   Spicy   20          [ 10,     0,    10,    10,    10]        1
-29  liechi  Spicy   40          [ 30,    10,    30,     0,     0]        9
-30  lum     Spicy   20          [ 10,    10,    10,    10,     0]        1
-31  mago    Sweet   25          [  0,     0,    15,     0,     0]        3
-32  magost  Sweet   30          [  0,     0,    20,    10,     0]        5
-33  micle   Dry     60          [  0,    40,    10,     0,     0]       15
-34  nanab   Sweet   20          [  0,     0,    10,    10,     0]        1
-35  nomel   Sour    30          [ 10,     0,     0,     0,    20]        5
-36  occa    Spicy   30          [ 15,     0,    10,     0,     0]        5
-37  oran    Spicy   20          [ 10,    10,     0,    10,    10]        1
-38  pamtre  Dry     35          [  0,    30,    10,     0,     0]        7
-39  passho  Dry     30          [  0,    15,     0,    10,     0]        5
-40  payapa  Sour    30          [  0,     0,    10,     0,    15]        5
-41  pecha   Sweet   25          [  0,     0,    10,     0,     0]        3
-42  persim  Spicy   20          [ 10,    10,    10,     0,    10]        1
-43  petaya  Spicy   40          [ 30,     0,     0,    30,    10]        9
-44  pinap   Spicy   20          [ 10,     0,     0,     0,    10]        1
-45  pomeg   Spicy   20          [ 10,     0,    10,    10,     0]        1
-46  qualot  Spicy   20          [ 10,     0,    10,     0,    10]        1
-47  rabuta  Bitter  30          [  0,     0,     0,    20,    10]        5
-48  rawst   Bitter  25          [  0,     0,     0,    10,     0]        3
-49  razz    Spicy   20          [ 10,    10,     0,     0,     0]        1
-50  rindo   Bitter  30          [ 10,     0,     0,    15,     0]        5
-51  roseli  Sweet   35          [  0,     0,    25,    10,     0]        7
-52  rowap   Sour    60          [ 10,     0,     0,     0,    40]       15
-53  salac   Sweet   40          [  0,     0,    30,    10,    30]        9
-54  shuca   Sweet   30          [ 10,     0,    15,     0,     0]        5
-55  sitrus  Dry     20          [  0,    10,    10,    10,    10]        1
-56  spelon  Spicy   35          [ 30,    10,     0,     0,     0]        7
-57  starf   Spicy   50          [ 30,    10,    30,    10,    30]       11
-58  tamato  Spicy   30          [ 20,    10,     0,     0,     0]        5
-59  tanga   Spicy   35          [ 20,     0,     0,     0,    10]        7
-60  wacan   Sweet   30          [  0,     0,    15,     0,    10]        5
-61  watmel  Sweet   35          [  0,     0,    30,    10,     0]        7
-62  wepear  Bitter  20          [  0,     0,     0,    10,    10]        1
-63  wiki    Dry     25          [  0,    15,     0,     0,     0]        3
-64  yache   Sour    30          [  0,    10,     0,     0,    15]        5
-</code>
-      </para>
+ID  Name     Main         Secondary    Spicy Dry Sweet Bitter Sour  Smooth   Rarity  Flavors
+--  -------  -----------  -----------  ---------------------------  -------  ------  -------
+ 0  aguav    Bitter (15)       -       [   0,   0,   0,  15,   0 ]       25       3        1
+ 1  apicot   Dry    (30)  Sour   (30)  [  10,  30,   0,   0,  30 ]       40       9        3
+ 2  aspear   Sour   (10)       -       [   0,   0,   0,   0,  10 ]       25       3        1
+ 3  babiri   Spicy  (25)  Dry    (10)  [  25,  10,   0,   0,   0 ]       35       7        2
+ 4  belue    Sour   (30)  Spicy  (10)  [  10,   0,   0,   0,  30 ]       35       7        2
+ 5  bluk     Dry    (10)  Sweet  (10)  [   0,  10,  10,   0,   0 ]       20       1        2
+ 6  charti   Dry    (20)  Spicy  (10)  [  10,  20,   0,   0,   0 ]       35       7        2
+ 7  cheri    Spicy  (10)       -       [  10,   0,   0,   0,   0 ]       25       3        1
+ 8  chesto   Dry    (10)       -       [   0,  10,   0,   0,   0 ]       25       3        1
+ 9  chilan   Dry    (25)  Sweet  (10)  [   0,  25,  10,   0,   0 ]       35       7        2
+10  chople   Spicy  (15)  Bitter (10)  [  15,   0,   0,  10,   0 ]       30       5        2
+11  coba     Bitter (15)  Dry    (10)  [   0,  10,   0,  15,   0 ]       30       5        2
+12  colbur   Sour   (20)  Bitter (10)  [   0,   0,   0,  10,  20 ]       35       7        2
+13  cornn    Dry    (20)  Sweet  (10)  [   0,  20,  10,   0,   0 ]       30       5        2
+14  custap   Sweet  (40)  Bitter (10)  [   0,   0,  40,  10,   0 ]       60      15        2
+15  durin    Bitter (30)  Sour   (10)  [   0,   0,   0,  30,  10 ]       35       7        2
+16  enigma   Spicy  (40)  Dry    (10)  [  40,  10,   0,   0,   0 ]       60      15        2
+17  figy     Spicy  (15)       -       [  15,   0,   0,   0,   0 ]       25       3        1
+18  ganlon   Dry    (30)  Bitter (30)  [   0,  30,  10,  30,   0 ]       40       9        3
+19  grepa    Dry    (10)  Sweet  (10)  [   0,  10,  10,   0,  10 ]       20       1        3
+20  haban    Bitter (20)  Sweet  (10)  [   0,   0,  10,  20,   0 ]       35       7        2
+21  hondew   Spicy  (10)  Dry    (10)  [  10,  10,   0,  10,   0 ]       20       1        3
+22  iapapa   Sour   (15)       -       [   0,   0,   0,   0,  15 ]       25       3        1
+23  jaboca   Bitter (40)  Sour   (10)  [   0,   0,   0,  40,  10 ]       60      15        2
+24  kasib    Sweet  (20)  Dry    (10)  [   0,  10,  20,   0,   0 ]       35       7        2
+25  kebia    Dry    (15)  Sour   (10)  [   0,  15,   0,   0,  10 ]       30       5        2
+26  kelpsy   Dry    (10)  Bitter (10)  [   0,  10,   0,  10,  10 ]       20       1        3
+27  lansat   Spicy  (30)  Sweet  (30)  [  30,  10,  30,  10,  30 ]       50      11        5
+28  leppa    Spicy  (10)  Sweet  (10)  [  10,   0,  10,  10,  10 ]       20       1        4
+29  liechi   Spicy  (30)  Sweet  (30)  [  30,  10,  30,   0,   0 ]       40       9        3
+30  lum      Spicy  (10)  Dry    (10)  [  10,  10,  10,  10,   0 ]       20       1        4
+31  mago     Sweet  (15)       -       [   0,   0,  15,   0,   0 ]       25       3        1
+32  magost   Sweet  (20)  Bitter (10)  [   0,   0,  20,  10,   0 ]       30       5        2
+33  micle    Dry    (40)  Sweet  (10)  [   0,  40,  10,   0,   0 ]       60      15        2
+34  nanab    Sweet  (10)  Bitter (10)  [   0,   0,  10,  10,   0 ]       20       1        2
+35  nomel    Sour   (20)  Spicy  (10)  [  10,   0,   0,   0,  20 ]       30       5        2
+36  occa     Spicy  (15)  Sweet  (10)  [  15,   0,  10,   0,   0 ]       30       5        2
+37  oran     Spicy  (10)  Dry    (10)  [  10,  10,   0,  10,  10 ]       20       1        4
+38  pamtre   Dry    (30)  Sweet  (10)  [   0,  30,  10,   0,   0 ]       35       7        2
+39  passho   Dry    (15)  Bitter (10)  [   0,  15,   0,  10,   0 ]       30       5        2
+40  payapa   Sour   (15)  Sweet  (10)  [   0,   0,  10,   0,  15 ]       30       5        2
+41  pecha    Sweet  (10)       -       [   0,   0,  10,   0,   0 ]       25       3        1
+42  persim   Spicy  (10)  Dry    (10)  [  10,  10,  10,   0,  10 ]       20       1        4
+43  petaya   Spicy  (30)  Bitter (30)  [  30,   0,   0,  30,  10 ]       40       9        3
+44  pinap    Spicy  (10)  Sour   (10)  [  10,   0,   0,   0,  10 ]       20       1        2
+45  pomeg    Spicy  (10)  Sweet  (10)  [  10,   0,  10,  10,   0 ]       20       1        3
+46  qualot   Spicy  (10)  Sweet  (10)  [  10,   0,  10,   0,  10 ]       20       1        3
+47  rabuta   Bitter (20)  Sour   (10)  [   0,   0,   0,  20,  10 ]       30       5        2
+48  rawst    Bitter (10)       -       [   0,   0,   0,  10,   0 ]       25       3        1
+49  razz     Spicy  (10)  Dry    (10)  [  10,  10,   0,   0,   0 ]       20       1        2
+50  rindo    Bitter (15)  Spicy  (10)  [  10,   0,   0,  15,   0 ]       30       5        2
+51  roseli   Sweet  (25)  Bitter (10)  [   0,   0,  25,  10,   0 ]       35       7        2
+52  rowap    Sour   (40)  Spicy  (10)  [  10,   0,   0,   0,  40 ]       60      15        2
+53  salac    Sweet  (30)  Sour   (30)  [   0,   0,  30,  10,  30 ]       40       9        3
+54  shuca    Sweet  (15)  Spicy  (10)  [  10,   0,  15,   0,   0 ]       30       5        2
+55  sitrus   Dry    (10)  Sweet  (10)  [   0,  10,  10,  10,  10 ]       20       1        4
+56  spelon   Spicy  (30)  Dry    (10)  [  30,  10,   0,   0,   0 ]       35       7        2
+57  starf    Spicy  (30)  Sweet  (30)  [  30,  10,  30,  10,  30 ]       50      11        5
+58  tamato   Spicy  (20)  Dry    (10)  [  20,  10,   0,   0,   0 ]       30       5        2
+59  tanga    Spicy  (20)  Sour   (10)  [  20,   0,   0,   0,  10 ]       35       7        2
+60  wacan    Sweet  (15)  Sour   (10)  [   0,   0,  15,   0,  10 ]       30       5        2
+61  watmel   Sweet  (30)  Bitter (10)  [   0,   0,  30,  10,   0 ]       35       7        2
+62  wepear   Bitter (10)  Sour   (10)  [   0,   0,   0,  10,  10 ]       20       1        2
+63  wiki     Dry    (15)       -       [   0,  15,   0,   0,   0 ]       25       3        1
+64  yache    Sour   (15)  Dry    (10)  [   0,  10,   0,   0,  15 ]       30       5        2
+</code>     </para>
     </member>
     <member name="T:SmoothToRare">
       <para>
@@ -123,7 +122,7 @@ ID  Name    Flavor  Smoothness  Spicy    Dry   Sweet  Bitter Sour      Rarity
     <member name="T:FlavorPreference">
       <para>
 <code>
-Spicy → Dry → Sweet → Bitter → Sour → Spicy
+Spicy &gt; Dry &gt; Sweet &gt; Bitter &gt; Sour &gt; Spicy
 One dominant flavor (typically 20-40)
 One or more secondary flavors (often 0-15)
 </code>
