@@ -85,7 +85,7 @@ namespace BDSP.Core.Berries
         /// Returns a aligned, human-readable description of the berry.
         /// </summary>
         /// <remarks>
-        /// Example: ganlon  Dry    ( 30) - Flavors [  0,  30,  10,  30,   0] Smoothness: 40 Rarity:  9
+        /// Example: ganlon  Dry    (30) - Flavors [  0,  30,  10,  30,   0] Smoothness: 40, Rarity:  9
         /// </remarks>
         public override string ToString()
         {

@@ -66,7 +66,7 @@ namespace BDSP.Tools
                 Reset,
                 mainColor,
                 flavorName,
-                berry.Smoothness,
+                berry.MainFlavorValue,
                 flavors,
                 SmoothColor,
                 berry.Smoothness,
