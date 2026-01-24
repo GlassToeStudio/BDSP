@@ -53,7 +53,8 @@ namespace BDSP.Core.Poffins.Search
             int end;
             GetComboRange(options.Choose, out start, out end);
 
-            if (!options.UseParallel)
+            bool shouldParallel = options.UseParallel && ShouldParallelForAll(options.Choose);
+            if (!shouldParallel)
             {
                 for (int i = start; i < end; i++)
                 {
@@ -136,7 +137,8 @@ namespace BDSP.Core.Poffins.Search
                 ids[i] = buffer[i].Id;
             }
 
-            if (!options.UseParallel)
+            bool shouldParallel = options.UseParallel && ShouldParallelForSubset(options.Choose, count);
+            if (!shouldParallel)
             {
                 CookSubsetSequential(ids, in options, in poffinOptions, collector);
                 return;
@@ -467,6 +469,31 @@ namespace BDSP.Core.Poffins.Search
                 parallelOptions.MaxDegreeOfParallelism = options.MaxDegreeOfParallelism.Value;
             }
             return parallelOptions;
+        }
+
+        private static bool ShouldParallelForAll(int choose)
+        {
+            return choose >= 2 && choose <= 4;
+        }
+
+        private static bool ShouldParallelForSubset(int choose, int subsetSize)
+        {
+            if (choose == 2)
+            {
+                return subsetSize >= 30;
+            }
+
+            if (choose == 3)
+            {
+                return subsetSize >= 20;
+            }
+
+            if (choose == 4)
+            {
+                return subsetSize >= 10;
+            }
+
+            return false;
         }
 
         private static int CompareResults(PoffinResult left, PoffinResult right)

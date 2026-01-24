@@ -102,12 +102,12 @@ Cooking rules implementation.
 - `Cook(PoffinComboBase combo, int cookTimeSeconds, int spills, int burns, int amityBonus = 9)`
 
 ### PoffinComboBase / PoffinComboTable
-Precomputed sums for all unique 2-4 berry combinations.
+Precomputed sums for all unique 2-4 berry combinations (full-berry fast path).
 - `PoffinComboTable.All`: `ReadOnlySpan<PoffinComboBase>`
 - `PoffinComboTable.Count`: total combo count
 
 ### PoffinComboBuilder
-Subset precompute helper for UI workflows.
+Subset precompute helper for advanced workflows.
 - `PoffinComboBuilder.CreateFromSubset(ReadOnlySpan<BerryId>)`
 ### PoffinComboEnumerator
 Non-allocating enumeration of 2-4 berry combinations from an arbitrary subset.
@@ -115,15 +115,20 @@ Non-allocating enumeration of 2-4 berry combinations from an arbitrary subset.
 
 ### PoffinSearch (Unified Entry Point)
 Same call shape whether the user filtered berries or not. The engine automatically
-switches between precomputed combo tables and subset enumeration.
+switches between precomputed combo tables and subset enumeration, and it decides
+whether to run in parallel based on subset size and choose count.
 
 Namespace:
 - `BDSP.Core.Poffins.Search` (PoffinSearch, PoffinSearchOptions, TopK)
 - `BDSP.Core.Poffins.Filters` (PoffinFilterOptions)
 
-When to precompute a subset:
-- One-off search → direct subset enumeration is usually fine.
-- Repeated searches over the same subset → use `PoffinComboBuilder.CreateFromSubset(...)`.
+Automatic strategy (current thresholds):
+- All berries: use PoffinComboTable (precomputed).
+- Subsets: no subset precompute in PoffinSearch (we do not track reuse yet).
+- Parallel thresholds for subsets (when UseParallel = true):
+  - Choose=2: parallel if subset size >= 30
+  - Choose=3: parallel if subset size >= 20
+  - Choose=4: parallel if subset size >= 10
 
 ```csharp
 var berryFilter = new BerryFilterOptions(minRarity: 3, maxRarity: 7);
@@ -153,7 +158,7 @@ var berryFilter = new BerryFilterOptions(
 var options = new PoffinSearchOptions(
     choose: 2,
     cookTimeSeconds: 60,
-    useParallel: false);
+    useParallel: true);
 
 var results = PoffinSearch.Run(berryFilter, options, topK: 50);
 ```
@@ -227,4 +232,5 @@ PoffinComboEnumerator.ForEach(selected, 2, combo =>
 - Precomputed weakened flavor values on `BerryBase` for faster cooking.
 - Precomputed 2-4 berry combo bases (`PoffinComboTable`) for high-volume cooking.
 - Non-allocating subset combo enumeration (`PoffinComboEnumerator`) for UI workflows.
+
 

@@ -99,7 +99,7 @@ This formula applies only when all Berries used in the recipe are unique.
 
 ### **Optimization: Precomputed Combo Bases**
 
-For high-volume search (millions of recipes), precompute unique 2–4 berry combinations into summed base values.
+For high-volume search (millions of recipes), precompute unique 2-4 berry combinations into summed base values.
 This avoids per-berry summation inside the hot cooking loop.
 
 - Source: `PoffinComboTable.All`
@@ -112,12 +112,12 @@ For UI workflows where users first filter berries and then cook only from that s
 use the non-allocating enumerator:
 
 - `PoffinComboEnumerator.ForEach(source, choose, action)`
-- Supports 2–4 berry combinations in deterministic order (i &lt; j &lt; k &lt; l).
+- Supports 2-4 berry combinations in deterministic order (i &lt; j &lt; k &lt; l).
 - Uses stackalloc buffers; the span is only valid for the duration of the callback.
 
 ### **Benchmarks**
 
-Benchmarks for cooking all 2–4 berry combinations via both approaches live in `BDSP.Core.Benchmarks`.
+Benchmarks for cooking all 2-4 berry combinations via both approaches live in `BDSP.Core.Benchmarks`.
 Run:
 
 ```powershell
@@ -132,6 +132,11 @@ Use `PoffinSearch.Run(...)` for a consistent call shape. It automatically select
 - precomputed combo tables when the berry filter is empty (all berries), or
 - subset enumeration when the user filters berries.
 
+Parallel thresholds for subsets (when `useParallel = true`):
+- Choose=2: parallel if subset size >= 30
+- Choose=3: parallel if subset size >= 20
+- Choose=4: parallel if subset size >= 10
+
 This keeps UI code simple while still using the fastest path.
 
 ### **Implementation Layout**
@@ -139,16 +144,13 @@ This keeps UI code simple while still using the fastest path.
 - `BDSP.Core/Poffins/Filters`: poffin filters
 - `BDSP.Core/Poffins/Search`: unified search API + TopK
 
-### **When to Precompute Subset Combos**
-Typical approach:
-1. Start with direct subset enumeration (no precompute) for one-off searches.
-2. Precompute subset combos when:
-   - the same subset will be searched multiple times (different scoring/filters), or
-   - the subset is large and you expect long-running searches.
+### **Subset Precompute (Advanced)**
 
-Use `PoffinComboBuilder.CreateFromSubset(...)` to build a subset combo table.
+`PoffinSearch` does not precompute subsets by default because we do not track reuse yet.
+Use `PoffinComboBuilder.CreateFromSubset(...)` only if you explicitly reuse the same
+subset in multiple runs or want to manage caching yourself.
 
-To find the crossover point for your machine, run:
+To measure your local crossover points, run:
 ```powershell
 dotnet run --project BDSP.Core.Benchmarks -c Release -- --filter *SubsetCookingBenchmarks*
 ```
@@ -164,7 +166,7 @@ var results = PoffinSearch.Run(default, options, topK: 200);
 Subset-driven search (UI workflow):
 ```csharp
 var berryFilter = new BerryFilterOptions(minRarity: 1, maxRarity: 5);
-var options = new PoffinSearchOptions(choose: 2, cookTimeSeconds: 60, useParallel: false);
+var options = new PoffinSearchOptions(choose: 2, cookTimeSeconds: 60, useParallel: true);
 var results = PoffinSearch.Run(berryFilter, options, topK: 50);
 ```
 
@@ -439,3 +441,5 @@ The number of sparkles shown corresponds to a specific range of sheen values, wh
 #### **Special Case: Pokémon Box**
 
 In **Pokémon Box Ruby & Sapphire**, while the exact sheen is not viewable, the condition stars for a Pokémon will flash if its sheen is maxed out at 255.
+
+

@@ -17,7 +17,7 @@ namespace BDSP.Core.Poffins.Search
         public readonly int Burns;
         /// <summary>Amity bonus reduction (BDSP cap is 9).</summary>
         public readonly int AmityBonus;
-        /// <summary>When true, uses Parallel.For to process combos.</summary>
+        /// <summary>When true, allows internal parallelization based on measured thresholds.</summary>
         public readonly bool UseParallel;
         /// <summary>Optional parallelism limit (null = default).</summary>
         public readonly int? MaxDegreeOfParallelism;
