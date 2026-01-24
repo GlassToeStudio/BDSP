@@ -1,4 +1,4 @@
-﻿# Berry and Poffin System Architecture
+﻿# Berry & Poffin System Architecture
 
 ## Overview
 
@@ -377,6 +377,41 @@ flowchart LR
     style E fill:#e0f2f1,stroke:#00897b,stroke-width:2px
     style F fill:#fff9c4,stroke:#f9a825,stroke-width:2px
 ```
+
+---
+
+## Class Reference Table
+
+### Berry System Classes
+
+| Class | Type | Key Members | Description |
+|-------|------|-------------|-------------|
+| **Flavor** | Enumeration | Spicy, Dry, Sweet, Bitter, Sour, None | Flavor types for berries and poffins |
+| **BerryId** | Value Type | `ushort Value` | Unique identifier for berries |
+| **BerryBase** | Data Model | `BerryId Id`<br/>`byte Spicy, Dry, Sweet, Bitter, Sour`<br/>`byte Smoothness`<br/>`sbyte WeakSpicy, WeakDry, WeakSweet, WeakBitter, WeakSour` | Raw berry data with weak flavor values used in cooking calculations |
+| **Berry** | Computed Model | `BerryId Id`<br/>`byte Spicy, Dry, Sweet, Bitter, Sour, Smoothness, Rarity`<br/>`Flavor MainFlavor, SecondaryFlavor`<br/>`byte MainFlavorValue, SecondaryFlavorValue, NumFlavors` | Processed berry data with computed flavor properties |
+| **BerryTable** | Repository | `const int Count`<br/>`ReadOnlySpan<Berry> All`<br/>`ReadOnlySpan<BerryBase> BaseAll`<br/>`Berry Get(BerryId)`<br/>`BerryBase GetBase(BerryId)` | Central repository providing access to all berry data |
+| **BerryNames** | Utility | `string GetName(BerryId)` | Localization utility for berry names |
+| **BerryFilterOptions** | Filter Spec | Min/Max ranges for all flavor attributes<br/>`bool RequireMainFlavor, RequireSecondaryFlavor`<br/>`Flavor MainFlavor, SecondaryFlavor`<br/>`byte RequiredFlavorMask, ExcludedFlavorMask` | Comprehensive filtering criteria for berry queries |
+| **BerrySortField** | Enumeration | Id, Spicy, Dry, Sweet, Bitter, Sour, Smoothness, Rarity, MainFlavor, SecondaryFlavor, MainFlavorValue, SecondaryFlavorValue, NumFlavors, Name | Available fields for sorting berries |
+| **BerrySortKey** | Struct | `BerrySortField Field`<br/>`bool Descending` | Sorting specification with field and direction |
+| **BerrySorter** | Algorithm | `Sort(Span<Berry>, int, ReadOnlySpan<BerrySortKey>)` | Sorting engine for berry collections |
+| **BerryQuery** | Service | `Execute(ReadOnlySpan<Berry>, Span<Berry>, BerryFilterOptions, ReadOnlySpan<BerrySortKey>) → int` | Query service for filtering and sorting berries |
+
+### Poffin System Classes
+
+| Class | Type | Key Members | Description |
+|-------|------|-------------|-------------|
+| **PoffinComboEnumerator** | Generator | `ForEach(ReadOnlySpan<BerryId>, int choose, Action<ReadOnlySpan<BerryId>>)` | Enumerates berry combinations for cooking |
+| **PoffinComboBase** | Precomputed | `short WeakSpicySum, WeakDrySum, WeakSweetSum, WeakBitterSum, WeakSourSum`<br/>`ushort SmoothnessSum`<br/>`byte Count` | Precomputed sums for berry combinations |
+| **PoffinComboTable** | Cache | `int Count`<br/>`ReadOnlySpan<PoffinComboBase> All` | Precomputed combination cache for all berries |
+| **PoffinCooker** | Engine | `Cook(ReadOnlySpan<BerryBase>, int cookTime, int spills, int burns, int amityBonus) → Poffin`<br/>`Cook(PoffinComboBase, ...) → Poffin` | Core cooking engine with configurable parameters |
+| **Poffin** | Product | `byte Spicy, Dry, Sweet, Bitter, Sour, Smoothness`<br/>`bool IsFoul`<br/>`byte Level, SecondLevel`<br/>`Flavor MainFlavor, SecondaryFlavor`<br/>`byte NumFlavors` | Cooked poffin with quality metrics |
+| **PoffinSearchOptions** | Configuration | `int Choose, CookTimeSeconds, Spills, Burns, AmityBonus`<br/>`bool UseParallel`<br/>`int MaxDegreeOfParallelism`<br/>`bool UseComboTableWhenAllBerries` | Search configuration with cooking and performance parameters |
+| **PoffinFilterOptions** | Filter Spec | `int MinSpicy, MaxSpicy`<br/>`int MinSmoothness, MaxSmoothness`<br/>`int MinLevel, MaxLevel` | Filtering criteria for poffin results |
+| **TopK** | Data Structure | `int Count`<br/>`TryAdd(T item, int score)` | Efficient data structure for maintaining top-ranked results |
+| **PoffinResult** | Result | `Poffin Poffin`<br/>`int BerryCount, Score` | Search result containing poffin and metadata |
+| **PoffinSearch** | Orchestrator | `Run(BerryFilterOptions, PoffinSearchOptions, int topK, PoffinFilterOptions) → PoffinResult[]` | Main orchestrator for poffin search operations |
 
 ---
 

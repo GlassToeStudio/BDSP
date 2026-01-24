@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berry & Poffin System Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        
+        .system-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+        
+        .system-section {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 30px;
+            border: 3px solid #e2e8f0;
+        }
+        
+        .section-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .icon {
+            font-size: 1.2em;
+        }
+        
+        .classes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        
+        .class-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 5px solid;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .class-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .class-card.enum { border-color: #c62828; }
+        .class-card.value-type { border-color: #3f51b5; }
+        .class-card.data-model { border-color: #7b1fa2; }
+        .class-card.computed { border-color: #0277bd; }
+        .class-card.repository { border-color: #2e7d32; }
+        .class-card.utility { border-color: #e65100; }
+        .class-card.filter { border-color: #c2185b; }
+        .class-card.service { border-color: #00838f; }
+        .class-card.algorithm { border-color: #00695c; }
+        .class-card.generator { border-color: #3949ab; }
+        .class-card.precomputed { border-color: #512da8; }
+        .class-card.cache { border-color: #673ab7; }
+        .class-card.engine { border-color: #d84315; }
+        .class-card.product { border-color: #f57f17; }
+        .class-card.config { border-color: #283593; }
+        .class-card.data-structure { border-color: #00897b; }
+        .class-card.result { border-color: #f9a825; }
+        .class-card.orchestrator { border-color: #00695c; }
+        
+        .class-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+        
+        .class-type {
+            font-size: 0.85em;
+            color: #718096;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .class-members {
+            font-size: 0.9em;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+        
+        .class-description {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.9em;
+            color: #718096;
+            font-style: italic;
+        }
+        
+        .bridge-section {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border: 3px dashed #f57c00;
+            text-align: center;
+            padding: 30px;
+            border-radius: 15px;
+        }
+        
+        .bridge-title {
+            font-size: 1.5em;
+            color: #e65100;
+            margin-bottom: 15px;
+        }
+        
+        .bridge-connections {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .bridge-item {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            border: 2px solid #f57c00;
+            font-weight: bold;
+            color: #e65100;
+        }
+        
+        .arrow {
+            font-size: 2em;
+            color: #f57c00;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .legend {
+            margin-top: 40px;
+            padding: 25px;
+            background: #edf2f7;
+            border-radius: 12px;
+        }
+        
+        .legend-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+        
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            border: 2px solid;
+        }
+        
+        .legend-label {
+            font-size: 0.9em;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🫐 Berry & Poffin System Architecture</h1>
+        <p class="subtitle">Interactive Class Diagram - Hover for details</p>
+        
+        <div class="system-container">
+            <!-- Berry System -->
+            <div class="system-section">
+                <div class="section-title">
+                    <span class="icon">🫐</span>
+                    Berry System
+                </div>
+                <div class="classes-grid">
+                    <div class="class-card enum">
+                        <div class="class-name">Flavor</div>
+                        <div class="class-type">Enumeration</div>
+                        <div class="class-members">
+                            • Spicy<br>
+                            • Dry<br>
+                            • Sweet<br>
+                            • Bitter<br>
+                            • Sour<br>
+                            • None
+                        </div>
+                        <div class="class-description">Flavor types for berries and poffins</div>
+                    </div>
+                    
+                    <div class="class-card value-type">
+                        <div class="class-name">BerryId</div>
+                        <div class="class-type">Value Type</div>
+                        <div class="class-members">
+                            + ushort Value
+                        </div>
+                        <div class="class-description">Unique identifier for berries</div>
+                    </div>
+                    
+                    <div class="class-card data-model">
+                        <div class="class-name">BerryBase</div>
+                        <div class="class-type">Data Model</div>
+                        <div class="class-members">
+                            + BerryId Id<br>
+                            + byte Spicy, Dry, Sweet, Bitter, Sour<br>
+                            + byte Smoothness<br>
+                            + sbyte WeakSpicy, WeakDry, WeakSweet<br>
+                            + sbyte WeakBitter, WeakSour
+                        </div>
+                        <div class="class-description">Raw berry data with weak flavor values for cooking</div>
+                    </div>
+                    
+                    <div class="class-card computed">
+                        <div class="class-name">Berry</div>
+                        <div class="class-type">Computed Model</div>
+                        <div class="class-members">
+                            + BerryId Id<br>
+                            + byte Spicy, Dry, Sweet, Bitter, Sour<br>
+                            + byte Smoothness, Rarity<br>
+                            + Flavor MainFlavor, SecondaryFlavor<br>
+                            + byte MainFlavorValue, SecondaryFlavorValue<br>
+                            + byte NumFlavors
+                        </div>
+                        <div class="class-description">Processed berry with computed flavor properties</div>
+                    </div>
+                    
+                    <div class="class-card repository">
+                        <div class="class-name">BerryTable</div>
+                        <div class="class-type">Repository</div>
+                        <div class="class-members">
+                            + const int Count<br>
+                            + ReadOnlySpan&lt;Berry&gt; All<br>
+                            + ReadOnlySpan&lt;BerryBase&gt; BaseAll<br>
+                            + Berry Get(BerryId)<br>
+                            + BerryBase GetBase(BerryId)
+                        </div>
+                        <div class="class-description">Central repository for all berry data</div>
+                    </div>
+                    
+                    <div class="class-card utility">
+                        <div class="class-name">BerryNames</div>
+                        <div class="class-type">Utility</div>
+                        <div class="class-members">
+                            + string GetName(BerryId)
+                        </div>
+                        <div class="class-description">Localization utility for berry names</div>
+                    </div>
+                    
+                    <div class="class-card filter">
+                        <div class="class-name">BerryFilterOptions</div>
+                        <div class="class-type">Filter Specification</div>
+                        <div class="class-members">
+                            + Min/Max ranges for all flavors<br>
+                            + bool RequireMainFlavor, RequireSecondaryFlavor<br>
+                            + Flavor MainFlavor, SecondaryFlavor<br>
+                            + byte RequiredFlavorMask, ExcludedFlavorMask
+                        </div>
+                        <div class="class-description">Comprehensive berry filtering criteria</div>
+                    </div>
+                    
+                    <div class="class-card enum">
+                        <div class="class-name">BerrySortField</div>
+                        <div class="class-type">Enumeration</div>
+                        <div class="class-members">
+                            Id, Spicy, Dry, Sweet, Bitter, Sour,<br>
+                            Smoothness, Rarity, MainFlavor,<br>
+                            SecondaryFlavor, MainFlavorValue,<br>
+                            SecondaryFlavorValue, NumFlavors, Name
+                        </div>
+                        <div class="class-description">Available fields for berry sorting</div>
+                    </div>
+                    
+                    <div class="class-card value-type">
+                        <div class="class-name">BerrySortKey</div>
+                        <div class="class-type">Struct</div>
+                        <div class="class-members">
+                            + BerrySortField Field<br>
+                            + bool Descending
+                        </div>
+                        <div class="class-description">Sorting specification with field and direction</div>
+                    </div>
+                    
+                    <div class="class-card algorithm">
+                        <div class="class-name">BerrySorter</div>
+                        <div class="class-type">Algorithm</div>
+                        <div class="class-members">
+                            + Sort(Span&lt;Berry&gt;, int, ReadOnlySpan&lt;BerrySortKey&gt;)
+                        </div>
+                        <div class="class-description">Sorting engine for berry collections</div>
+                    </div>
+                    
+                    <div class="class-card service">
+                        <div class="class-name">BerryQuery</div>
+                        <div class="class-type">Service</div>
+                        <div class="class-members">
+                            + Execute(ReadOnlySpan&lt;Berry&gt;, Span&lt;Berry&gt;,<br>
+                            BerryFilterOptions, ReadOnlySpan&lt;BerrySortKey&gt;)<br>
+                            → int
+                        </div>
+                        <div class="class-description">Query service for filtering and sorting berries</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bridge Section -->
+            <div class="bridge-section">
+                <div class="bridge-title">🔗 Bridge Layer</div>
+                <div class="arrow">↓</div>
+                <div class="bridge-connections">
+                    <div class="bridge-item">BerryId → PoffinComboEnumerator</div>
+                    <div class="bridge-item">BerryBase → PoffinCooker</div>
+                </div>
+            </div>
+            
+            <!-- Poffin System -->
+            <div class="system-section">
+                <div class="section-title">
+                    <span class="icon">🍪</span>
+                    Poffin System
+                </div>
+                <div class="classes-grid">
+                    <div class="class-card generator">
+                        <div class="class-name">PoffinComboEnumerator</div>
+                        <div class="class-type">Generator</div>
+                        <div class="class-members">
+                            + ForEach(ReadOnlySpan&lt;BerryId&gt;, int choose,<br>
+                            Action&lt;ReadOnlySpan&lt;BerryId&gt;&gt;)
+                        </div>
+                        <div class="class-description">Enumerates berry combinations for cooking</div>
+                    </div>
+                    
+                    <div class="class-card precomputed">
+                        <div class="class-name">PoffinComboBase</div>
+                        <div class="class-type">Precomputed</div>
+                        <div class="class-members">
+                            + short WeakSpicySum, WeakDrySum<br>
+                            + short WeakSweetSum, WeakBitterSum, WeakSourSum<br>
+                            + ushort SmoothnessSum<br>
+                            + byte Count
+                        </div>
+                        <div class="class-description">Precomputed sums for berry combinations</div>
+                    </div>
+                    
+                    <div class="class-card cache">
+                        <div class="class-name">PoffinComboTable</div>
+                        <div class="class-type">Cache</div>
+                        <div class="class-members">
+                            + int Count<br>
+                            + ReadOnlySpan&lt;PoffinComboBase&gt; All
+                        </div>
+                        <div class="class-description">Precomputed combination cache for all berries</div>
+                    </div>
+                    
+                    <div class="class-card engine">
+                        <div class="class-name">PoffinCooker</div>
+                        <div class="class-type">Engine</div>
+                        <div class="class-members">
+                            + Cook(ReadOnlySpan&lt;BerryBase&gt;, cookTime,<br>
+                            spills, burns, amityBonus) → Poffin<br>
+                            + Cook(PoffinComboBase, ...) → Poffin
+                        </div>
+                        <div class="class-description">Core cooking engine with configurable parameters</div>
+                    </div>
+                    
+                    <div class="class-card product">
+                        <div class="class-name">Poffin</div>
+                        <div class="class-type">Product</div>
+                        <div class="class-members">
+                            + byte Spicy, Dry, Sweet, Bitter, Sour<br>
+                            + byte Smoothness<br>
+                            + bool IsFoul<br>
+                            + byte Level, SecondLevel<br>
+                            + Flavor MainFlavor, SecondaryFlavor<br>
+                            + byte NumFlavors
+                        </div>
+                        <div class="class-description">Cooked poffin with quality metrics</div>
+                    </div>
+                    
+                    <div class="class-card config">
+                        <div class="class-name">PoffinSearchOptions</div>
+                        <div class="class-type">Configuration</div>
+                        <div class="class-members">
+                            + int Choose, CookTimeSeconds<br>
+                            + int Spills, Burns, AmityBonus<br>
+                            + bool UseParallel<br>
+                            + int MaxDegreeOfParallelism<br>
+                            + bool UseComboTableWhenAllBerries
+                        </div>
+                        <div class="class-description">Search configuration with cooking and performance params</div>
+                    </div>
+                    
+                    <div class="class-card filter">
+                        <div class="class-name">PoffinFilterOptions</div>
+                        <div class="class-type">Filter Specification</div>
+                        <div class="class-members">
+                            + int MinSpicy, MaxSpicy<br>
+                            + int MinSmoothness, MaxSmoothness<br>
+                            + int MinLevel, MaxLevel
+                        </div>
+                        <div class="class-description">Filtering criteria for poffin results</div>
+                    </div>
+                    
+                    <div class="class-card data-structure">
+                        <div class="class-name">TopK</div>
+                        <div class="class-type">Data Structure</div>
+                        <div class="class-members">
+                            + int Count<br>
+                            + TryAdd(T item, int score)
+                        </div>
+                        <div class="class-description">Efficient structure for maintaining top-ranked results</div>
+                    </div>
+                    
+                    <div class="class-card result">
+                        <div class="class-name">PoffinResult</div>
+                        <div class="class-type">Result</div>
+                        <div class="class-members">
+                            + Poffin Poffin<br>
+                            + int BerryCount<br>
+                            + int Score
+                        </div>
+                        <div class="class-description">Search result containing poffin and metadata</div>
+                    </div>
+                    
+                    <div class="class-card orchestrator">
+                        <div class="class-name">PoffinSearch</div>
+                        <div class="class-type">Orchestrator</div>
+                        <div class="class-members">
+                            + Run(BerryFilterOptions, PoffinSearchOptions,<br>
+                            int topK, PoffinFilterOptions)<br>
+                            → PoffinResult[]
+                        </div>
+                        <div class="class-description">Main orchestrator for poffin search operations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-title">Color Legend</div>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffebee; border-color: #c62828;"></div>
+                    <div class="legend-label">Enumeration</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e8eaf6; border-color: #3f51b5;"></div>
+                    <div class="legend-label">Value Type</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f3e5f5; border-color: #7b1fa2;"></div>
+                    <div class="legend-label">Data Model</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e1f5fe; border-color: #0277bd;"></div>
+                    <div class="legend-label">Computed Model</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e8f5e9; border-color: #2e7d32;"></div>
+                    <div class="legend-label">Repository</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fff3e0; border-color: #e65100;"></div>
+                    <div class="legend-label">Utility</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fce4ec; border-color: #c2185b;"></div>
+                    <div class="legend-label">Filter Spec</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e0f7fa; border-color: #00838f;"></div>
+                    <div class="legend-label">Service</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #c5cae9; border-color: #3949ab;"></div>
+                    <div class="legend-label">Generator</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffccbc; border-color: #d84315;"></div>
+                    <div class="legend-label">Engine</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fff9c4; border-color: #f57f17;"></div>
+                    <div class="legend-label">Product</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e0f2f1; border-color: #00897b;"></div>
+                    <div class="legend-label">Data Structure</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
