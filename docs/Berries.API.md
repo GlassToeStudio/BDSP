@@ -125,6 +125,50 @@ var poffinFilter = new PoffinFilterOptions(minLevel: 30, maxSmoothness: 20);
 var results = PoffinSearch.Run(berryFilter, options, topK: 100, poffinFilter);
 ```
 
+Full-berry search (fast path):
+```csharp
+var options = new PoffinSearchOptions(
+    choose: 4,
+    cookTimeSeconds: 40,
+    useParallel: true);
+
+var results = PoffinSearch.Run(default, options, topK: 200);
+```
+
+Subset-driven search (UI path):
+```csharp
+var berryFilter = new BerryFilterOptions(
+    minRarity: 1,
+    maxRarity: 5,
+    requireMainFlavor: true,
+    mainFlavor: Flavor.Spicy);
+
+var options = new PoffinSearchOptions(
+    choose: 2,
+    cookTimeSeconds: 60,
+    useParallel: false);
+
+var results = PoffinSearch.Run(berryFilter, options, topK: 50);
+```
+
+Score tuning (favor main flavor, penalize smoothness):
+```csharp
+var score = new PoffinScoreOptions(
+    levelWeight: 1000,
+    totalFlavorWeight: 2,
+    smoothnessPenalty: 5,
+    preferredMainFlavor: Flavor.Dry,
+    preferredMainFlavorBonus: 250);
+
+var options = new PoffinSearchOptions(
+    choose: 3,
+    cookTimeSeconds: 40,
+    useParallel: true,
+    scoreOptions: score);
+
+var results = PoffinSearch.Run(default, options, topK: 100);
+```
+
 Key types:
 - `PoffinSearchOptions`
 - `PoffinFilterOptions`

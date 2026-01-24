@@ -232,3 +232,27 @@ classDiagram
     PoffinSearch --> PoffinResult
     PoffinSearch --> TopK~T~
 ```
+
+# Poffin Workflow Diagrams
+
+```mermaid
+flowchart TD
+    A[User selects berries] --> B{Berry filter applied?}
+    B -- No --> C[Use PoffinComboTable]
+    B -- Yes --> D[Enumerate subset combos]
+    C --> E[Cook poffins]
+    D --> E[Cook poffins]
+    E --> F[Apply poffin filters]
+    F --> G[Score + TopK]
+    G --> H[Results for UI]
+```
+
+```mermaid
+flowchart TD
+    A["Filters: BerryQuery"] --> B[PoffinSearch.Run]
+    B --> C{All berries?}
+    C -- Yes --> D[PoffinComboTable + Cook]
+    C -- No --> E[PoffinComboEnumerator + Cook]
+    D --> F[TopK ranked results]
+    E --> F
+```

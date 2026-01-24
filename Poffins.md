@@ -139,6 +139,28 @@ This keeps UI code simple while still using the fastest path.
 - `BDSP.Core/Poffins/Filters`: poffin filters
 - `BDSP.Core/Poffins/Search`: unified search API + TopK
 
+### **Usage Examples**
+
+Full-berry search (fastest path):
+```csharp
+var options = new PoffinSearchOptions(choose: 4, cookTimeSeconds: 40, useParallel: true);
+var results = PoffinSearch.Run(default, options, topK: 200);
+```
+
+Subset-driven search (UI workflow):
+```csharp
+var berryFilter = new BerryFilterOptions(minRarity: 1, maxRarity: 5);
+var options = new PoffinSearchOptions(choose: 2, cookTimeSeconds: 60, useParallel: false);
+var results = PoffinSearch.Run(berryFilter, options, topK: 50);
+```
+
+Score tuning (favor smoothness):
+```csharp
+var score = new PoffinScoreOptions(levelWeight: 1000, totalFlavorWeight: 1, smoothnessPenalty: 10);
+var options = new PoffinSearchOptions(choose: 3, cookTimeSeconds: 40, useParallel: true, scoreOptions: score);
+var results = PoffinSearch.Run(default, options, topK: 100);
+```
+
 ### **Poffin Level**
 
 A Poffin's level is simply the value of its single strongest flavor.
