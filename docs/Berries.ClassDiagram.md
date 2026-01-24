@@ -15,10 +15,14 @@ classDiagram
         Sour
         None
     }
+    style Flavor fill:#ffebee,stroke:#c62828,stroke-width:3px
+
     class BerryId {
         <<value type>>
         +ushort Value
     }
+    style BerryId fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+
     class BerryBase {
         <<data model>>
         +BerryId Id
@@ -34,6 +38,8 @@ classDiagram
         +sbyte WeakBitter
         +sbyte WeakSour
     }
+    style BerryBase fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+
     class Berry {
         <<computed model>>
         +BerryId Id
@@ -50,6 +56,8 @@ classDiagram
         +byte SecondaryFlavorValue
         +byte NumFlavors
     }
+    style Berry fill:#e1f5fe,stroke:#0277bd,stroke-width:3px
+
     class BerryTable {
         <<repository>>
         +const int Count
@@ -58,10 +66,14 @@ classDiagram
         +Berry Get(BerryId)
         +BerryBase GetBase(BerryId)
     }
+    style BerryTable fill:#e8f5e9,stroke:#2e7d32,stroke-width:3px
+
     class BerryNames {
         <<utility>>
         +string GetName(BerryId)
     }
+    style BerryNames fill:#fff3e0,stroke:#e65100,stroke-width:2px
+
     class BerryFilterOptions {
         <<filter spec>>
         +int MinSpicy
@@ -91,6 +103,8 @@ classDiagram
         +byte RequiredFlavorMask
         +byte ExcludedFlavorMask
     }
+    style BerryFilterOptions fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
     class BerrySortField {
         <<enumeration>>
         Id
@@ -108,19 +122,26 @@ classDiagram
         NumFlavors
         Name
     }
-    class BerrySortKey {
+    style BerrySortField fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+
+class BerrySortKey {
         <<struct>>
         +BerrySortField Field
         +bool Descending
     }
+    style BerrySortKey fill:#f1f8e9,stroke:#689f38,stroke-width:2px
+
     class BerrySorter {
         <<algorithm>>
         +Sort(Span Berry, int, ReadOnlySpan BerrySortKey)
     }
+    style BerrySorter fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+
     class BerryQuery {
         <<service>>
         +Execute(ReadOnlySpan Berry, Span Berry, BerryFilterOptions, ReadOnlySpan BerrySortKey) int
     }
+    style BerryQuery fill:#e0f7fa,stroke:#00838f,stroke-width:3px
 
     BerryTable --> Berry : provides
     BerryTable --> BerryBase : provides
