@@ -46,25 +46,90 @@ namespace BDSP.Core.Cooking
             }
 #endif
 
-            int spicy = 0;
-            int dry = 0;
-            int sweet = 0;
-            int bitter = 0;
-            int sour = 0;
+            int spicySum = 0;
+            int drySum = 0;
+            int sweetSum = 0;
+            int bitterSum = 0;
+            int sourSum = 0;
             int smoothnessSum = 0;
 
             // Sum pre-weakened flavor values across all berries.
             // BerryBase already stores each flavor with its weakness applied.
-            for (var i = 0; i < count; i++)
+            for (int i = 0; i < count; i++)
             {
-                ref readonly var b = ref berries[i];
-                spicy += b.WeakSpicy;
-                dry += b.WeakDry;
-                sweet += b.WeakSweet;
-                bitter += b.WeakBitter;
-                sour += b.WeakSour;
+                ref readonly BerryBase b = ref berries[i];
+                spicySum += b.WeakSpicy;
+                drySum += b.WeakDry;
+                sweetSum += b.WeakSweet;
+                bitterSum += b.WeakBitter;
+                sourSum += b.WeakSour;
                 smoothnessSum += b.Smoothness;
             }
+
+            return CookFromBase(
+                spicySum,
+                drySum,
+                sweetSum,
+                bitterSum,
+                sourSum,
+                smoothnessSum,
+                count,
+                cookTimeSeconds,
+                spills,
+                burns,
+                amityBonus);
+        }
+
+        /// <summary>
+        /// Cook a poffin from a precomputed combination base.
+        /// </summary>
+        /// <param name="combo">Precomputed sums for a unique berry combo (2–4).</param>
+        /// <param name="cookTimeSeconds">Cook time in seconds.</param>
+        /// <param name="spills">Number of spills during cooking.</param>
+        /// <param name="burns">Number of burns during cooking.</param>
+        /// <param name="amityBonus">Bonus smoothness reduction (BDSP cap is 9).</param>
+        public static Poffin Cook(
+            in PoffinComboBase combo,
+            int cookTimeSeconds,
+            int spills,
+            int burns,
+            int amityBonus = 9)
+        {
+            return CookFromBase(
+                combo.WeakSpicySum,
+                combo.WeakDrySum,
+                combo.WeakSweetSum,
+                combo.WeakBitterSum,
+                combo.WeakSourSum,
+                combo.SmoothnessSum,
+                combo.Count,
+                cookTimeSeconds,
+                spills,
+                burns,
+                amityBonus);
+        }
+
+        /// <summary>
+        /// Shared cooking logic for either per-berry sums or precomputed combo sums.
+        /// </summary>
+        private static Poffin CookFromBase(
+            int spicySum,
+            int drySum,
+            int sweetSum,
+            int bitterSum,
+            int sourSum,
+            int smoothnessSum,
+            int count,
+            int cookTimeSeconds,
+            int spills,
+            int burns,
+            int amityBonus)
+        {
+            int spicy = spicySum;
+            int dry = drySum;
+            int sweet = sweetSum;
+            int bitter = bitterSum;
+            int sour = sourSum;
 
             // Negative flavor penalty: each negative flavor reduces all five flavors by 1.
             int negatives = 0;
@@ -91,7 +156,7 @@ namespace BDSP.Core.Cooking
                 spicy = spicy * modifier / cookTimeSeconds;
                 dry = dry * modifier / cookTimeSeconds;
                 sweet = sweet * modifier / cookTimeSeconds;
-                bitter = bitter  * modifier / cookTimeSeconds;
+                bitter = bitter * modifier / cookTimeSeconds;
                 sour = sour * modifier / cookTimeSeconds;
             }
 
@@ -105,6 +170,7 @@ namespace BDSP.Core.Cooking
                 bitter -= errors;
                 sour -= errors;
             }
+
             // Clamp negatives to 0 and apply the Gen VIII flavor cap of 100.
             spicy = (byte)ClampFlavor(spicy);
             dry = (byte)ClampFlavor(dry);
@@ -125,7 +191,14 @@ namespace BDSP.Core.Cooking
                 smoothness = 0;
             }
 
-            return new Poffin((byte)spicy, (byte)dry, (byte)sweet, (byte)bitter, (byte)sour, (byte)smoothness, isFoul: false);
+            return new Poffin(
+                (byte)spicy,
+                (byte)dry,
+                (byte)sweet,
+                (byte)bitter,
+                (byte)sour,
+                (byte)smoothness,
+                isFoul: false);
         }
 
         /// <summary>
@@ -134,16 +207,16 @@ namespace BDSP.Core.Cooking
         /// <param name="berries">Input berries.</param>
         private static bool HasDuplicateBerries(ReadOnlySpan<BerryBase> berries)
         {
-            var count = berries.Length;
+            int count = berries.Length;
             if (count < 2)
             {
                 return false;
             }
 
-            for (var i = 0; i < count - 1; i++)
+            for (int i = 0; i < count - 1; i++)
             {
-                var id = berries[i].Id.Value;
-                for (var j = i + 1; j < count; j++)
+                ushort id = berries[i].Id.Value;
+                for (int j = i + 1; j < count; j++)
                 {
                     if (id == berries[j].Id.Value)
                     {

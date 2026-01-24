@@ -91,6 +91,46 @@ var smoothness = baseBerry.Smoothness;
 var weakDry = baseBerry.WeakDry;
 ```
 
+## Poffin / Cooking API (Current)
+
+### Poffin
+Cooked result (flavors + smoothness), with derived main/secondary flavor and levels.
+
+### PoffinCooker
+Cooking rules implementation.
+- `Cook(ReadOnlySpan<BerryBase> berries, int cookTimeSeconds, int spills, int burns, int amityBonus = 9)`
+- `Cook(PoffinComboBase combo, int cookTimeSeconds, int spills, int burns, int amityBonus = 9)`
+
+### PoffinComboBase / PoffinComboTable
+Precomputed sums for all unique 2–4 berry combinations.
+- `PoffinComboTable.All`: `ReadOnlySpan<PoffinComboBase>`
+- `PoffinComboTable.Count`: total combo count
+
+### PoffinComboEnumerator
+Non-allocating enumeration of 2–4 berry combinations from an arbitrary subset.
+- `PoffinComboEnumerator.ForEach(source, choose, action)`
+
+### Precomputed combo cooking (full table)
+```csharp
+ReadOnlySpan<PoffinComboBase> combos = PoffinComboTable.All;
+for (int i = 0; i < combos.Length; i++)
+{
+    Poffin poffin = PoffinCooker.Cook(combos[i], cookTimeSeconds: 40, spills: 0, burns: 0);
+}
+```
+
+### Subset combo enumeration (UI)
+```csharp
+ReadOnlySpan<BerryId> selected = stackalloc BerryId[] { new BerryId(5), new BerryId(34), new BerryId(62) };
+PoffinComboEnumerator.ForEach(selected, 2, combo =>
+{
+    Span<BerryBase> bases = stackalloc BerryBase[2];
+    bases[0] = BerryTable.GetBase(combo[0]);
+    bases[1] = BerryTable.GetBase(combo[1]);
+    Poffin poffin = PoffinCooker.Cook(bases, cookTimeSeconds: 60, spills: 0, burns: 0);
+});
+```
+
 ## Capabilities Checklist
 - Fixed berry data table (65 berries) with stable IDs.
 - Base cooking data (`BerryBase`) for low-allocation hot paths.
@@ -102,3 +142,5 @@ var weakDry = baseBerry.WeakDry;
 - Multi-key sorting on all berry attributes and name.
 - Comprehensive unit tests for table integrity, derived values, name mapping, filtering, and sorting.
 - Precomputed weakened flavor values on `BerryBase` for faster cooking.
+- Precomputed 2–4 berry combo bases (`PoffinComboTable`) for high-volume cooking.
+- Non-allocating subset combo enumeration (`PoffinComboEnumerator`) for UI workflows.

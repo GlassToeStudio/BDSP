@@ -9,9 +9,10 @@ low allocations, fast lookups, and deterministic results.
 - `BDSP.Core.CLI`: Console helpers (ANSI-colored berry output).
 - `docs/`: API reference and diagrams.
 
-## Berry Docs
-- API overview: `docs/Berries.API.md`
-- Class diagram: `docs/Berries.Diagrams.md`
+## Docs
+- Berry + cooking API overview: `docs/Berries.API.md`
+- Class diagrams (berries + cooking): `docs/Berries.Diagrams.md`
+- Cooking rules reference: `Poffins.md`
 - Data tables / reference notes: `BDSP.Core/BerryDocs.xml`
 
 ## Fixtures
@@ -24,6 +25,20 @@ var options = new BerryFilterOptions(minRarity: 5, maxRarity: 9);
 Span<Berry> buffer = stackalloc Berry[BerryTable.Count];
 var count = BerryQuery.Execute(BerryTable.All, buffer, options, default);
 var results = buffer[..count];
+```
+
+## Combo Cooking Example
+```csharp
+ReadOnlySpan<PoffinComboBase> combos = PoffinComboTable.All;
+Poffin best = default;
+for (int i = 0; i < combos.Length; i++)
+{
+    Poffin p = PoffinCooker.Cook(combos[i], cookTimeSeconds: 40, spills: 0, burns: 0);
+    if (p.Level > best.Level)
+    {
+        best = p;
+    }
+}
 ```
 
 ## Build / Test

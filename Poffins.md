@@ -97,6 +97,24 @@ This formula applies only when all Berries used in the recipe are unique.
   - **Implementation note:** Foul poffins are never included in feeding plans.
 - **Cook Time Display:** The timer displays hundredths of a second, but the game only registers time in 1/30th of a second intervals. In Generation VIII, a time displayed as "0:47.100" is treated as 48 full seconds.
 
+### **Optimization: Precomputed Combo Bases**
+
+For high-volume search (millions of recipes), precompute unique 2–4 berry combinations into summed base values.
+This avoids per-berry summation inside the hot cooking loop.
+
+- Source: `PoffinComboTable.All`
+- Each entry stores total weakened flavor sums, total smoothness, and berry count.
+- Single-berry recipes are not included in this precompute path.
+
+### **Subset Combo Enumeration (UI Scenarios)**
+
+For UI workflows where users first filter berries and then cook only from that subset,
+use the non-allocating enumerator:
+
+- `PoffinComboEnumerator.ForEach(source, choose, action)`
+- Supports 2–4 berry combinations in deterministic order (i &lt; j &lt; k &lt; l).
+- Uses stackalloc buffers; the span is only valid for the duration of the callback.
+
 ### **Poffin Level**
 
 A Poffin's level is simply the value of its single strongest flavor.

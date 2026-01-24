@@ -95,6 +95,12 @@
 ### Phase 5: Search and Enumeration
 9) Implement combination/permutation enumerators for berries and poffins.
    - Tests: combination counts and deterministic ordering.
+9.1) Precompute combo bases (2-4 berries) for high-volume cooking.
+   - Outputs: `PoffinComboBase` + `PoffinComboTable`.
+   - Tests: count, bounds, spot-checks vs on-the-fly sums.
+9.2) Add subset combo enumerator for UI scenarios.
+   - Outputs: `PoffinComboEnumerator`.
+   - Tests: ordering and count for small inputs.
 10) Implement search helpers (top-K, pruning hooks).
    - Benchmarks: cooking throughput and search speed baseline.
 
@@ -117,3 +123,8 @@
 - Should cook time be modeled as seconds or 1/30 sec ticks for BDSP?
 - Is smoothness bonus a fixed input parameter or always maxed at 9?
 - Do we want optional Gen IV caps (99) and bonus (10), or BDSP-only?
+
+## Progress Log
+- 2026-01-24: Added `PoffinComboBase` and `PoffinComboTable` (precomputed 2-4 berry bases).
+- 2026-01-24: Added `PoffinComboEnumerator` (non-alloc subset combo enumeration).
+- 2026-01-24: Added `PoffinCooker` overload for `PoffinComboBase` and combo enumeration tests.

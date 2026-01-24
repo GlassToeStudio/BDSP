@@ -133,3 +133,63 @@ classDiagram
     BerrySorter --> BerrySortKey
     BerrySortKey --> BerrySortField
 ```
+
+# Poffin / Cooking Diagram
+
+```mermaid
+classDiagram
+    class Flavor {
+        <<enum>>
+        Spicy
+        Dry
+        Sweet
+        Bitter
+        Sour
+        None
+    }
+
+    class Poffin {
+        +byte Spicy
+        +byte Dry
+        +byte Sweet
+        +byte Bitter
+        +byte Sour
+        +byte Smoothness
+        +bool IsFoul
+        +byte Level
+        +byte SecondLevel
+        +Flavor MainFlavor
+        +Flavor SecondaryFlavor
+        +byte NumFlavors
+    }
+
+    class PoffinCooker {
+        +Cook(ReadOnlySpan~BerryBase~, int, int, int, int) Poffin
+        +Cook(PoffinComboBase, int, int, int, int) Poffin
+    }
+
+    class PoffinComboBase {
+        +short WeakSpicySum
+        +short WeakDrySum
+        +short WeakSweetSum
+        +short WeakBitterSum
+        +short WeakSourSum
+        +ushort SmoothnessSum
+        +byte Count
+    }
+
+    class PoffinComboTable {
+        +int Count
+        +ReadOnlySpan~PoffinComboBase~ All
+    }
+
+    class PoffinComboEnumerator {
+        +ForEach(ReadOnlySpan~BerryId~, int, Action~ReadOnlySpan~BerryId~~)
+    }
+
+    PoffinCooker --> BerryBase
+    PoffinCooker --> Poffin
+    Poffin --> Flavor
+    PoffinComboTable --> PoffinComboBase
+    PoffinComboEnumerator --> BerryId
+```
