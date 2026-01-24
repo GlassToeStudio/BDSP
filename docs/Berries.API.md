@@ -125,10 +125,7 @@ Namespace:
 Automatic strategy (current thresholds):
 - All berries: use PoffinComboTable (precomputed).
 - Subsets: no subset precompute in PoffinSearch (we do not track reuse yet).
-- Parallel thresholds for subsets (when UseParallel = true):
-  - Choose=2: parallel if subset size >= 30
-  - Choose=3: parallel if subset size >= 20
-  - Choose=4: parallel if subset size >= 10
+- Parallel threshold for subsets (when UseParallel = true): nCk >= 500 (based on combo count).
 
 ```csharp
 var berryFilter = new BerryFilterOptions(minRarity: 3, maxRarity: 7);
@@ -232,5 +229,6 @@ PoffinComboEnumerator.ForEach(selected, 2, combo =>
 - Precomputed weakened flavor values on `BerryBase` for faster cooking.
 - Precomputed 2-4 berry combo bases (`PoffinComboTable`) for high-volume cooking.
 - Non-allocating subset combo enumeration (`PoffinComboEnumerator`) for UI workflows.
+
 
 

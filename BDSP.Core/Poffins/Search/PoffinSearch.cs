@@ -478,22 +478,8 @@ namespace BDSP.Core.Poffins.Search
 
         private static bool ShouldParallelForSubset(int choose, int subsetSize)
         {
-            if (choose == 2)
-            {
-                return subsetSize >= 30;
-            }
-
-            if (choose == 3)
-            {
-                return subsetSize >= 20;
-            }
-
-            if (choose == 4)
-            {
-                return subsetSize >= 10;
-            }
-
-            return false;
+            int combos = Choose(subsetSize, choose);
+            return combos >= 500;
         }
 
         private static int CompareResults(PoffinResult left, PoffinResult right)

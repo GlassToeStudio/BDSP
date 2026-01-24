@@ -1,123 +1,3 @@
-## **Making Poffins**
-
-### **How to Cook Poffins**
-
-Poffins can be cooked alone or in groups of up to four players. The process involves stirring berry batter in a pot, with the goal of creating the strongest Poffin possible in the shortest time.
-
-#### **Cooking Setup**
-
-| Generation          | Players & Locations                                                                                | Berry Input                                 |
-| :------------------ | :------------------------------------------------------------------------------------------------- | :------------------------------------------ |
-| **Gen IV (DPPt)**   | • **Alone:** Poffin House<br>• **Local Wireless:** Poffin House<br>• **Wi-Fi:** Pokémon Wi-Fi Club | Each player adds one Berry.                 |
-| **Gen VIII (BDSP)** | • **Alone:** Poffin House                                                                          | A single player can use up to four Berries. |
-
-#### **The Cooking Process**
-
-1.  **Stir the Batter:** Use the stylus (DS) or control sticks (Switch) to stir the batter in the pot.
-2.  **Follow the Arrows:** An arrow will show which direction to stir (clockwise or counter-clockwise). Stirring in the correct direction lowers the cooking time.
-3.  **Avoid Mistakes:**
-    - **Burning:** Occurs if you stir too slowly.
-    - **Spilling:** Occurs if you stir too quickly in the early stages.
-4.  **Cooking Ends:** The process finishes after one minute, or sooner if you stir effectively.
-
----
-
-#### **Cooking Stages**
-
-The cooking process has three distinct stages as the batter thickens.
-
-| Stage             | Flames | Batter Appearance | Stirring Notes                                    |
-| :---------------- | :----- | :---------------- | :------------------------------------------------ |
-| **1. Doughy**     | Orange | Pale and doughy   | Easy to spill, requires slow stirring.            |
-| **2. Thickening** | Red    | Browning          | Harder to spill, requires faster stirring.        |
-| **3. Final**      | Blue   | Dark brown        | Impossible to spill, requires very fast stirring. |
-
----
-
-#### **Results**
-
-Once finished, every player involved receives a number of identical Poffins equal to the total number of Berries used in the recipe.
-
-#### **Two-Flavor Naming Priority**
-
-If both flavors have equal strength, the name is prioritized in this order:
-
-1. Spicy
-2. Dry
-3. Sweet
-4. Bitter
-5. Sour
-
-### **Poffin Flavors & Strengths**
-
-A Poffin's flavors are derived from the Berries used to make it. Each of the five flavors is weakened by one other flavor, which can reduce its final strength. The strength of each flavor in the final Poffin determines how much it will boost a Pokémon's contest conditions.
-
-#### **Flavor Weaknesses**
-
-The following table shows which flavor weakens another.
-
-| Flavor     | Is Weakened By |
-| :--------- | :------------- |
-| **Spicy**  | Dry            |
-| **Sour**   | Spicy          |
-| **Bitter** | Sour           |
-| **Sweet**  | Bitter         |
-| **Dry**    | Sweet          |
-
-### **Poffin Flavor Calculation**
-
-This formula applies only when all Berries used in the recipe are unique.
-
-#### **Step-by-Step Calculation**
-
-1. **Sum Flavors:** Add the values for each of the five flavors from all Berries used. You will have five totals (one for Spicy, one for Dry, etc.).
-2. **Apply Weaknesses:** For each flavor total, subtract the total of the flavor that weakens it.
-   - **New Spicy** = Total Spicy - Total Dry
-   - **New Dry** = Total Dry - Total Sweet
-   - **New Sweet** = Total Sweet - Total Bitter
-   - **New Bitter** = Total Bitter - Total Sour
-   - **New Sour** = Total Sour - Total Spicy
-
-3. **Negative Flavor Penalty:** For each flavor that is currently negative, subtract 1 from _all five_ flavors.
-4. **Time & Error Modifier:** Apply the following formula to each of the five flavors:
-   - `Final Flavor = round( (Flavor Value * (60 / Cook Time in Seconds)) - (Number of Burns + Number of Spills) )`
-   - **Implementation note:** The core library truncates (integer division) instead of rounding for speed.
-
-5. **Remove Negatives:** Set any flavor value that is now negative to 0.
-6. **Apply Flavor Cap:** Any flavor value exceeding the maximum is reduced to the cap.
-   - **Generation IV:** Max flavor is 99.
-   - **Generation VIII:** Max flavor is 100.
-
----
-
-#### **Exceptions**
-
-- **Foul Poffin:** The recipe results in a **Foul Poffin** if two or more identical Berries are used, or if all flavors end up at 0. A Foul Poffin gives a +2 boost to three random conditions.
-  - **Implementation note:** The core library uses a deterministic foul result (Spicy/Dry/Sweet set to 2, others 0).
-  - **Implementation note:** Foul poffins are never included in feeding plans.
-- **Cook Time Display:** The timer displays hundredths of a second, but the game only registers time in 1/30th of a second intervals. In Generation VIII, a time displayed as "0:47.100" is treated as 48 full seconds.
-
-### **Optimization: Precomputed Combo Bases**
-
-For high-volume search (millions of recipes), precompute unique 2-4 berry combinations into summed base values.
-This avoids per-berry summation inside the hot cooking loop.
-
-- Source: `PoffinComboTable.All`
-- Each entry stores total weakened flavor sums, total smoothness, and berry count.
-- Single-berry recipes are not included in this precompute path.
-
-### **Subset Combo Enumeration (UI Scenarios)**
-
-For UI workflows where users first filter berries and then cook only from that subset,
-use the non-allocating enumerator:
-
-- `PoffinComboEnumerator.ForEach(source, choose, action)`
-- Supports 2-4 berry combinations in deterministic order (i &lt; j &lt; k &lt; l).
-- Uses stackalloc buffers; the span is only valid for the duration of the callback.
-
-### **Benchmarks**
-
-Benchmarks for cooking all 2-4 berry combinations via both approaches live in `BDSP.Core.Benchmarks`.
 Run:
 
 ```powershell
@@ -132,10 +12,8 @@ Use `PoffinSearch.Run(...)` for a consistent call shape. It automatically select
 - precomputed combo tables when the berry filter is empty (all berries), or
 - subset enumeration when the user filters berries.
 
-Parallel thresholds for subsets (when `useParallel = true`):
-- Choose=2: parallel if subset size >= 30
-- Choose=3: parallel if subset size >= 20
-- Choose=4: parallel if subset size >= 10
+Parallel threshold for subsets (when `useParallel = true`):
+- Use parallel when nCk >= 500 (based on combo count).
 
 This keeps UI code simple while still using the fastest path.
 
@@ -198,6 +76,7 @@ This example shows how the flavors are calculated for a Poffin made with a **Blu
 Assume the Poffin was cooked in the maximum 60 seconds with no burns or spills.
 
 ##### **Initial Berry Flavors**
+##### **Initial Berry Flavors**
 
 | Berry            | Spicy | Dry | Sweet | Bitter | Sour |
 | :--------------- | :---- | :-- | :---- | :----- | :--- |
@@ -212,7 +91,7 @@ Assume the Poffin was cooked in the maximum 60 seconds with no burns or spills.
 | **1. Sum Flavors**           | 0     | 10    | 20    | 20     | 10    |
 | **2. Subtract Weaknesses**   | -10   | -10   | 0     | 10     | 10    |
 | **3. Negative Penalty (-2)** | -12   | -12   | -2    | 8      | 8     |
-| **4. Time/Error Modifier**   | -12   | -12   | -2    | 8      | 8     |
+| **4. Time & Error Modifier** | -12   | -12   | -2    | 8      | 8     |
 | **5. Set Negatives to 0**    | 0     | 0     | 0     | 8      | 8     |
 | **Final Flavors**            | **0** | **0** | **0** | **8**  | **8** |
 
@@ -441,5 +320,4 @@ The number of sparkles shown corresponds to a specific range of sheen values, wh
 #### **Special Case: Pokémon Box**
 
 In **Pokémon Box Ruby & Sapphire**, while the exact sheen is not viewable, the condition stars for a Pokémon will flash if its sheen is maxed out at 255.
-
 
