@@ -9,10 +9,11 @@ This document describes the architecture of the Berry and Poffin cooking system,
 ## Class Diagram
 
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9','primaryTextColor':'#1b5e20','primaryBorderColor':'#4caf50','lineColor':'#106a15','secondaryColor':'#fff3e0','tertiaryColor':'#e1f5fe'}}}%%
+%%{init: {"theme":"base", "themeVariables": { "primaryColor":"#e8f5e9","primaryTextColor":"#1b5e20","primaryBorderColor":"#2e7d32","lineColor":"#81c784","secondaryColor":"#fff3e0","tertiaryColor":"#e1f5fe"}}}%%
 
 classDiagram
-    %% Core Enums and Value Types
+    direction TB
+
     class Flavor {
         <<enumeration>>
         Spicy
@@ -30,7 +31,6 @@ classDiagram
     }
     style BerryId fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
 
-    %% Berry Data Models
     class BerryBase {
         <<data model>>
         +BerryId Id
@@ -66,12 +66,11 @@ classDiagram
     }
     style Berry fill:#e1f5fe,stroke:#0277bd,stroke-width:3px
 
-    %% Berry Access and Utilities
     class BerryTable {
         <<repository>>
         +const int Count
-        +ReadOnlySpan~Berry~ All
-        +ReadOnlySpan~BerryBase~ BaseAll
+        +ReadOnlySpan Berry All
+        +ReadOnlySpan BerryBase BaseAll
         +Berry Get(BerryId)
         +BerryBase GetBase(BerryId)
     }
@@ -83,7 +82,6 @@ classDiagram
     }
     style BerryNames fill:#fff3e0,stroke:#e65100,stroke-width:2px
 
-    %% Berry Filtering and Sorting
     class BerryFilterOptions {
         <<filter spec>>
         +int MinSpicy
@@ -143,17 +141,16 @@ classDiagram
 
     class BerrySorter {
         <<algorithm>>
-        +Sort(Span~Berry~, int, ReadOnlySpan~BerrySortKey~)
+        +Sort(Span Berry, int, ReadOnlySpan BerrySortKey)
     }
     style BerrySorter fill:#e0f2f1,stroke:#00695c,stroke-width:2px
 
     class BerryQuery {
         <<service>>
-        +Execute(ReadOnlySpan~Berry~, Span~Berry~, BerryFilterOptions, ReadOnlySpan~BerrySortKey~) int
+        +Execute(ReadOnlySpan Berry, Span Berry, BerryFilterOptions, ReadOnlySpan BerrySortKey) int
     }
     style BerryQuery fill:#e0f7fa,stroke:#00838f,stroke-width:3px
 
-    %% Poffin Models
     class Poffin {
         <<product>>
         +byte Spicy
@@ -183,10 +180,9 @@ classDiagram
     }
     style PoffinComboBase fill:#ede7f6,stroke:#512da8,stroke-width:2px
 
-    %% Poffin Cooking Engine
     class PoffinCooker {
         <<engine>>
-        +Cook(ReadOnlySpan~BerryBase~, int, int, int, int) Poffin
+        +Cook(ReadOnlySpan BerryBase, int, int, int, int) Poffin
         +Cook(PoffinComboBase, int, int, int, int) Poffin
     }
     style PoffinCooker fill:#ffccbc,stroke:#d84315,stroke-width:3px
@@ -194,17 +190,16 @@ classDiagram
     class PoffinComboTable {
         <<cache>>
         +int Count
-        +ReadOnlySpan~PoffinComboBase~ All
+        +ReadOnlySpan PoffinComboBase All
     }
     style PoffinComboTable fill:#d1c4e9,stroke:#673ab7,stroke-width:2px
 
     class PoffinComboEnumerator {
         <<generator>>
-        +ForEach(ReadOnlySpan~BerryId~, int, Action~ReadOnlySpan~BerryId~~)
+        +ForEach(ReadOnlySpan BerryId, int, Action)
     }
     style PoffinComboEnumerator fill:#c5cae9,stroke:#3949ab,stroke-width:2px
 
-    %% Poffin Search System
     class PoffinSearchOptions {
         <<configuration>>
         +int Choose
@@ -213,7 +208,7 @@ classDiagram
         +int Burns
         +int AmityBonus
         +bool UseParallel
-        +int? MaxDegreeOfParallelism
+        +int MaxDegreeOfParallelism
         +bool UseComboTableWhenAllBerries
     }
     style PoffinSearchOptions fill:#e8eaf6,stroke:#283593,stroke-width:2px
@@ -227,7 +222,7 @@ classDiagram
         +int MinLevel
         +int MaxLevel
     }
-    style PoffinFilterOptions fill:#fce4ec,stroke:#ad1457,stroke-width:200px
+    style PoffinFilterOptions fill:#fce4ec,stroke:#ad1457,stroke-width:2px
 
     class PoffinResult {
         <<result>>
@@ -250,7 +245,6 @@ classDiagram
     }
     style PoffinSearch fill:#b2dfdb,stroke:#00695c,stroke-width:3px
 
-    %% Relationships - Berry System
     BerryTable --> Berry : provides
     BerryTable --> BerryBase : provides
     BerryTable --> BerryId : indexes by
@@ -258,24 +252,20 @@ classDiagram
     Berry --> BerryId : identified by
     Berry --> Flavor : classified by
     BerryBase --> BerryId : identified by
-    
-    %% Relationships - Query System
+
     BerryQuery --> BerryFilterOptions : uses
     BerryQuery --> BerrySortKey : uses
     BerrySorter --> BerrySortKey : uses
     BerrySortKey --> BerrySortField : contains
-    
-    %% Relationships - Poffin Cooking
+
     PoffinCooker --> BerryBase : consumes
     PoffinCooker --> Poffin : produces
     PoffinCooker --> PoffinComboBase : can use
     Poffin --> Flavor : has
-    
-    %% Relationships - Combo System
+
     PoffinComboTable --> PoffinComboBase : stores
     PoffinComboEnumerator --> BerryId : enumerates
-    
-    %% Relationships - Search System
+
     PoffinSearch --> PoffinSearchOptions : configured by
     PoffinSearch --> PoffinFilterOptions : filters with
     PoffinSearch --> PoffinResult : produces
@@ -285,57 +275,107 @@ classDiagram
 
 ---
 
-## Poffin Search Workflow
+## Berry API Flow
 
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9','secondaryColor':'#fff3e0','tertiaryColor':'#e1f5fe'}}}%%
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9','secondaryColor':'#fff3e0','tertiaryColor':'#e1f5fe', 'lineColor':'#81c784'}}}%%
 
-flowchart TD
-    A[🎯 User selects berries] --> B{Berry filter<br/>applied?}
-    B -->|No - All berries| C[💾 Use PoffinComboTable<br/>Precomputed]
-    B -->|Yes - Subset| D[Enumerate subset combos]
+flowchart LR
+    A[BerryTable.All] --> B[BerryQuery.Execute]
+    C[BerryFilterOptions] --> B
+    D[BerrySortKey Array] --> B
+    B --> E[Span Berry results]
     
-    C --> E[Cook poffins]
-    D --> E
-    
-    E --> F[🎯 Apply poffin filters]
-    F --> G[📊 Score + TopK ranking]
-    G --> H[✨ Results for UI]
-    
-    style A fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    style B fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style C fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    style D fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    style E fill:#fff9c4,stroke:#f57f17,stroke-width:3px
-    style F fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    style G fill:#e0f2f1,stroke:#00897b,stroke-width:2px
-    style H fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+    style A fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style B fill:#e0f7fa,stroke:#00838f,stroke-width:2px
+    style C fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style D fill:#f1f8e9,stroke:#689f38,stroke-width:2px
+    style E fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
 ```
 
 ---
 
-## High-Level Search Flow
+## Poffin Search Workflow
 
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9','secondaryColor':'#fff3e0','tertiaryColor':'#e1f5fe'}}}%%
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9','secondaryColor':'#fff3e0','tertiaryColor':'#e1f5fe', 'lineColor':'#81c784'}}}%%
 
-flowchart LR
-    A[🔍 Berry Filters<br/>BerryQuery] --> B[🎯 PoffinSearch.Run]
-    
-    B --> C{All berries<br/>selected?}
-    
-    C -->|Yes| D[💾 PoffinComboTable<br/>+ Cook]
-    C -->|No| E[🔄 PoffinComboEnumerator<br/>+ Cook]
-    
-    D --> F[🏆 TopK ranked results]
+flowchart TD
+    A[User selects berries] --> B[BerryQuery filter]
+    B --> C{Filter empty?}
+    C -->|Yes| D[PoffinComboTable all combos]
+    C -->|No| E[Subset combos enumerate]
+    D --> F{Parallel threshold met?}
     E --> F
+    F -->|Yes| G[Cook in parallel]
+    F -->|No| H[Cook sequentially]
+    G --> I[PoffinFilterOptions]
+    H --> I
+    I --> J[Score + TopK]
+    J --> K[Results]
     
-    style A fill:#e0f7fa,stroke:#00838f,stroke-width:3px
-    style B fill:#b2dfdb,stroke:#00695c,stroke-width:3px
+    style A fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style B fill:#e0f7fa,stroke:#00838f,stroke-width:2px
     style C fill:#fff3e0,stroke:#f57c00,stroke-width:2px
     style D fill:#d1c4e9,stroke:#673ab7,stroke-width:2px
     style E fill:#c5cae9,stroke:#3949ab,stroke-width:2px
-    style F fill:#fff9c4,stroke:#f9a825,stroke-width:3px
+    style F fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style G fill:#ffccbc,stroke:#d84315,stroke-width:2px
+    style H fill:#ffccbc,stroke:#d84315,stroke-width:2px
+    style I fill:#fce4ec,stroke:#ad1457,stroke-width:2px
+    style J fill:#e0f2f1,stroke:#00897b,stroke-width:2px
+    style K fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+```
+
+---
+
+## Internal Cooking Flow
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9','secondaryColor':'#fff3e0','tertiaryColor':'#e1f5fe', 'lineColor':'#81c784'}}}%%
+
+flowchart TD
+    A[PoffinSearch.Run] --> B{All berries?}
+    B -->|Yes| C[PoffinComboTable slice]
+    B -->|No| D[BerryQuery + subset ids]
+    C --> E[PoffinCooker.Cook combo]
+    D --> F[PoffinCooker.Cook span]
+    E --> G[Filter PoffinFilterOptions]
+    F --> G
+    G --> H[Score PoffinScoreOptions]
+    H --> I[TopK merge]
+    
+    style A fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    style B fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style C fill:#d1c4e9,stroke:#673ab7,stroke-width:2px
+    style D fill:#e0f7fa,stroke:#00838f,stroke-width:2px
+    style E fill:#ffccbc,stroke:#d84315,stroke-width:2px
+    style F fill:#ffccbc,stroke:#d84315,stroke-width:2px
+    style G fill:#fce4ec,stroke:#ad1457,stroke-width:2px
+    style H fill:#e0f2f1,stroke:#00897b,stroke-width:2px
+    style I fill:#e0f2f1,stroke:#00897b,stroke-width:2px
+```
+
+---
+
+## High-Level API Flow
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9','secondaryColor':'#fff3e0','tertiaryColor':'#e1f5fe', 'lineColor':'#81c784'}}}%%
+
+flowchart LR
+    A[BerryFilterOptions] --> B[PoffinSearch.Run]
+    C[PoffinSearchOptions] --> B
+    D[PoffinFilterOptions] --> B
+    B --> E[TopK PoffinResult]
+    E --> F[Result array]
+    
+    style A fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style B fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    style C fill:#e8eaf6,stroke:#283593,stroke-width:2px
+    style D fill:#fce4ec,stroke:#ad1457,stroke-width:2px
+    style E fill:#e0f2f1,stroke:#00897b,stroke-width:2px
+    style F fill:#fff9c4,stroke:#f9a825,stroke-width:2px
 ```
 
 ---
@@ -344,13 +384,13 @@ flowchart LR
 
 | Color | Component Type | Examples |
 |-------|---------------|----------|
-| 🔴 **Red** | Enums & Filters | `Flavor`, `BerryFilterOptions`, `PoffinFilterOptions` |
-| 🔵 **Blue** | Core Data Models | `Berry`, `BerryId` |
-| 🟣 **Purple** | Raw Data & Precomputed | `BerryBase`, `PoffinComboBase`, `PoffinComboTable` |
-| 🟢 **Green** | Repositories & Services | `BerryTable`, `BerryQuery`, `PoffinSearch` |
-| 🟠 **Orange** | Cooking Engine | `PoffinCooker` |
-| 🟡 **Yellow** | Results & Products | `Poffin`, `PoffinResult` |
-| ⚪ **Teal** | Utilities & Data Structures | `TopK`, `BerrySorter` |
+| **Red** | Enums & Filters | `Flavor`, `BerryFilterOptions`, `PoffinFilterOptions` |
+| **Blue** | Core Data Models | `Berry`, `BerryId` |
+| **Purple** | Raw Data & Precomputed | `BerryBase`, `PoffinComboBase`, `PoffinComboTable` |
+| **Green** | Repositories & Services | `BerryTable`, `BerryQuery`, `PoffinSearch` |
+| **Orange** | Cooking Engine | `PoffinCooker` |
+| **Yellow** | Results & Products | `Poffin`, `PoffinResult` |
+| **Teal** | Utilities & Data Structures | `TopK`, `BerrySorter` |
 
 ---
 
