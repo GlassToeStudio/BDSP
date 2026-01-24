@@ -53,14 +53,14 @@ namespace BDSP.Core.Benchmarks
         {
             int sum = 0;
             ReadOnlySpan<BerryBase> bases = BerryTable.BaseAll;
+            Span<BerryBase> buffer = stackalloc BerryBase[2];
             for (int i = 0; i < _ids.Length - 1; i++)
             {
                 for (int j = i + 1; j < _ids.Length; j++)
                 {
-                    Span<BerryBase> berries = stackalloc BerryBase[2];
-                    berries[0] = bases[_ids[i].Value];
-                    berries[1] = bases[_ids[j].Value];
-                    Poffin p = PoffinCooker.Cook(berries, 40, 0, 0);
+                    buffer[0] = bases[_ids[i].Value];
+                    buffer[1] = bases[_ids[j].Value];
+                    Poffin p = PoffinCooker.Cook(buffer, 40, 0, 0);
                     sum += p.Level;
                 }
             }
@@ -85,17 +85,17 @@ namespace BDSP.Core.Benchmarks
         {
             int sum = 0;
             ReadOnlySpan<BerryBase> bases = BerryTable.BaseAll;
+            Span<BerryBase> buffer = stackalloc BerryBase[3];
             for (int i = 0; i < _ids.Length - 2; i++)
             {
                 for (int j = i + 1; j < _ids.Length - 1; j++)
                 {
                     for (int k = j + 1; k < _ids.Length; k++)
                     {
-                        Span<BerryBase> berries = stackalloc BerryBase[3];
-                        berries[0] = bases[_ids[i].Value];
-                        berries[1] = bases[_ids[j].Value];
-                        berries[2] = bases[_ids[k].Value];
-                        Poffin p = PoffinCooker.Cook(berries, 40, 0, 0);
+                        buffer[0] = bases[_ids[i].Value];
+                        buffer[1] = bases[_ids[j].Value];
+                        buffer[2] = bases[_ids[k].Value];
+                        Poffin p = PoffinCooker.Cook(buffer, 40, 0, 0);
                         sum += p.Level;
                     }
                 }
@@ -121,6 +121,7 @@ namespace BDSP.Core.Benchmarks
         {
             int sum = 0;
             ReadOnlySpan<BerryBase> bases = BerryTable.BaseAll;
+            Span<BerryBase> buffer = stackalloc BerryBase[4];
             for (int i = 0; i < _ids.Length - 3; i++)
             {
                 for (int j = i + 1; j < _ids.Length - 2; j++)
@@ -129,12 +130,11 @@ namespace BDSP.Core.Benchmarks
                     {
                         for (int l = k + 1; l < _ids.Length; l++)
                         {
-                            Span<BerryBase> berries = stackalloc BerryBase[4];
-                            berries[0] = bases[_ids[i].Value];
-                            berries[1] = bases[_ids[j].Value];
-                            berries[2] = bases[_ids[k].Value];
-                            berries[3] = bases[_ids[l].Value];
-                            Poffin p = PoffinCooker.Cook(berries, 40, 0, 0);
+                            buffer[0] = bases[_ids[i].Value];
+                            buffer[1] = bases[_ids[j].Value];
+                            buffer[2] = bases[_ids[k].Value];
+                            buffer[3] = bases[_ids[l].Value];
+                            Poffin p = PoffinCooker.Cook(buffer, 40, 0, 0);
                             sum += p.Level;
                         }
                     }
