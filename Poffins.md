@@ -115,6 +115,15 @@ use the non-allocating enumerator:
 - Supports 2–4 berry combinations in deterministic order (i &lt; j &lt; k &lt; l).
 - Uses stackalloc buffers; the span is only valid for the duration of the callback.
 
+### **Benchmarks**
+
+Benchmarks for cooking all 2–4 berry combinations via both approaches live in `BDSP.Core.Benchmarks`.
+Run:
+
+```powershell
+dotnet run --project BDSP.Core.Benchmarks -c Release
+```
+
 ### **Poffin Level**
 
 A Poffin's level is simply the value of its single strongest flavor.

@@ -110,6 +110,13 @@ Precomputed sums for all unique 2–4 berry combinations.
 Non-allocating enumeration of 2–4 berry combinations from an arbitrary subset.
 - `PoffinComboEnumerator.ForEach(source, choose, action)`
 
+### Benchmarks
+Benchmark project comparing combo-base cooking vs span-based cooking:
+
+```powershell
+dotnet run --project BDSP.Core.Benchmarks -c Release
+```
+
 ### Precomputed combo cooking (full table)
 ```csharp
 ReadOnlySpan<PoffinComboBase> combos = PoffinComboTable.All;

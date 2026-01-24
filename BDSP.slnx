@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="BDSP.Core.CLI/BDSP.Core.CLI.csproj" />
+  <Project Path="BDSP.Core.Benchmarks/BDSP.Core.Benchmarks.csproj" />
   <Project Path="BDSP.Core.Tests/BDSP.Core.Tests.csproj" />
   <Project Path="BDSP.Core/BDSP.Core.csproj" />
 </Solution>

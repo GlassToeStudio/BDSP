@@ -7,6 +7,7 @@ low allocations, fast lookups, and deterministic results.
 - `BDSP.Core`: Core data structures and algorithms (berries, cooking, queries).
 - `BDSP.Core.Tests`: Unit tests for data integrity and filtering/sorting.
 - `BDSP.Core.CLI`: Console helpers (ANSI-colored berry output).
+- `BDSP.Core.Benchmarks`: BenchmarkDotNet benchmarks for cooking and search.
 - `docs/`: API reference and diagrams.
 
 ## Docs
@@ -44,4 +45,9 @@ for (int i = 0; i < combos.Length; i++)
 ## Build / Test
 ```powershell
 dotnet test BDSP.slnx
+```
+
+## Benchmarks
+```powershell
+dotnet run --project BDSP.Core.Benchmarks -c Release
 ```
