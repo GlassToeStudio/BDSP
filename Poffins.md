@@ -124,6 +124,8 @@ Run:
 dotnet run --project BDSP.Core.Benchmarks -c Release
 ```
 
+The benchmark suite includes both single-threaded and parallel variants for combo-base and span-based cooking.
+
 ### **Poffin Level**
 
 A Poffin's level is simply the value of its single strongest flavor.

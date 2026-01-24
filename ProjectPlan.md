@@ -129,3 +129,4 @@
 - 2026-01-24: Added `PoffinComboEnumerator` (non-alloc subset combo enumeration).
 - 2026-01-24: Added `PoffinCooker` overload for `PoffinComboBase` and combo enumeration tests.
 - 2026-01-24: Added `BDSP.Core.Benchmarks` with cooking benchmarks (combo base vs span).
+- 2026-01-24: Added parallel cooking benchmarks for combo base and span.
