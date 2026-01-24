@@ -240,8 +240,12 @@ flowchart TD
     A[User selects berries] --> B{Berry filter applied?}
     B -- No --> C[Use PoffinComboTable]
     B -- Yes --> D[Enumerate subset combos]
+    D --> D2{Reuse same subset?}
+    D2 -- Yes --> D3[Build subset precompute]
+    D2 -- No --> D4[Cook direct]
     C --> E[Cook poffins]
-    D --> E[Cook poffins]
+    D3 --> E[Cook poffins]
+    D4 --> E[Cook poffins]
     E --> F[Apply poffin filters]
     F --> G[Score + TopK]
     G --> H[Results for UI]

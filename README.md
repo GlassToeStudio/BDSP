@@ -15,6 +15,7 @@ low allocations, fast lookups, and deterministic results.
 - `BDSP.Core/Poffins/Cooking` (combo tables + cooker).
 - `BDSP.Core/Poffins/Filters` (poffin filters).
 - `BDSP.Core/Poffins/Search` (unified search API + TopK).
+- `PoffinComboBuilder` lives under `Cooking` for subset precompute.
 
 ## Docs
 - Berry + cooking API overview: `docs/Berries.API.md`

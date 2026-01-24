@@ -139,6 +139,20 @@ This keeps UI code simple while still using the fastest path.
 - `BDSP.Core/Poffins/Filters`: poffin filters
 - `BDSP.Core/Poffins/Search`: unified search API + TopK
 
+### **When to Precompute Subset Combos**
+Typical approach:
+1. Start with direct subset enumeration (no precompute) for one-off searches.
+2. Precompute subset combos when:
+   - the same subset will be searched multiple times (different scoring/filters), or
+   - the subset is large and you expect long-running searches.
+
+Use `PoffinComboBuilder.CreateFromSubset(...)` to build a subset combo table.
+
+To find the crossover point for your machine, run:
+```powershell
+dotnet run --project BDSP.Core.Benchmarks -c Release -- --filter *SubsetCookingBenchmarks*
+```
+
 ### **Usage Examples**
 
 Full-berry search (fastest path):

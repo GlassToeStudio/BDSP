@@ -102,12 +102,15 @@ Cooking rules implementation.
 - `Cook(PoffinComboBase combo, int cookTimeSeconds, int spills, int burns, int amityBonus = 9)`
 
 ### PoffinComboBase / PoffinComboTable
-Precomputed sums for all unique 2–4 berry combinations.
+Precomputed sums for all unique 2-4 berry combinations.
 - `PoffinComboTable.All`: `ReadOnlySpan<PoffinComboBase>`
 - `PoffinComboTable.Count`: total combo count
 
+### PoffinComboBuilder
+Subset precompute helper for UI workflows.
+- `PoffinComboBuilder.CreateFromSubset(ReadOnlySpan<BerryId>)`
 ### PoffinComboEnumerator
-Non-allocating enumeration of 2–4 berry combinations from an arbitrary subset.
+Non-allocating enumeration of 2-4 berry combinations from an arbitrary subset.
 - `PoffinComboEnumerator.ForEach(source, choose, action)`
 
 ### PoffinSearch (Unified Entry Point)
@@ -117,6 +120,10 @@ switches between precomputed combo tables and subset enumeration.
 Namespace:
 - `BDSP.Core.Poffins.Search` (PoffinSearch, PoffinSearchOptions, TopK)
 - `BDSP.Core.Poffins.Filters` (PoffinFilterOptions)
+
+When to precompute a subset:
+- One-off search → direct subset enumeration is usually fine.
+- Repeated searches over the same subset → use `PoffinComboBuilder.CreateFromSubset(...)`.
 
 ```csharp
 var berryFilter = new BerryFilterOptions(minRarity: 3, maxRarity: 7);
@@ -181,6 +188,10 @@ Benchmark project comparing combo-base cooking vs span-based cooking:
 ```powershell
 dotnet run --project BDSP.Core.Benchmarks -c Release
 ```
+Subset crossover benchmarks:
+```powershell
+dotnet run --project BDSP.Core.Benchmarks -c Release -- --filter *SubsetCookingBenchmarks*
+```
 
 ### Precomputed combo cooking (full table)
 ```csharp
@@ -214,5 +225,6 @@ PoffinComboEnumerator.ForEach(selected, 2, combo =>
 - Multi-key sorting on all berry attributes and name.
 - Comprehensive unit tests for table integrity, derived values, name mapping, filtering, and sorting.
 - Precomputed weakened flavor values on `BerryBase` for faster cooking.
-- Precomputed 2–4 berry combo bases (`PoffinComboTable`) for high-volume cooking.
+- Precomputed 2-4 berry combo bases (`PoffinComboTable`) for high-volume cooking.
 - Non-allocating subset combo enumeration (`PoffinComboEnumerator`) for UI workflows.
+
