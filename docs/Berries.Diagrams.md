@@ -1,4 +1,4 @@
-# Berry & Poffin System Architecture
+﻿# Berry and Poffin System Architecture
 
 ## Overview
 

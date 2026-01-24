@@ -142,7 +142,7 @@ The type of Poffin is determined by the number and strength of its flavors.
 
 | Poffin Type       | Flavors | Appearance                                                         | Notes                                                                                                  |
 | ----------------- | ------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| **Foul**          | N/A     | Black                                                              | Results from using ≥2 of the same berry or if all flavors are ≤ 0. Has 3 random flavors at strength 2. |
+| **Foul**          | N/A     | Black                                                              | Results from using ≥2 of the same berry or if all flavors are == 0. Has 3 random flavors at strength 2. |
 | **Single-Flavor** | 1       | Solid color based on the flavor                                    | Named after the single flavor (e.g., Spicy Poffin).                                                    |
 | **Two-Flavor**    | 2       | Primary flavor's color with sprinkles of the second flavor's color | Named after both flavors, with the stronger one listed first.                                          |
 | **Rich**          | 3       | Medium gray                                                        |                                                                                                        |
@@ -320,4 +320,5 @@ The number of sparkles shown corresponds to a specific range of sheen values, wh
 #### **Special Case: Pokémon Box**
 
 In **Pokémon Box Ruby & Sapphire**, while the exact sheen is not viewable, the condition stars for a Pokémon will flash if its sheen is maxed out at 255.
+
 
