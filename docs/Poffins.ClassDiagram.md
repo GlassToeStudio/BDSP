@@ -6,7 +6,7 @@
 classDiagram
     direction TB
 
-    class Flavor {
+ class Flavor {
         <<enumeration>>
         Spicy
         Dry
@@ -15,12 +15,16 @@ classDiagram
         Sour
         None
     }
+    style Flavor fill:#ffebee,stroke:#c62828,stroke-width:3px
+
     class BerryId {
         <<value type>>
         +ushort Value
     }
+    style BerryId fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+
     class BerryBase {
-        <<from Berry System>>
+        <<data model>>
         +BerryId Id
         +byte Spicy
         +byte Dry
@@ -34,8 +38,9 @@ classDiagram
         +sbyte WeakBitter
         +sbyte WeakSour
     }
+    style BerryBase fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
 
-    class PoffinComboBase {
+ class PoffinComboBase {
         <<precomputed>>
         +short WeakSpicySum
         +short WeakDrySum
@@ -45,20 +50,27 @@ classDiagram
         +ushort SmoothnessSum
         +byte Count
     }
+    style PoffinComboBase fill:#ede7f6,stroke:#512da8,stroke-width:2px
+
     class PoffinComboTable {
         <<cache>>
         +int Count
         +ReadOnlySpan PoffinComboBase All
     }
+    style PoffinComboTable fill:#d1c4e9,stroke:#673ab7,stroke-width:2px
+
     class PoffinComboEnumerator {
         <<generator>>
         +ForEach(ReadOnlySpan BerryId, int, Action)
     }
+    style PoffinComboEnumerator fill:#c5cae9,stroke:#3949ab,stroke-width:2px
+
     class PoffinCooker {
         <<engine>>
         +Cook(ReadOnlySpan BerryBase, int, int, int, int) Poffin
         +Cook(PoffinComboBase, int, int, int, int) Poffin
     }
+    style PoffinCooker fill:#ffccbc,stroke:#d84315,stroke-width:3px
 
     class Poffin {
         <<product>>
@@ -75,6 +87,7 @@ classDiagram
         +Flavor SecondaryFlavor
         +byte NumFlavors
     }
+    style Poffin fill:#fff9c4,stroke:#f57f17,stroke-width:3px
 
     class PoffinSearchOptions {
         <<configuration>>
@@ -84,9 +97,11 @@ classDiagram
         +int Burns
         +int AmityBonus
         +bool UseParallel
-        +int? MaxDegreeOfParallelism
+        +int MaxDegreeOfParallelism
         +bool UseComboTableWhenAllBerries
     }
+    style PoffinSearchOptions fill:#e8eaf6,stroke:#283593,stroke-width:2px
+
     class PoffinFilterOptions {
         <<filter spec>>
         +int MinSpicy
@@ -96,21 +111,29 @@ classDiagram
         +int MinLevel
         +int MaxLevel
     }
+    style PoffinFilterOptions fill:#fce4ec,stroke:#ad1457,stroke-width:2px
+
     class PoffinResult {
         <<result>>
         +Poffin Poffin
         +int BerryCount
         +int Score
     }
+    style PoffinResult fill:#fff9c4,stroke:#f9a825,stroke-width:3px
+
     class TopK {
         <<data structure>>
         +int Count
         +TryAdd(T, int)
     }
+    style TopK fill:#e0f2f1,stroke:#00897b,stroke-width:2px
+
     class PoffinSearch {
         <<orchestrator>>
         +Run(BerryFilterOptions, PoffinSearchOptions, int, PoffinFilterOptions) PoffinResult[]
     }
+    style PoffinSearch fill:#b2dfdb,stroke:#00695c,stroke-width:3px
+
     class BerryFilterOptions {
         <<from Berry System>>
         +int MinSpicy
@@ -140,6 +163,8 @@ classDiagram
         +byte RequiredFlavorMask
         +byte ExcludedFlavorMask
     }
+    style BerryFilterOptions fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
 
     PoffinComboTable --> PoffinComboBase : stores
     PoffinComboEnumerator --> BerryId : enumerates
