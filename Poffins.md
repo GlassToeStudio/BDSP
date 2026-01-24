@@ -126,6 +126,19 @@ dotnet run --project BDSP.Core.Benchmarks -c Release
 
 The benchmark suite includes both single-threaded and parallel variants for combo-base and span-based cooking.
 
+### **Unified Search API**
+
+Use `PoffinSearch.Run(...)` for a consistent call shape. It automatically selects:
+- precomputed combo tables when the berry filter is empty (all berries), or
+- subset enumeration when the user filters berries.
+
+This keeps UI code simple while still using the fastest path.
+
+### **Implementation Layout**
+- `BDSP.Core/Poffins/Cooking`: combo tables + cooker
+- `BDSP.Core/Poffins/Filters`: poffin filters
+- `BDSP.Core/Poffins/Search`: unified search API + TopK
+
 ### **Poffin Level**
 
 A Poffin's level is simply the value of its single strongest flavor.

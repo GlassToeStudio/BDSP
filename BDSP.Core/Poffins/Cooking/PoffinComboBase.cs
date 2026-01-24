@@ -1,4 +1,4 @@
-namespace BDSP.Core.Cooking
+namespace BDSP.Core.Poffins.Cooking
 {
     /// <summary>
     /// Precomputed base totals for a unique berry combination.

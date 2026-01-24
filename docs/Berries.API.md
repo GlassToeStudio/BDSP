@@ -110,6 +110,27 @@ Precomputed sums for all unique 2–4 berry combinations.
 Non-allocating enumeration of 2–4 berry combinations from an arbitrary subset.
 - `PoffinComboEnumerator.ForEach(source, choose, action)`
 
+### PoffinSearch (Unified Entry Point)
+Same call shape whether the user filtered berries or not. The engine automatically
+switches between precomputed combo tables and subset enumeration.
+
+Namespace:
+- `BDSP.Core.Poffins.Search` (PoffinSearch, PoffinSearchOptions, TopK)
+- `BDSP.Core.Poffins.Filters` (PoffinFilterOptions)
+
+```csharp
+var berryFilter = new BerryFilterOptions(minRarity: 3, maxRarity: 7);
+var options = new PoffinSearchOptions(choose: 3, cookTimeSeconds: 40, useParallel: true);
+var poffinFilter = new PoffinFilterOptions(minLevel: 30, maxSmoothness: 20);
+var results = PoffinSearch.Run(berryFilter, options, topK: 100, poffinFilter);
+```
+
+Key types:
+- `PoffinSearchOptions`
+- `PoffinFilterOptions`
+- `PoffinResult`
+- `TopK<T>`
+
 ### Benchmarks
 Benchmark project comparing combo-base cooking vs span-based cooking:
 

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using BDSP.Core.Berries;
-using BDSP.Core.Cooking;
+using BDSP.Core.Poffins.Cooking;
 using Xunit;
 using System.Runtime.InteropServices;
 

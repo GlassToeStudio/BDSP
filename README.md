@@ -10,6 +10,12 @@ low allocations, fast lookups, and deterministic results.
 - `BDSP.Core.Benchmarks`: BenchmarkDotNet benchmarks for cooking and search.
 - `docs/`: API reference and diagrams.
 
+## Poffin Structure (BDSP.Core)
+- `BDSP.Core/Poffins` mirrors the berry layout.
+- `BDSP.Core/Poffins/Cooking` (combo tables + cooker).
+- `BDSP.Core/Poffins/Filters` (poffin filters).
+- `BDSP.Core/Poffins/Search` (unified search API + TopK).
+
 ## Docs
 - Berry + cooking API overview: `docs/Berries.API.md`
 - Class diagrams (berries + cooking): `docs/Berries.Diagrams.md`
@@ -26,6 +32,14 @@ var options = new BerryFilterOptions(minRarity: 5, maxRarity: 9);
 Span<Berry> buffer = stackalloc Berry[BerryTable.Count];
 var count = BerryQuery.Execute(BerryTable.All, buffer, options, default);
 var results = buffer[..count];
+```
+
+## Unified Poffin Search Example
+```csharp
+var berryFilter = new BerryFilterOptions(minRarity: 3, maxRarity: 7);
+var searchOptions = new PoffinSearchOptions(choose: 3, cookTimeSeconds: 40, useParallel: true);
+var poffinFilter = new PoffinFilterOptions(minLevel: 30, maxSmoothness: 20);
+var results = PoffinSearch.Run(berryFilter, searchOptions, topK: 100, poffinFilter);
 ```
 
 ## Combo Cooking Example

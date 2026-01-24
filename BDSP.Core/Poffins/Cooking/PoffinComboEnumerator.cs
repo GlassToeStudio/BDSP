@@ -1,7 +1,7 @@
 using System;
 using BDSP.Core.Berries;
 
-namespace BDSP.Core.Cooking
+namespace BDSP.Core.Poffins.Cooking
 {
     /// <summary>
     /// Enumerates unique 2–4 berry combinations from an arbitrary berry subset.

@@ -1,6 +1,6 @@
 using BDSP.Core.Berries;
 
-namespace BDSP.Core.Cooking
+namespace BDSP.Core.Poffins.Cooking
 {
     /// <summary>
     /// Precomputes unique berry combinations (2–4) into <see cref="PoffinComboBase"/> entries.

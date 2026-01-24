@@ -4,7 +4,7 @@ using System.Diagnostics;
 using BDSP.Core.Berries;
 using BDSP.Core.Poffins;
 
-namespace BDSP.Core.Cooking
+namespace BDSP.Core.Poffins.Cooking
 {
     /// <summary>
     /// Implements BDSP cooking rules for poffin creation.

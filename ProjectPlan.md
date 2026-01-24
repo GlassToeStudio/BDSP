@@ -101,6 +101,9 @@
 9.2) Add subset combo enumerator for UI scenarios.
    - Outputs: `PoffinComboEnumerator`.
    - Tests: ordering and count for small inputs.
+9.3) Add unified poffin search API (auto-selects full vs subset path).
+   - Outputs: `PoffinSearch`, `PoffinSearchOptions`, `PoffinFilterOptions`, `TopK`.
+   - Tests: route selection, filter application, top-K ordering.
 10) Implement search helpers (top-K, pruning hooks).
    - Benchmarks: cooking throughput and search speed baseline.
 
@@ -130,3 +133,4 @@
 - 2026-01-24: Added `PoffinCooker` overload for `PoffinComboBase` and combo enumeration tests.
 - 2026-01-24: Added `BDSP.Core.Benchmarks` with cooking benchmarks (combo base vs span).
 - 2026-01-24: Added parallel cooking benchmarks for combo base and span.
+- 2026-01-24: Added unified `PoffinSearch` API with filters and scoring options.

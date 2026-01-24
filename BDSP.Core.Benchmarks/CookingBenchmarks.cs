@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using BDSP.Core.Berries;
-using BDSP.Core.Cooking;
+using BDSP.Core.Poffins.Cooking;
 using BDSP.Core.Poffins;
 
 namespace BDSP.Core.Benchmarks

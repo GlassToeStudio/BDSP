@@ -187,9 +187,48 @@ classDiagram
         +ForEach(ReadOnlySpan~BerryId~, int, Action~ReadOnlySpan~BerryId~~)
     }
 
+    class PoffinSearchOptions {
+        +int Choose
+        +int CookTimeSeconds
+        +int Spills
+        +int Burns
+        +int AmityBonus
+        +bool UseParallel
+        +int? MaxDegreeOfParallelism
+        +bool UseComboTableWhenAllBerries
+    }
+
+    class PoffinFilterOptions {
+        +int MinSpicy
+        +int MaxSpicy
+        +int MinSmoothness
+        +int MaxSmoothness
+        +int MinLevel
+        +int MaxLevel
+    }
+
+    class PoffinResult {
+        +Poffin Poffin
+        +int BerryCount
+        +int Score
+    }
+
+    class TopK~T~ {
+        +int Count
+        +TryAdd(T, int)
+    }
+
+    class PoffinSearch {
+        +Run(BerryFilterOptions, PoffinSearchOptions, int, PoffinFilterOptions) PoffinResult[]
+    }
+
     PoffinCooker --> BerryBase
     PoffinCooker --> Poffin
     Poffin --> Flavor
     PoffinComboTable --> PoffinComboBase
     PoffinComboEnumerator --> BerryId
+    PoffinSearch --> PoffinSearchOptions
+    PoffinSearch --> PoffinFilterOptions
+    PoffinSearch --> PoffinResult
+    PoffinSearch --> TopK~T~
 ```
