@@ -8,39 +8,32 @@ namespace BDSP.Core.Poffins
     /// </summary>
     public readonly struct Poffin
     {
-        /// <summary>Spicy flavor value.</summary>
+        /// <summary>Spicy flavor value (0-255).</summary>
         public readonly byte Spicy;
-        /// <summary>Dry flavor value.</summary>
+        /// <summary>Dry flavor value (0-255).</summary>
         public readonly byte Dry;
-        /// <summary>Sweet flavor value.</summary>
+        /// <summary>Sweet flavor value (0-255).</summary>
         public readonly byte Sweet;
-        /// <summary>Bitter flavor value.</summary>
+        /// <summary>Bitter flavor value (0-255).</summary>
         public readonly byte Bitter;
-        /// <summary>Sour flavor value.</summary>
+        /// <summary>Sour flavor value (0-255).</summary>
         public readonly byte Sour;
-        /// <summary>Smoothness value.</summary>
+        /// <summary>Smoothness value (0-255).</summary>
         public readonly byte Smoothness;
         /// <summary>True if this poffin is foul (invalid recipe).</summary>
         public readonly bool IsFoul;
-        /// <summary>Highest flavor value (poffin level).</summary>
+        /// <summary>Highest flavor value (0-255).</summary>
         public readonly byte Level;
-        /// <summary>Second-highest flavor value.</summary>
+        /// <summary>Second-highest flavor value (0-255).</summary>
         public readonly byte SecondLevel;
         /// <summary>Main flavor (highest value, priority tie-break).</summary>
         public readonly Flavor MainFlavor;
         /// <summary>Secondary flavor (second highest value, priority tie-break).</summary>
         public readonly Flavor SecondaryFlavor;
-        /// <summary>Number of non-zero flavors.</summary>
+        /// <summary>Number of non-zero flavors (0-5).</summary>
         public readonly byte NumFlavors;
 
-        public Poffin(
-            byte spicy,
-            byte dry,
-            byte sweet,
-            byte bitter,
-            byte sour,
-            byte smoothness,
-            bool isFoul)
+        public Poffin(byte spicy, byte dry, byte sweet, byte bitter, byte sour, byte smoothness, bool isFoul)
         {
             Spicy = spicy;
             Dry = dry;
@@ -99,6 +92,8 @@ namespace BDSP.Core.Poffins
                 Sour,
                 Smoothness);
         }
+
+        #region Private helpers
 
         private static byte CountNonZero(byte spicy, byte dry, byte sweet, byte bitter, byte sour)
         {
@@ -208,5 +203,7 @@ namespace BDSP.Core.Poffins
                 _ => 0
             };
         }
+
+        #endregion
     }
 }
