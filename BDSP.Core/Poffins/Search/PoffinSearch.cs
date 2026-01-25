@@ -1,11 +1,11 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using BDSP.Core.Berries;
-using BDSP.Core.Poffins.Cooking;
 using BDSP.Core.Poffins;
+using BDSP.Core.Poffins.Cooking;
 using BDSP.Core.Poffins.Filters;
-using System.Diagnostics;
 
 namespace BDSP.Core.Poffins.Search
 {
@@ -18,11 +18,7 @@ namespace BDSP.Core.Poffins.Search
         /// Runs a poffin search with an optional berry filter and optional poffin filter.
         /// The call shape is the same regardless of whether the user filtered berries.
         /// </summary>
-        public static PoffinResult[] Run(
-            in BerryFilterOptions berryOptions,
-            in PoffinSearchOptions options,
-            int topK = 100,
-            in PoffinFilterOptions poffinOptions = default)
+        public static PoffinResult[] Run(in BerryFilterOptions berryOptions, in PoffinSearchOptions options, int topK = 100, in PoffinFilterOptions poffinOptions = default)
         {
             if (options.Choose < 2 || options.Choose > 4)
             {
@@ -43,11 +39,7 @@ namespace BDSP.Core.Poffins.Search
             return collector.ToSortedArray(CompareResults);
         }
 
-        private static void RunFromComboTable(
-            in PoffinSearchOptions options,
-            in PoffinFilterOptions poffinOptions,
-            int topK,
-            TopK<PoffinResult> collector)
+        private static void RunFromComboTable(in PoffinSearchOptions options, in PoffinFilterOptions poffinOptions, int topK, TopK<PoffinResult> collector)
         {
             PoffinComboBase[] combos = PoffinComboTable.All.ToArray();
             int start;
@@ -118,12 +110,7 @@ namespace BDSP.Core.Poffins.Search
                 });
         }
 
-        private static void RunFromSubset(
-            in BerryFilterOptions berryOptions,
-            in PoffinSearchOptions options,
-            in PoffinFilterOptions poffinOptions,
-            int topK,
-            TopK<PoffinResult> collector)
+        private static void RunFromSubset(in BerryFilterOptions berryOptions, in PoffinSearchOptions options, in PoffinFilterOptions poffinOptions, int topK, TopK<PoffinResult> collector)
         {
             Span<Berry> buffer = stackalloc Berry[BerryTable.Count];
             int count = BerryQuery.Execute(BerryTable.All, buffer, berryOptions, default);
@@ -148,11 +135,7 @@ namespace BDSP.Core.Poffins.Search
             CookSubsetParallel(ids, in options, in poffinOptions, topK, collector);
         }
 
-        private static void CookSubsetSequential(
-            ReadOnlySpan<BerryId> ids,
-            in PoffinSearchOptions options,
-            in PoffinFilterOptions poffinOptions,
-            TopK<PoffinResult> collector)
+        private static void CookSubsetSequential(ReadOnlySpan<BerryId> ids, in PoffinSearchOptions options, in PoffinFilterOptions poffinOptions, TopK<PoffinResult> collector)
         {
             ReadOnlySpan<BerryBase> bases = BerryTable.BaseAll;
 
@@ -228,12 +211,7 @@ namespace BDSP.Core.Poffins.Search
             }
         }
 
-        private static void CookSubsetParallel(
-            BerryId[] ids,
-            in PoffinSearchOptions options,
-            in PoffinFilterOptions poffinOptions,
-            int topK,
-            TopK<PoffinResult> collector)
+        private static void CookSubsetParallel(BerryId[] ids, in PoffinSearchOptions options, in PoffinFilterOptions poffinOptions, int topK, TopK<PoffinResult> collector)
         {
             BerryBase[] bases = BerryTable.BaseAll.ToArray();
             ParallelOptions parallelOptions = CreateParallelOptions(in options);
@@ -353,11 +331,7 @@ namespace BDSP.Core.Poffins.Search
                 });
         }
 
-        private static void AddIfMatch(
-            in Poffin poffin,
-            in PoffinSearchOptions options,
-            in PoffinFilterOptions poffinOptions,
-            TopK<PoffinResult> collector)
+        private static void AddIfMatch(in Poffin poffin, in PoffinSearchOptions options, in PoffinFilterOptions poffinOptions, TopK<PoffinResult> collector)
         {
             if (!Matches(in poffin, in poffinOptions))
             {
@@ -396,13 +370,7 @@ namespace BDSP.Core.Poffins.Search
             return true;
         }
 
-        private static bool InRange(
-            byte value,
-            int min,
-            int max,
-            PoffinFilterMask mask,
-            PoffinFilterMask minFlag,
-            PoffinFilterMask maxFlag)
+        private static bool InRange(byte value, int min, int max, PoffinFilterMask mask, PoffinFilterMask minFlag, PoffinFilterMask maxFlag)
         {
             if ((mask & minFlag) != 0 && value < min) return false;
             if ((mask & maxFlag) != 0 && value > max) return false;
