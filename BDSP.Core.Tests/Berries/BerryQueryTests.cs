@@ -140,6 +140,37 @@ namespace BDSP.Core.Tests.Berries
         }
 
         [Fact]
+        public void Filter_ByFlavorMask_AllFlavorsRequired()
+        {
+            const byte allMask = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4);
+            var options = new BerryFilterOptions(requiredFlavorMask: allMask);
+
+            Span<Berry> buffer = stackalloc Berry[BerryTable.Count];
+            var count = BerryQuery.Execute(BerryTable.All, buffer, options, default);
+            var results = buffer[..count];
+
+            Assert.NotEmpty(results.ToArray());
+            foreach (var berry in results)
+            {
+                Assert.True(berry.Spicy > 0);
+                Assert.True(berry.Dry > 0);
+                Assert.True(berry.Sweet > 0);
+                Assert.True(berry.Bitter > 0);
+                Assert.True(berry.Sour > 0);
+            }
+        }
+
+        [Fact]
+        public void Filter_InvalidRange_ReturnsEmpty()
+        {
+            var options = new BerryFilterOptions(minSpicy: 5, maxSpicy: 4);
+
+            Span<Berry> buffer = stackalloc Berry[BerryTable.Count];
+            var count = BerryQuery.Execute(BerryTable.All, buffer, options, default);
+            Assert.Equal(0, count);
+        }
+
+        [Fact]
         public void Filter_AllowsExplicitZeroBounds()
         {
             var options = new BerryFilterOptions(minSpicy: 0, maxSpicy: 0);
