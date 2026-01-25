@@ -194,6 +194,18 @@ Key types:
 - `PoffinResult`
 - `TopK<T>`
 
+### PoffinFilterOptions
+Immutable struct of optional filter bounds.
+
+Notes:
+- All bounds are inclusive.
+- Zero is a valid bound; use `default` or `PoffinFilterOptions.None` for "no filters".
+- Accepted ranges (poffins):
+  - Flavor values: 0-255
+  - Smoothness: 0-255
+  - Level: 0-255
+  - NumFlavors: 0-5
+
 ### Benchmarks
 Benchmark project comparing combo-base cooking vs span-based cooking:
 

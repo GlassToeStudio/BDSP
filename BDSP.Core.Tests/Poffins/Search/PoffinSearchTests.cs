@@ -19,9 +19,22 @@ namespace BDSP.Core.Tests.Poffins.Search
         public void Run_RespectsPoffinFilterOptions()
         {
             var options = new PoffinSearchOptions(choose: 2, cookTimeSeconds: 40, useParallel: false);
-            var filter = new PoffinFilterOptions(maxSmoothness: 0);
+            var filter = new PoffinFilterOptions(minLevel: 256);
             var results = PoffinSearch.Run(default, options, topK: 50, filter);
             Assert.Empty(results);
+        }
+
+        [Fact]
+        public void Run_AllowsExplicitZeroBounds()
+        {
+            var options = new PoffinSearchOptions(choose: 2, cookTimeSeconds: 40, useParallel: false);
+            var filter = new PoffinFilterOptions(minSpicy: 0, maxSpicy: 0);
+            var results = PoffinSearch.Run(default, options, topK: 50, filter);
+            Assert.NotEmpty(results);
+            foreach (var result in results)
+            {
+                Assert.Equal(0, result.Poffin.Spicy);
+            }
         }
 
         [Fact]

@@ -3,6 +3,31 @@ using BDSP.Core.Berries;
 namespace BDSP.Core.Poffins.Filters
 {
     /// <summary>
+    /// Indicates which poffin filter bounds are active.
+    /// </summary>
+    [System.Flags]
+    public enum PoffinFilterMask : uint
+    {
+        None = 0,
+        MinSpicy = 1 << 0,
+        MaxSpicy = 1 << 1,
+        MinDry = 1 << 2,
+        MaxDry = 1 << 3,
+        MinSweet = 1 << 4,
+        MaxSweet = 1 << 5,
+        MinBitter = 1 << 6,
+        MaxBitter = 1 << 7,
+        MinSour = 1 << 8,
+        MaxSour = 1 << 9,
+        MinSmoothness = 1 << 10,
+        MaxSmoothness = 1 << 11,
+        MinLevel = 1 << 12,
+        MaxLevel = 1 << 13,
+        MinNumFlavors = 1 << 14,
+        MaxNumFlavors = 1 << 15
+    }
+
+    /// <summary>
     /// Filter options for cooked poffins. Use <see cref="Unset"/> for unused bounds.
     /// </summary>
     public readonly struct PoffinFilterOptions
@@ -13,39 +38,42 @@ namespace BDSP.Core.Poffins.Filters
         /// <summary>Sentinel value for unset bounds.</summary>
         public const int Unset = -1;
 
-        /// <summary>Minimum spicy value.</summary>
+        /// <summary>Minimum spicy value (0-255).</summary>
         public readonly int MinSpicy;
-        /// <summary>Maximum spicy value.</summary>
+        /// <summary>Maximum spicy value (0-255).</summary>
         public readonly int MaxSpicy;
-        /// <summary>Minimum dry value.</summary>
+        /// <summary>Minimum dry value (0-255).</summary>
         public readonly int MinDry;
-        /// <summary>Maximum dry value.</summary>
+        /// <summary>Maximum dry value (0-255).</summary>
         public readonly int MaxDry;
-        /// <summary>Minimum sweet value.</summary>
+        /// <summary>Minimum sweet value (0-255).</summary>
         public readonly int MinSweet;
-        /// <summary>Maximum sweet value.</summary>
+        /// <summary>Maximum sweet value (0-255).</summary>
         public readonly int MaxSweet;
-        /// <summary>Minimum bitter value.</summary>
+        /// <summary>Minimum bitter value (0-255).</summary>
         public readonly int MinBitter;
-        /// <summary>Maximum bitter value.</summary>
+        /// <summary>Maximum bitter value (0-255).</summary>
         public readonly int MaxBitter;
-        /// <summary>Minimum sour value.</summary>
+        /// <summary>Minimum sour value (0-255).</summary>
         public readonly int MinSour;
-        /// <summary>Maximum sour value.</summary>
+        /// <summary>Maximum sour value (0-255).</summary>
         public readonly int MaxSour;
 
-        /// <summary>Minimum smoothness value.</summary>
+        /// <summary>Minimum smoothness value (0-255).</summary>
         public readonly int MinSmoothness;
-        /// <summary>Maximum smoothness value.</summary>
+        /// <summary>Maximum smoothness value (0-255).</summary>
         public readonly int MaxSmoothness;
-        /// <summary>Minimum level (max flavor).</summary>
+        /// <summary>Minimum level (0-255).</summary>
         public readonly int MinLevel;
-        /// <summary>Maximum level (max flavor).</summary>
+        /// <summary>Maximum level (0-255).</summary>
         public readonly int MaxLevel;
-        /// <summary>Minimum number of non-zero flavors.</summary>
+        /// <summary>Minimum number of non-zero flavors (0-5).</summary>
         public readonly int MinNumFlavors;
-        /// <summary>Maximum number of non-zero flavors.</summary>
+        /// <summary>Maximum number of non-zero flavors (0-5).</summary>
         public readonly int MaxNumFlavors;
+
+        /// <summary>Mask of active bounds for fast checks.</summary>
+        public readonly PoffinFilterMask Mask;
 
         /// <summary>When true, <see cref="MainFlavor"/> must match.</summary>
         public readonly bool RequireMainFlavor;
@@ -78,6 +106,24 @@ namespace BDSP.Core.Poffins.Filters
             bool requireSecondaryFlavor = false,
             Flavor secondaryFlavor = Flavor.None)
         {
+            PoffinFilterMask mask = PoffinFilterMask.None;
+            if (minSpicy != Unset) mask |= PoffinFilterMask.MinSpicy;
+            if (maxSpicy != Unset) mask |= PoffinFilterMask.MaxSpicy;
+            if (minDry != Unset) mask |= PoffinFilterMask.MinDry;
+            if (maxDry != Unset) mask |= PoffinFilterMask.MaxDry;
+            if (minSweet != Unset) mask |= PoffinFilterMask.MinSweet;
+            if (maxSweet != Unset) mask |= PoffinFilterMask.MaxSweet;
+            if (minBitter != Unset) mask |= PoffinFilterMask.MinBitter;
+            if (maxBitter != Unset) mask |= PoffinFilterMask.MaxBitter;
+            if (minSour != Unset) mask |= PoffinFilterMask.MinSour;
+            if (maxSour != Unset) mask |= PoffinFilterMask.MaxSour;
+            if (minSmoothness != Unset) mask |= PoffinFilterMask.MinSmoothness;
+            if (maxSmoothness != Unset) mask |= PoffinFilterMask.MaxSmoothness;
+            if (minLevel != Unset) mask |= PoffinFilterMask.MinLevel;
+            if (maxLevel != Unset) mask |= PoffinFilterMask.MaxLevel;
+            if (minNumFlavors != Unset) mask |= PoffinFilterMask.MinNumFlavors;
+            if (maxNumFlavors != Unset) mask |= PoffinFilterMask.MaxNumFlavors;
+
             MinSpicy = minSpicy;
             MaxSpicy = maxSpicy;
             MinDry = minDry;
@@ -96,6 +142,7 @@ namespace BDSP.Core.Poffins.Filters
             MinNumFlavors = minNumFlavors;
             MaxNumFlavors = maxNumFlavors;
 
+            Mask = mask;
             RequireMainFlavor = requireMainFlavor;
             MainFlavor = mainFlavor;
             RequireSecondaryFlavor = requireSecondaryFlavor;

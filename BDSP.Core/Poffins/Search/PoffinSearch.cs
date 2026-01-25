@@ -24,9 +24,6 @@ namespace BDSP.Core.Poffins.Search
             int topK = 100,
             in PoffinFilterOptions poffinOptions = default)
         {
-            BerryFilterOptions normalizedBerryOptions = NormalizeDefaultFilter(in berryOptions);
-            PoffinFilterOptions normalizedPoffinOptions = NormalizeDefaultFilter(in poffinOptions);
-
             if (options.Choose < 2 || options.Choose > 4)
             {
                 throw new ArgumentOutOfRangeException(nameof(options.Choose), "Choose must be 2, 3, or 4.");
@@ -34,13 +31,13 @@ namespace BDSP.Core.Poffins.Search
 
             var collector = new TopK<PoffinResult>(topK);
 
-            if (IsAllBerries(in normalizedBerryOptions) && options.UseComboTableWhenAllBerries)
+            if (IsAllBerries(in berryOptions) && options.UseComboTableWhenAllBerries)
             {
-                RunFromComboTable(in options, in normalizedPoffinOptions, topK, collector);
+                RunFromComboTable(in options, in poffinOptions, topK, collector);
             }
             else
             {
-                RunFromSubset(in normalizedBerryOptions, in options, in normalizedPoffinOptions, topK, collector);
+                RunFromSubset(in berryOptions, in options, in poffinOptions, topK, collector);
             }
 
             return collector.ToSortedArray(CompareResults);
@@ -386,78 +383,33 @@ namespace BDSP.Core.Poffins.Search
 
         private static bool Matches(in Poffin poffin, in PoffinFilterOptions o)
         {
-            if (!InRange(poffin.Spicy, o.MinSpicy, o.MaxSpicy)) return false;
-            if (!InRange(poffin.Dry, o.MinDry, o.MaxDry)) return false;
-            if (!InRange(poffin.Sweet, o.MinSweet, o.MaxSweet)) return false;
-            if (!InRange(poffin.Bitter, o.MinBitter, o.MaxBitter)) return false;
-            if (!InRange(poffin.Sour, o.MinSour, o.MaxSour)) return false;
-            if (!InRange(poffin.Smoothness, o.MinSmoothness, o.MaxSmoothness)) return false;
-            if (!InRange(poffin.Level, o.MinLevel, o.MaxLevel)) return false;
-            if (!InRange(poffin.NumFlavors, o.MinNumFlavors, o.MaxNumFlavors)) return false;
+            if (!InRange(poffin.Spicy, o.MinSpicy, o.MaxSpicy, o.Mask, PoffinFilterMask.MinSpicy, PoffinFilterMask.MaxSpicy)) return false;
+            if (!InRange(poffin.Dry, o.MinDry, o.MaxDry, o.Mask, PoffinFilterMask.MinDry, PoffinFilterMask.MaxDry)) return false;
+            if (!InRange(poffin.Sweet, o.MinSweet, o.MaxSweet, o.Mask, PoffinFilterMask.MinSweet, PoffinFilterMask.MaxSweet)) return false;
+            if (!InRange(poffin.Bitter, o.MinBitter, o.MaxBitter, o.Mask, PoffinFilterMask.MinBitter, PoffinFilterMask.MaxBitter)) return false;
+            if (!InRange(poffin.Sour, o.MinSour, o.MaxSour, o.Mask, PoffinFilterMask.MinSour, PoffinFilterMask.MaxSour)) return false;
+            if (!InRange(poffin.Smoothness, o.MinSmoothness, o.MaxSmoothness, o.Mask, PoffinFilterMask.MinSmoothness, PoffinFilterMask.MaxSmoothness)) return false;
+            if (!InRange(poffin.Level, o.MinLevel, o.MaxLevel, o.Mask, PoffinFilterMask.MinLevel, PoffinFilterMask.MaxLevel)) return false;
+            if (!InRange(poffin.NumFlavors, o.MinNumFlavors, o.MaxNumFlavors, o.Mask, PoffinFilterMask.MinNumFlavors, PoffinFilterMask.MaxNumFlavors)) return false;
             if (o.RequireMainFlavor && poffin.MainFlavor != o.MainFlavor) return false;
             if (o.RequireSecondaryFlavor && poffin.SecondaryFlavor != o.SecondaryFlavor) return false;
             return true;
         }
 
-        private static bool InRange(byte value, int min, int max)
+        private static bool InRange(
+            byte value,
+            int min,
+            int max,
+            PoffinFilterMask mask,
+            PoffinFilterMask minFlag,
+            PoffinFilterMask maxFlag)
         {
-            if (min != PoffinFilterOptions.Unset && value < min) return false;
-            if (max != PoffinFilterOptions.Unset && value > max) return false;
+            if ((mask & minFlag) != 0 && value < min) return false;
+            if ((mask & maxFlag) != 0 && value > max) return false;
             return true;
         }
 
         private static bool IsAllBerries(in BerryFilterOptions options)
-        {
-            return options.Mask == BerryFilterMask.None &&
-                   !options.RequireMainFlavor &&
-                   !options.RequireSecondaryFlavor &&
-                   options.RequiredFlavorMask == 0 &&
-                   options.ExcludedFlavorMask == 0;
-        }
-
-        private static PoffinFilterOptions NormalizeDefaultFilter(in PoffinFilterOptions options)
-        {
-            if (!IsDefaultFilter(in options))
-            {
-                return options;
-            }
-
-            return PoffinFilterOptions.None;
-        }
-
-        private static bool IsDefaultFilter(in PoffinFilterOptions options)
-        {
-            return options.MinSpicy == PoffinFilterOptions.Unset &&
-                   options.MaxSpicy == PoffinFilterOptions.Unset &&
-                   options.MinDry == PoffinFilterOptions.Unset &&
-                   options.MaxDry == PoffinFilterOptions.Unset &&
-                   options.MinSweet == PoffinFilterOptions.Unset &&
-                   options.MaxSweet == PoffinFilterOptions.Unset &&
-                   options.MinBitter == PoffinFilterOptions.Unset &&
-                   options.MaxBitter == PoffinFilterOptions.Unset &&
-                   options.MinSour == PoffinFilterOptions.Unset &&
-                   options.MaxSour == PoffinFilterOptions.Unset &&
-                   options.MinSmoothness == PoffinFilterOptions.Unset &&
-                   options.MaxSmoothness == PoffinFilterOptions.Unset &&
-                   options.MinLevel == PoffinFilterOptions.Unset &&
-                   options.MaxLevel == PoffinFilterOptions.Unset &&
-                   options.MinNumFlavors == PoffinFilterOptions.Unset &&
-                   options.MaxNumFlavors == PoffinFilterOptions.Unset &&
-                   !options.RequireMainFlavor &&
-                   !options.RequireSecondaryFlavor;
-        }
-
-        private static BerryFilterOptions NormalizeDefaultFilter(in BerryFilterOptions options)
-        {
-            if (!IsDefaultFilter(in options))
-            {
-                return options;
-            }
-
-            return BerryFilterOptions.None;
-        }
-
-        private static bool IsDefaultFilter(in BerryFilterOptions options)
         {
             return options.Mask == BerryFilterMask.None &&
                    !options.RequireMainFlavor &&
