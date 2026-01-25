@@ -102,8 +102,34 @@ classDiagram
         +Flavor SecondaryFlavor
         +byte RequiredFlavorMask
         +byte ExcludedFlavorMask
+        +BerryFilterMask Mask
     }
     style BerryFilterOptions fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
+    class BerryFilterMask {
+        <<flags>>
+        MinSpicy
+        MaxSpicy
+        MinDry
+        MaxDry
+        MinSweet
+        MaxSweet
+        MinBitter
+        MaxBitter
+        MinSour
+        MaxSour
+        MinSmoothness
+        MaxSmoothness
+        MinRarity
+        MaxRarity
+        MinMainFlavorValue
+        MaxMainFlavorValue
+        MinSecondaryFlavorValue
+        MaxSecondaryFlavorValue
+        MinNumFlavors
+        MaxNumFlavors
+    }
+    style BerryFilterMask fill:#fce4ec,stroke:#ad1457,stroke-width:2px
 
     class BerrySortField {
         <<enumeration>>
@@ -156,5 +182,4 @@ class BerrySortKey {
     BerrySorter --> BerrySortKey : uses
     BerrySortKey --> BerrySortField : contains
 ```
-
 

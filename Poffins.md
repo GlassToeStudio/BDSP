@@ -61,9 +61,7 @@ A Poffin's level is simply the value of its single strongest flavor.
 
 - **Example:** A Poffin with 12 Spiciness and 8 Dryness is a **Level 12** Poffin.
 - **Improving Level:** The level is increased by cooking faster and avoiding burns or spills.
-- **Maximum Level:**
-  - **Generation IV:** 99
-  - **Generation VIII:** 100
+- **Implementation note:** The core library derives level from the max flavor value and does not clamp to 100.
 
 ### **Poffin Calculation Example**
 
@@ -75,7 +73,6 @@ This example shows how the flavors are calculated for a Poffin made with a **Blu
 
 Assume the Poffin was cooked in the maximum 60 seconds with no burns or spills.
 
-##### **Initial Berry Flavors**
 ##### **Initial Berry Flavors**
 
 | Berry            | Spicy | Dry | Sweet | Bitter | Sour |
@@ -142,7 +139,7 @@ The type of Poffin is determined by the number and strength of its flavors.
 
 | Poffin Type       | Flavors | Appearance                                                         | Notes                                                                                                  |
 | ----------------- | ------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| **Foul**          | N/A     | Black                                                              | Results from using ≥2 of the same berry or if all flavors are == 0. Has 3 random flavors at strength 2. |
+| **Foul**          | N/A     | Black                                                              | Results from using >=2 of the same berry or if all flavors are == 0. Has 3 random flavors at strength 2. |
 | **Single-Flavor** | 1       | Solid color based on the flavor                                    | Named after the single flavor (e.g., Spicy Poffin).                                                    |
 | **Two-Flavor**    | 2       | Primary flavor's color with sprinkles of the second flavor's color | Named after both flavors, with the stronger one listed first.                                          |
 | **Rich**          | 3       | Medium gray                                                        |                                                                                                        |
@@ -177,25 +174,25 @@ A bonus can be earned to make the Poffin smoother (lower value), allowing a Poke
 
 Run a fast search with min level and smoothness bounds:
 ```powershell
-dotnet run --project BDSP.Cli -- --berries=4 --topk=50 --min-level=50 --max-smooth=20
+dotnet run --project BDSP.Core.CLI -- --berries=4 --topk=50 --min-level=50 --max-smooth=20
 ```
 
 Run a Spicy-focused search:
 ```powershell
-dotnet run --project BDSP.Cli -- --min-spicy=30 --sort=level:desc --then=smoothness:asc
+dotnet run --project BDSP.Core.CLI -- --min-spicy=30 --sort=level:desc --then=smoothness:asc
 ```
 
 Run a pruning-heavy search (filters + smoothness cap):
 ```powershell
-dotnet run --project BDSP.Cli -- --min-level=60 --min-spicy=25 --max-smooth=15
+dotnet run --project BDSP.Core.CLI -- --min-level=60 --min-spicy=25 --max-smooth=15
 ```
 
 ---
 
 #### **Smoothness Range**
 
-- **Highest Possible:** **59** (from a single Berry with 60 smoothness).
-- **Lowest Possible:** **6** (in Gen IV) or **7** (in Gen VIII).
+- **Lowest Possible (core library):** **0** (smoothness is clamped to 0 after reductions).
+- **Highest Possible:** Depends on recipe, cook time, and bonus reduction; see the formula above.
 
 ---
 
@@ -215,22 +212,22 @@ The following table lists the base smoothness for each Berry type.
 
 ### **Feeding Poffins & Condition Boosts**
 
-When a Pokémon eats a Poffin, its contest conditions increase based on the Poffin's flavors and the Pokémon's Nature.
+When a Pokemon eats a Poffin, its contest conditions increase based on the Poffin's flavors and the Pokemon's Nature.
 
 #### **Calculating Condition Gains**
 
-- **Base Gain:** A Pokémon's condition increases by an amount equal to the Poffin's corresponding flavor strength.
-- **Flavor Preference Bonus:** This gain is modified if the Poffin's primary flavor matches the Pokémon's liked or disliked flavor.
-  - **Liked Flavor:** The Pokémon "happily" eats it. All condition gains from that Poffin are multiplied by **1.1x** (rounded down).
-  - **Disliked Flavor:** The Pokémon "disdainfully" eats it. All condition gains from that Poffin are multiplied by **0.9x** (rounded down).
+- **Base Gain:** A Pokemon's condition increases by an amount equal to the Poffin's corresponding flavor strength.
+- **Flavor Preference Bonus:** This gain is modified if the Poffin's primary flavor matches the Pokemon's liked or disliked flavor.
+  - **Liked Flavor:** The Pokemon "happily" eats it. All condition gains from that Poffin are multiplied by **1.1x** (rounded down).
+  - **Disliked Flavor:** The Pokemon "disdainfully" eats it. All condition gains from that Poffin are multiplied by **0.9x** (rounded down).
 
 ---
 
-#### **Pokémon Flavor Preferences by Nature**
+#### **Pokemon Flavor Preferences by Nature**
 
-A Pokémon's liked and disliked flavors are determined by its Nature. Natures in _italics_ have no flavor preference.
+A Pokemon's liked and disliked flavors are determined by its Nature. Natures in _italics_ have no flavor preference.
 
-| ↓ Liked Flavor | **Spicy** | **Dry**  | **Sweet** | **Bitter** | **Sour**  |
+| v Liked Flavor | **Spicy** | **Dry**  | **Sweet** | **Bitter** | **Sour**  |
 | :------------- | :-------- | :------- | :-------- | :--------- | :-------- |
 | **Spicy**      | _Bashful_ | Adamant  | Brave     | Naughty    | Lonely    |
 | **Dry**        | Modest    | _Docile_ | Quiet     | Rash       | Mild      |
@@ -240,41 +237,41 @@ A Pokémon's liked and disliked flavors are determined by its Nature. Natures in
 
 ### **Sheen**
 
-A Pokémon's sheen determines how "full" it is and limits the number of Poffins it can eat.
+A Pokemon's sheen determines how "full" it is and limits the number of Poffins it can eat.
 
 #### **Core Rules**
 
 | Attribute               | Rule                                                                                           |
 | :---------------------- | :--------------------------------------------------------------------------------------------- |
-| **How it Increases**    | When a Pokémon eats a Poffin, the Poffin's `smoothness` value is added to the Pokémon's sheen. |
+| **How it Increases**    | When a Pokemon eats a Poffin, the Poffin's `smoothness` value is added to the Pokemon's sheen. |
 | **Initial Sheen**       | 0                                                                                              |
 | **Maximum Sheen**       | **255**                                                                                        |
-| **Effect of Max Sheen** | A Pokémon with 255 sheen can no longer eat any Poffins.                                        |
+| **Effect of Max Sheen** | A Pokemon with 255 sheen can no longer eat any Poffins.                                        |
 | **Permanence**          | Sheen is permanent and cannot be removed or reset.                                             |
 
 ---
 
 #### **Exceeding the Limit**
 
-If a Pokémon eats a Poffin that would cause its sheen to go _above_ 255, its sheen is simply set to 255. The Pokémon still receives the full condition boosts from that final Poffin.
+If a Pokemon eats a Poffin that would cause its sheen to go _above_ 255, its sheen is simply set to 255. The Pokemon still receives the full condition boosts from that final Poffin.
 
 #### **Example**
 
 A Poffin made from a single Wiki Berry has **24 smoothness**.
 
-- After eating **10** of these Poffins, a Pokémon's sheen will be **240**.
+- After eating **10** of these Poffins, a Pokemon's sheen will be **240**.
 - After eating the **11th** Poffin, its sheen becomes **255** (not 264). It can now no longer eat any Poffins.
 
 ### **Checking Sheen**
 
-A Pokémon's sheen value is not displayed as a number in-game. Instead, it is represented by a series of sparkles on the Pokémon's status screen.
+A Pokemon's sheen value is not displayed as a number in-game. Instead, it is represented by a series of sparkles on the Pokemon's status screen.
 
 #### **Where to Check Sheen**
 
 | Game Series                    | Location                 |
 | :----------------------------- | :----------------------- |
-| Ruby, Sapphire, Emerald        | PokéNav                  |
-| Diamond, Pearl, Platinum, BDSP | Pokémon's Summary Screen |
+| Ruby, Sapphire, Emerald        | PokeNav                  |
+| Diamond, Pearl, Platinum, BDSP | Pokemon's Summary Screen |
 
 ---
 
@@ -317,8 +314,9 @@ The number of sparkles shown corresponds to a specific range of sheen values, wh
 
 ---
 
-#### **Special Case: Pokémon Box**
+#### **Special Case: Pokemon Box**
 
-In **Pokémon Box Ruby & Sapphire**, while the exact sheen is not viewable, the condition stars for a Pokémon will flash if its sheen is maxed out at 255.
+In **Pokemon Box Ruby & Sapphire**, while the exact sheen is not viewable, the condition stars for a Pokemon will flash if its sheen is maxed out at 255.
+
 
 

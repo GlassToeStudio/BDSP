@@ -106,12 +106,44 @@ classDiagram
         <<filter spec>>
         +int MinSpicy
         +int MaxSpicy
+        +int MinDry
+        +int MaxDry
+        +int MinSweet
+        +int MaxSweet
+        +int MinBitter
+        +int MaxBitter
+        +int MinSour
+        +int MaxSour
         +int MinSmoothness
         +int MaxSmoothness
         +int MinLevel
         +int MaxLevel
+        +int MinNumFlavors
+        +int MaxNumFlavors
+        +PoffinFilterMask Mask
     }
     style PoffinFilterOptions fill:#fce4ec,stroke:#ad1457,stroke-width:2px
+
+    class PoffinFilterMask {
+        <<flags>>
+        MinSpicy
+        MaxSpicy
+        MinDry
+        MaxDry
+        MinSweet
+        MaxSweet
+        MinBitter
+        MaxBitter
+        MinSour
+        MaxSour
+        MinSmoothness
+        MaxSmoothness
+        MinLevel
+        MaxLevel
+        MinNumFlavors
+        MaxNumFlavors
+    }
+    style PoffinFilterMask fill:#fce4ec,stroke:#ad1457,stroke-width:2px
 
     class PoffinResult {
         <<result>>
@@ -162,6 +194,7 @@ classDiagram
         +Flavor SecondaryFlavor
         +byte RequiredFlavorMask
         +byte ExcludedFlavorMask
+        +BerryFilterMask Mask
     }
     style BerryFilterOptions fill:#fce4ec,stroke:#c2185b,stroke-width:2px
 
@@ -180,5 +213,4 @@ classDiagram
     PoffinSearch --> BerryFilterOptions : starts with
     PoffinResult --> Poffin : wraps
 ```
-
 

@@ -110,8 +110,34 @@ classDiagram
         +Flavor SecondaryFlavor
         +byte RequiredFlavorMask
         +byte ExcludedFlavorMask
+        +BerryFilterMask Mask
     }
     style BerryFilterOptions fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
+    class BerryFilterMask {
+        <<flags>>
+        MinSpicy
+        MaxSpicy
+        MinDry
+        MaxDry
+        MinSweet
+        MaxSweet
+        MinBitter
+        MaxBitter
+        MinSour
+        MaxSour
+        MinSmoothness
+        MaxSmoothness
+        MinRarity
+        MaxRarity
+        MinMainFlavorValue
+        MaxMainFlavorValue
+        MinSecondaryFlavorValue
+        MaxSecondaryFlavorValue
+        MinNumFlavors
+        MaxNumFlavors
+    }
+    style BerryFilterMask fill:#fce4ec,stroke:#ad1457,stroke-width:2px
 
     class BerrySortField {
         <<enumeration>>
@@ -217,12 +243,44 @@ classDiagram
         <<filter spec>>
         +int MinSpicy
         +int MaxSpicy
+        +int MinDry
+        +int MaxDry
+        +int MinSweet
+        +int MaxSweet
+        +int MinBitter
+        +int MaxBitter
+        +int MinSour
+        +int MaxSour
         +int MinSmoothness
         +int MaxSmoothness
         +int MinLevel
         +int MaxLevel
+        +int MinNumFlavors
+        +int MaxNumFlavors
+        +PoffinFilterMask Mask
     }
     style PoffinFilterOptions fill:#fce4ec,stroke:#ad1457,stroke-width:2px
+
+    class PoffinFilterMask {
+        <<flags>>
+        MinSpicy
+        MaxSpicy
+        MinDry
+        MaxDry
+        MinSweet
+        MaxSweet
+        MinBitter
+        MaxBitter
+        MinSour
+        MaxSour
+        MinSmoothness
+        MaxSmoothness
+        MinLevel
+        MaxLevel
+        MinNumFlavors
+        MaxNumFlavors
+    }
+    style PoffinFilterMask fill:#fce4ec,stroke:#ad1457,stroke-width:2px
 
     class PoffinResult {
         <<result>>
@@ -392,7 +450,7 @@ flowchart LR
 | **Berry** | Computed Model | `BerryId Id`<br/>`byte Spicy, Dry, Sweet, Bitter, Sour, Smoothness, Rarity`<br/>`Flavor MainFlavor, SecondaryFlavor`<br/>`byte MainFlavorValue, SecondaryFlavorValue, NumFlavors` | Processed berry data with computed flavor properties |
 | **BerryTable** | Repository | `const int Count`<br/>`ReadOnlySpan<Berry> All`<br/>`ReadOnlySpan<BerryBase> BaseAll`<br/>`Berry Get(BerryId)`<br/>`BerryBase GetBase(BerryId)` | Central repository providing access to all berry data |
 | **BerryNames** | Utility | `string GetName(BerryId)` | Localization utility for berry names |
-| **BerryFilterOptions** | Filter Spec | Min/Max ranges for all flavor attributes<br/>`bool RequireMainFlavor, RequireSecondaryFlavor`<br/>`Flavor MainFlavor, SecondaryFlavor`<br/>`byte RequiredFlavorMask, ExcludedFlavorMask` | Comprehensive filtering criteria for berry queries |
+| **BerryFilterOptions** | Filter Spec | Min/Max ranges for all flavor attributes<br/>`bool RequireMainFlavor, RequireSecondaryFlavor`<br/>`Flavor MainFlavor, SecondaryFlavor`<br/>`byte RequiredFlavorMask, ExcludedFlavorMask`<br/>`BerryFilterMask Mask` | Comprehensive filtering criteria for berry queries |
 | **BerrySortField** | Enumeration | Id, Spicy, Dry, Sweet, Bitter, Sour, Smoothness, Rarity, MainFlavor, SecondaryFlavor, MainFlavorValue, SecondaryFlavorValue, NumFlavors, Name | Available fields for sorting berries |
 | **BerrySortKey** | Struct | `BerrySortField Field`<br/>`bool Descending` | Sorting specification with field and direction |
 | **BerrySorter** | Algorithm | `Sort(Span<Berry>, int, ReadOnlySpan<BerrySortKey>)` | Sorting engine for berry collections |
@@ -408,7 +466,7 @@ flowchart LR
 | **PoffinCooker** | Engine | `Cook(ReadOnlySpan<BerryBase>, int cookTime, int spills, int burns, int amityBonus) → Poffin`<br/>`Cook(PoffinComboBase, ...) → Poffin` | Core cooking engine with configurable parameters |
 | **Poffin** | Product | `byte Spicy, Dry, Sweet, Bitter, Sour, Smoothness`<br/>`bool IsFoul`<br/>`byte Level, SecondLevel`<br/>`Flavor MainFlavor, SecondaryFlavor`<br/>`byte NumFlavors` | Cooked poffin with quality metrics |
 | **PoffinSearchOptions** | Configuration | `int Choose, CookTimeSeconds, Spills, Burns, AmityBonus`<br/>`bool UseParallel`<br/>`int MaxDegreeOfParallelism`<br/>`bool UseComboTableWhenAllBerries` | Search configuration with cooking and performance parameters |
-| **PoffinFilterOptions** | Filter Spec | `int MinSpicy, MaxSpicy`<br/>`int MinSmoothness, MaxSmoothness`<br/>`int MinLevel, MaxLevel` | Filtering criteria for poffin results |
+| **PoffinFilterOptions** | Filter Spec | Min/Max ranges for all flavor attributes<br/>`int MinSmoothness, MaxSmoothness`<br/>`int MinLevel, MaxLevel`<br/>`int MinNumFlavors, MaxNumFlavors`<br/>`PoffinFilterMask Mask` | Filtering criteria for poffin results |
 | **TopK** | Data Structure | `int Count`<br/>`TryAdd(T item, int score)` | Efficient data structure for maintaining top-ranked results |
 | **PoffinResult** | Result | `Poffin Poffin`<br/>`int BerryCount, Score` | Search result containing poffin and metadata |
 | **PoffinSearch** | Orchestrator | `Run(BerryFilterOptions, PoffinSearchOptions, int topK, PoffinFilterOptions) → PoffinResult[]` | Main orchestrator for poffin search operations |
