@@ -1,6 +1,6 @@
 using BDSP.Core.Poffins;
 
-namespace BDSP.Core.Optimization
+namespace BDSP.Core.Optimization.Core
 {
     /// <summary>
     /// Poffin result paired with its recipe metadata.
@@ -11,11 +11,14 @@ namespace BDSP.Core.Optimization
         public readonly Poffin Poffin;
         /// <summary>Recipe metadata.</summary>
         public readonly PoffinRecipe Recipe;
+        /// <summary>Number of duplicate recipes that produced identical poffin stats.</summary>
+        public readonly int DuplicateCount;
 
-        public PoffinWithRecipe(Poffin poffin, PoffinRecipe recipe)
+        public PoffinWithRecipe(Poffin poffin, PoffinRecipe recipe, int duplicateCount = 1)
         {
             Poffin = poffin;
             Recipe = recipe;
+            DuplicateCount = duplicateCount;
         }
     }
 }

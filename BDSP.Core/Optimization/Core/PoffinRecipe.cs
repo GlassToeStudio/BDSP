@@ -1,6 +1,6 @@
 using BDSP.Core.Berries;
 
-namespace BDSP.Core.Optimization
+namespace BDSP.Core.Optimization.Core
 {
     /// <summary>
     /// Describes the berry recipe and cooking parameters used to create a poffin.

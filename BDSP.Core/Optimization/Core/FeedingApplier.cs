@@ -1,6 +1,6 @@
 using BDSP.Core.Poffins;
 
-namespace BDSP.Core.Optimization
+namespace BDSP.Core.Optimization.Core
 {
     /// <summary>
     /// Applies a poffin to contest stats, enforcing stat/sheens caps.

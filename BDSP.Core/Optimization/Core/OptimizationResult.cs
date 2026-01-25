@@ -1,4 +1,4 @@
-namespace BDSP.Core.Optimization
+namespace BDSP.Core.Optimization.Core
 {
     /// <summary>
     /// High-level optimization results with ranked feeding plans.

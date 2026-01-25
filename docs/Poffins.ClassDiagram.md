@@ -99,8 +99,19 @@ classDiagram
         +bool UseParallel
         +int MaxDegreeOfParallelism
         +bool UseComboTableWhenAllBerries
+        +PoffinScoreOptions ScoreOptions
     }
     style PoffinSearchOptions fill:#e8eaf6,stroke:#283593,stroke-width:2px
+
+    class PoffinScoreOptions {
+        <<configuration>>
+        +int LevelWeight
+        +int TotalFlavorWeight
+        +int SmoothnessPenalty
+        +Flavor PreferredMainFlavor
+        +int PreferredMainFlavorBonus
+    }
+    style PoffinScoreOptions fill:#e8eaf6,stroke:#3949ab,stroke-width:2px
 
     class PoffinFilterOptions {
         <<filter spec>>
@@ -120,6 +131,10 @@ classDiagram
         +int MaxLevel
         +int MinNumFlavors
         +int MaxNumFlavors
+        +bool RequireMainFlavor
+        +Flavor MainFlavor
+        +bool RequireSecondaryFlavor
+        +Flavor SecondaryFlavor
         +PoffinFilterMask Mask
     }
     style PoffinFilterOptions fill:#fce4ec,stroke:#ad1457,stroke-width:2px
@@ -207,10 +222,10 @@ classDiagram
     Poffin --> Flavor : has
 
     PoffinSearch --> PoffinSearchOptions : configured by
+    PoffinSearchOptions --> PoffinScoreOptions : contains
     PoffinSearch --> PoffinFilterOptions : filters with
     PoffinSearch --> PoffinResult : produces
     PoffinSearch --> TopK : ranks with
     PoffinSearch --> BerryFilterOptions : starts with
     PoffinResult --> Poffin : wraps
 ```
-

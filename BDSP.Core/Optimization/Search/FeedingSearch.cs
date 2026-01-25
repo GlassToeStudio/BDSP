@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using BDSP.Core.Berries;
+using BDSP.Core.Optimization.Core;
+using BDSP.Core.Optimization.Filters;
 using BDSP.Core.Poffins;
 
-namespace BDSP.Core.Optimization
+namespace BDSP.Core.Optimization.Search
 {
     /// <summary>
     /// Baseline feeding search that consumes poffins in low-smoothness order.
@@ -30,7 +32,18 @@ namespace BDSP.Core.Optimization
                     score: 0);
             }
 
-            var ordered = candidates.ToArray();
+            var ordered = FeedingCandidatePruner.Prune(candidates, options.RarityCostMode);
+            if (ordered.Length == 0)
+            {
+                return new FeedingPlanResult(
+                    Array.Empty<FeedingStep>(),
+                    start,
+                    totalRarityCost: 0,
+                    totalPoffins: 0,
+                    totalSheen: start.Sheen,
+                    score: 0);
+            }
+
             Array.Sort(ordered, CompareCandidates);
 
             var steps = new List<FeedingStep>(ordered.Length);

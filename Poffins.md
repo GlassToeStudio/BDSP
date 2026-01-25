@@ -17,6 +17,9 @@ Parallel threshold for subsets (when `useParallel = true`):
 
 This keeps UI code simple while still using the fastest path.
 
+Poffin filters also support exact flavor requirements via `RequireMainFlavor` and
+`RequireSecondaryFlavor` in `PoffinFilterOptions`.
+
 ### **Cooking Rules (Summary)**
 
 1. Add together the respective flavors of all berries used.
@@ -31,6 +34,10 @@ This keeps UI code simple while still using the fastest path.
 - `BDSP.Core/Poffins/Cooking`: combo tables + cooker
 - `BDSP.Core/Poffins/Filters`: poffin filters
 - `BDSP.Core/Poffins/Search`: unified search API + TopK
+- `BDSP.Core/Optimization/Core`: contest stats + feeding plan result models
+- `BDSP.Core/Optimization/Filters`: pruning & dedup helpers
+- `BDSP.Core/Optimization/Search`: feeding search + contest stats search
+- `BDSP.Core/Optimization/Enumeration`: permutation enumerators
 
 ### **Subset Precompute (Advanced)**
 
@@ -45,6 +52,29 @@ To measure your local crossover points, run:
 ```powershell
 dotnet run --project BDSP.Core.Benchmarks -c Release -- --filter *SubsetCookingBenchmarks*
 ```
+To measure dedup/prune impact, run:
+```powershell
+dotnet run --project BDSP.Core.Benchmarks -c Release -- --filter *DedupPruneBenchmarks*
+```
+
+### **Feeding Plan Optimization (Baseline)**
+
+Before feeding search, prune dominated poffins:
+- A candidate is removed if another poffin is better or equal in all flavors,
+  with lower (or equal) smoothness and rarity cost, and at least one strict improvement.
+
+Identical poffin stat sets are deduplicated before pruning; the lowest rarity-cost
+recipe is kept and `DuplicateCount` tracks how many recipes produced the same poffin.
+
+Baseline plan uses low-smoothness first, then lower rarity cost, then higher level.
+The baseline plan continues until sheen reaches 255 (it does not stop early when stats cap).
+
+For UI/workflows, prefer `OptimizationPipeline` to run the full chain from berries
+to candidates and then into feeding or contest searches.
+
+For exhaustive exploration, use ordered poffin permutations (no repetition) on a pruned candidate set.
+
+Contest stats search uses inlined permutation loops for performance (see `ContestStatsSearch`).
 
 ### **Usage Examples**
 

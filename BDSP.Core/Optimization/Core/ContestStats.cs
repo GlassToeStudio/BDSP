@@ -1,4 +1,4 @@
-namespace BDSP.Core.Optimization
+namespace BDSP.Core.Optimization.Core
 {
     /// <summary>
     /// Represents contest condition stats plus sheen.

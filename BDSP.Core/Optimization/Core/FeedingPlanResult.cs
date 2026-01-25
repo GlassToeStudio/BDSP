@@ -1,4 +1,4 @@
-namespace BDSP.Core.Optimization
+namespace BDSP.Core.Optimization.Core
 {
     /// <summary>
     /// Summary of a feeding plan and its resulting stats.

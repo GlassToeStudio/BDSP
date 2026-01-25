@@ -102,6 +102,50 @@ flowchart TD
 
 ---
 
+## Feeding Plan Flow
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9','secondaryColor':'#fff3e0','tertiaryColor':'#e1f5fe', 'lineColor':'#81c784'}, 'themeCSS': '.flowchart-link { stroke-width: 2.5px !important; }'}}%%
+
+flowchart TD
+    A[OptimizationPipeline.BuildCandidates] --> B[TopK PoffinWithRecipe]
+    B --> C[FeedingCandidatePruner.Prune]
+    C --> D[Sort by smoothness/rarity/level]
+    D --> E[FeedingApplier.Apply loop]
+    E --> F[FeedingPlanResult]
+
+    style A fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    style B fill:#e0f2f1,stroke:#00897b,stroke-width:2px
+    style C fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style D fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style E fill:#e0f7fa,stroke:#00838f,stroke-width:2px
+    style F fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+```
+
+---
+
+## Contest Stats Search Flow
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9','secondaryColor':'#fff3e0','tertiaryColor':'#e1f5fe', 'lineColor':'#81c784'}, 'themeCSS': '.flowchart-link { stroke-width: 2.5px !important; }'}}%%
+
+flowchart TD
+    A[OptimizationPipeline.BuildCandidates] --> B[FeedingCandidatePruner.Prune]
+    B --> C[Ordered permutations (no repetition)]
+    C --> D[FeedingApplier.Apply per permutation]
+    D --> E[Score + TopK]
+    E --> F[ContestStatsResult[]]
+
+    style A fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    style B fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style C fill:#c5cae9,stroke:#3949ab,stroke-width:2px
+    style D fill:#e0f7fa,stroke:#00838f,stroke-width:2px
+    style E fill:#e0f2f1,stroke:#00897b,stroke-width:2px
+    style F fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+```
+
+---
+
 ## Color Legend
 
 | Color | Component Type | Examples |

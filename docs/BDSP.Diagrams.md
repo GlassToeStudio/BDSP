@@ -236,8 +236,19 @@ classDiagram
         +bool UseParallel
         +int MaxDegreeOfParallelism
         +bool UseComboTableWhenAllBerries
+        +PoffinScoreOptions ScoreOptions
     }
     style PoffinSearchOptions fill:#e8eaf6,stroke:#283593,stroke-width:2px
+
+    class PoffinScoreOptions {
+        <<configuration>>
+        +int LevelWeight
+        +int TotalFlavorWeight
+        +int SmoothnessPenalty
+        +Flavor PreferredMainFlavor
+        +int PreferredMainFlavorBonus
+    }
+    style PoffinScoreOptions fill:#e8eaf6,stroke:#3949ab,stroke-width:2px
 
     class PoffinFilterOptions {
         <<filter spec>>
@@ -257,6 +268,10 @@ classDiagram
         +int MaxLevel
         +int MinNumFlavors
         +int MaxNumFlavors
+        +bool RequireMainFlavor
+        +Flavor MainFlavor
+        +bool RequireSecondaryFlavor
+        +Flavor SecondaryFlavor
         +PoffinFilterMask Mask
     }
     style PoffinFilterOptions fill:#fce4ec,stroke:#ad1457,stroke-width:2px
@@ -325,6 +340,7 @@ classDiagram
     PoffinComboEnumerator --> BerryId : enumerates
 
     PoffinSearch --> PoffinSearchOptions : configured by
+    PoffinSearchOptions --> PoffinScoreOptions : contains
     PoffinSearch --> PoffinFilterOptions : filters with
     PoffinSearch --> PoffinResult : produces
     PoffinSearch --> TopK : ranks with
@@ -383,6 +399,141 @@ flowchart TD
     style I fill:#fce4ec,stroke:#ad1457,stroke-width:2px
     style J fill:#e0f2f1,stroke:#00897b,stroke-width:2px
     style K fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+```
+
+---
+
+## Optimization Class Diagram
+
+```mermaid
+%%{init: {"theme":"base", "themeVariables": { "primaryColor":"#e8f5e9","primaryTextColor":"#1b5e20","primaryBorderColor":"#2e7d32","lineColor":"#81c784","secondaryColor":"#fff3e0","tertiaryColor":"#e1f5fe"}, "themeCSS": ".relationshipLine { stroke-width: 2px !important; } .relationshipLabelBox { fill: #ffffff; }"}}%%
+
+classDiagram
+    direction TB
+
+    class ContestStats {
+        <<core>>
+        +byte Coolness
+        +byte Beauty
+        +byte Cuteness
+        +byte Cleverness
+        +byte Toughness
+        +byte Sheen
+    }
+    style ContestStats fill:#e1f5fe,stroke:#0277bd,stroke-width:3px
+
+    class PoffinRecipe {
+        <<core>>
+        +BerryId[] Berries
+        +int CookTimeSeconds
+        +int Spills
+        +int Burns
+        +int AmityBonus
+    }
+    style PoffinRecipe fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+
+    class PoffinWithRecipe {
+        <<core>>
+        +Poffin Poffin
+        +PoffinRecipe Recipe
+        +int DuplicateCount
+    }
+    style PoffinWithRecipe fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+
+    class FeedingPlanResult {
+        <<result>>
+        +FeedingStep[] Steps
+        +ContestStats FinalStats
+        +int TotalRarityCost
+        +int TotalPoffins
+        +int TotalSheen
+        +int Score
+    }
+    style FeedingPlanResult fill:#fff9c4,stroke:#f9a825,stroke-width:3px
+
+    class FeedingSearchOptions {
+        <<search config>>
+        +int StatsWeight
+        +int PoffinCountPenalty
+        +int SheenPenalty
+        +int RarityPenalty
+        +RarityCostMode RarityCostMode
+    }
+    style FeedingSearchOptions fill:#e8eaf6,stroke:#283593,stroke-width:2px
+
+    class PoffinCandidateOptions {
+        <<search config>>
+        +int[] ChooseList
+        +int CookTimeSeconds
+        +int Spills
+        +int Burns
+        +int AmityBonus
+        +PoffinScoreOptions ScoreOptions
+        +PoffinFilterOptions FilterOptions
+    }
+    style PoffinCandidateOptions fill:#e8eaf6,stroke:#283593,stroke-width:2px
+
+    class FeedingCandidatePruner {
+        <<filter>>
+        +Prune(ReadOnlySpan PoffinWithRecipe, RarityCostMode) PoffinWithRecipe[]
+    }
+    style FeedingCandidatePruner fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
+    class FeedingSearch {
+        <<search>>
+        +BuildPlan(ReadOnlySpan PoffinWithRecipe, FeedingSearchOptions, ContestStats) FeedingPlanResult
+    }
+    style FeedingSearch fill:#b2dfdb,stroke:#00695c,stroke-width:3px
+
+    class ContestStatsSearch {
+        <<search>>
+        +Run(ReadOnlySpan PoffinWithRecipe, ContestStatsSearchOptions, FeedingSearchOptions, int) ContestStatsResult[]
+    }
+    style ContestStatsSearch fill:#b2dfdb,stroke:#00695c,stroke-width:3px
+
+    class OptimizationPipeline {
+        <<orchestrator>>
+        +BuildCandidates(BerryFilterOptions, PoffinCandidateOptions, int, bool) PoffinWithRecipe[]
+        +RunFeedingPlan(BerryFilterOptions, PoffinCandidateOptions, int, FeedingSearchOptions, ContestStats, bool) FeedingPlanResult
+        +RunContestSearch(BerryFilterOptions, PoffinCandidateOptions, int, ContestStatsSearchOptions, FeedingSearchOptions, int, bool) ContestStatsResult[]
+    }
+    style OptimizationPipeline fill:#b2dfdb,stroke:#00695c,stroke-width:3px
+
+    ContestStatsSearch --> FeedingCandidatePruner : prunes
+    ContestStatsSearch --> FeedingSearchOptions : scoring
+    FeedingSearch --> FeedingCandidatePruner : prunes
+    FeedingSearch --> FeedingSearchOptions : configured by
+    FeedingSearch --> FeedingPlanResult : produces
+    FeedingPlanResult --> ContestStats : outputs
+    OptimizationPipeline --> PoffinCandidateOptions : uses
+    OptimizationPipeline --> FeedingSearch : runs
+    OptimizationPipeline --> ContestStatsSearch : runs
+```
+
+---
+
+## Optimization Workflow
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9','secondaryColor':'#fff3e0','tertiaryColor':'#e1f5fe', 'lineColor':'#81c784'}, 'themeCSS': '.flowchart-link { stroke-width: 2.5px !important; }'}}%%
+
+flowchart TD
+    A[OptimizationPipeline.BuildCandidates] --> B[TopK PoffinWithRecipe]
+    B --> C[FeedingCandidatePruner.Prune]
+    C --> D{Path}
+    D -->|Feeding| F[FeedingSearch.BuildPlan]
+    D -->|Contest| G[ContestStatsSearch.Run]
+    F --> H[FeedingPlanResult]
+    G --> I[ContestStatsResult[]]
+
+    style A fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    style B fill:#e0f2f1,stroke:#00897b,stroke-width:2px
+    style C fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style D fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style F fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    style G fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    style H fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+    style I fill:#fff9c4,stroke:#f9a825,stroke-width:2px
 ```
 
 ---
@@ -470,6 +621,23 @@ flowchart LR
 | **TopK** | Data Structure | `int Count`<br/>`TryAdd(T item, int score)` | Efficient data structure for maintaining top-ranked results |
 | **PoffinResult** | Result | `Poffin Poffin`<br/>`int BerryCount, Score` | Search result containing poffin and metadata |
 | **PoffinSearch** | Orchestrator | `Run(BerryFilterOptions, PoffinSearchOptions, int topK, PoffinFilterOptions) → PoffinResult[]` | Main orchestrator for poffin search operations |
+
+---
+
+### Optimization Classes
+
+| Class | Type | Key Members | Description |
+|-------|------|-------------|-------------|
+| **ContestStats** | Core Model | `Coolness, Beauty, Cuteness, Cleverness, Toughness, Sheen` | Contest stat totals and sheen |
+| **PoffinRecipe** | Core Model | `BerryId[] Berries, CookTimeSeconds, Spills, Burns, AmityBonus` | Recipe metadata for a poffin |
+| **PoffinWithRecipe** | Core Model | `Poffin Poffin, PoffinRecipe Recipe, DuplicateCount` | Poffin paired with recipe and dedup count |
+| **PoffinCandidateOptions** | Config | `ChooseList, CookTimeSeconds, Spills, Burns, AmityBonus, ScoreOptions, FilterOptions` | Candidate generation options |
+| **FeedingCandidatePruner** | Filter | `Prune(ReadOnlySpan<PoffinWithRecipe>, RarityCostMode)` | Dedup + dominance pruning |
+| **FeedingSearch** | Search | `BuildPlan(ReadOnlySpan<PoffinWithRecipe>, FeedingSearchOptions, ContestStats)` | Baseline feeding plan builder |
+| **FeedingPlanResult** | Result | `Steps, FinalStats, TotalRarityCost, TotalPoffins, TotalSheen, Score` | Feeding plan output |
+| **ContestStatsSearch** | Search | `Run(ReadOnlySpan<PoffinWithRecipe>, ContestStatsSearchOptions, FeedingSearchOptions, int)` | Ordered permutation search for contest stats |
+| **ContestStatsResult** | Result | `Indices, Stats, PoffinsEaten, TotalRarityCost, TotalSheen, Score` | Contest search output |
+| **OptimizationPipeline** | Orchestrator | `BuildCandidates(...)`, `RunFeedingPlan(...)`, `RunContestSearch(...)` | End-to-end workflow runner |
 
 ---
 

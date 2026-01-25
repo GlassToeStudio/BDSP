@@ -24,6 +24,11 @@ Canonical data tables.
 - `Get(BerryId)`
 - `GetBase(BerryId)`
 
+### Implementation Layout
+- `BDSP.Core/Berries/Core`: berry core types + tables
+- `BDSP.Core/Berries/Filters`: filter options + query
+- `BDSP.Core/Berries/Sorting`: sort keys + sorter
+
 ### BerryNames
 Name lookup by `BerryId`.
 
@@ -199,6 +204,12 @@ Key types:
 ## Optimization Models (Draft)
 These are planned result structures for feeding plans and contest stats.
 
+Namespaces:
+- `BDSP.Core.Optimization.Core`
+- `BDSP.Core.Optimization.Filters`
+- `BDSP.Core.Optimization.Search`
+- `BDSP.Core.Optimization.Enumeration`
+
 ### ContestStats
 Condition names (mapped from flavors):
 - Coolness (Spicy)
@@ -207,12 +218,39 @@ Condition names (mapped from flavors):
 - Cleverness (Bitter)
 - Toughness (Sour)
 
+### OptimizationPipeline
+End-to-end orchestration from berries to feeding plans or contest stats:
+- `BuildCandidates(BerryFilterOptions, PoffinCandidateOptions, int topK, bool dedup)`
+- `RunFeedingPlan(BerryFilterOptions, PoffinCandidateOptions, int candidateTopK, FeedingSearchOptions, ContestStats, bool dedup)`
+- `RunContestSearch(BerryFilterOptions, PoffinCandidateOptions, int candidateTopK, ContestStatsSearchOptions, FeedingSearchOptions, int topK, bool dedup)`
+
+### PoffinCandidateOptions
+Controls candidate generation (choose list, cooking params, score options, optional poffin filter).
+
+### FeedingCandidatePruner
+Prunes dominated poffins before feeding search:
+- Remove candidates with worse flavors, higher smoothness, and higher rarity cost.
+- Identical poffin stat sets are deduplicated first; the lowest rarity-cost recipe is kept.
+
+### PoffinPermutationEnumerator
+Enumerates ordered permutations of candidate poffins (no repetition) for feeding-plan exploration.
+
+### ContestStatsSearch
+Runs inlined permutation loops over poffin candidates and returns top-ranked contest stat results.
+
+### ContestStatsSearchOptions
+Controls permutation size, parallelism, and starting stats for contest-stat search.
+
+### PoffinWithRecipe
+Poffin + recipe metadata + `DuplicateCount` (number of recipes that produced identical stats).
+
 ### PoffinFilterOptions
 Immutable struct of optional filter bounds.
 
 Notes:
 - All bounds are inclusive.
 - Zero is a valid bound; use `default` or `PoffinFilterOptions.None` for "no filters".
+- Optional exact-flavor filters are available via `RequireMainFlavor` / `RequireSecondaryFlavor`.
 - Accepted ranges (poffins):
   - Flavor values: 0-100
   - Smoothness: 0-255
@@ -228,6 +266,10 @@ dotnet run --project BDSP.Core.Benchmarks -c Release
 Subset crossover benchmarks:
 ```powershell
 dotnet run --project BDSP.Core.Benchmarks -c Release -- --filter *SubsetCookingBenchmarks*
+```
+Dedup/prune benchmarks:
+```powershell
+dotnet run --project BDSP.Core.Benchmarks -c Release -- --filter *DedupPruneBenchmarks*
 ```
 
 ### Precomputed combo cooking (full table)

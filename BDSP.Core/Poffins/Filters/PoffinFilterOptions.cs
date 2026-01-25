@@ -149,4 +149,35 @@ namespace BDSP.Core.Poffins.Filters
             SecondaryFlavor = secondaryFlavor;
         }
     }
+
+    /// <summary>
+    /// Fast matching helpers for <see cref="PoffinFilterOptions"/>.
+    /// </summary>
+    public static class PoffinFilter
+    {
+        /// <summary>
+        /// Returns true when a poffin satisfies all active filters.
+        /// </summary>
+        public static bool Matches(in Poffin poffin, in PoffinFilterOptions o)
+        {
+            if (!InRange(poffin.Spicy, o.MinSpicy, o.MaxSpicy, o.Mask, PoffinFilterMask.MinSpicy, PoffinFilterMask.MaxSpicy)) return false;
+            if (!InRange(poffin.Dry, o.MinDry, o.MaxDry, o.Mask, PoffinFilterMask.MinDry, PoffinFilterMask.MaxDry)) return false;
+            if (!InRange(poffin.Sweet, o.MinSweet, o.MaxSweet, o.Mask, PoffinFilterMask.MinSweet, PoffinFilterMask.MaxSweet)) return false;
+            if (!InRange(poffin.Bitter, o.MinBitter, o.MaxBitter, o.Mask, PoffinFilterMask.MinBitter, PoffinFilterMask.MaxBitter)) return false;
+            if (!InRange(poffin.Sour, o.MinSour, o.MaxSour, o.Mask, PoffinFilterMask.MinSour, PoffinFilterMask.MaxSour)) return false;
+            if (!InRange(poffin.Smoothness, o.MinSmoothness, o.MaxSmoothness, o.Mask, PoffinFilterMask.MinSmoothness, PoffinFilterMask.MaxSmoothness)) return false;
+            if (!InRange(poffin.Level, o.MinLevel, o.MaxLevel, o.Mask, PoffinFilterMask.MinLevel, PoffinFilterMask.MaxLevel)) return false;
+            if (!InRange(poffin.NumFlavors, o.MinNumFlavors, o.MaxNumFlavors, o.Mask, PoffinFilterMask.MinNumFlavors, PoffinFilterMask.MaxNumFlavors)) return false;
+            if (o.RequireMainFlavor && poffin.MainFlavor != o.MainFlavor) return false;
+            if (o.RequireSecondaryFlavor && poffin.SecondaryFlavor != o.SecondaryFlavor) return false;
+            return true;
+        }
+
+        private static bool InRange(byte value, int min, int max, PoffinFilterMask mask, PoffinFilterMask minFlag, PoffinFilterMask maxFlag)
+        {
+            if ((mask & minFlag) != 0 && value < min) return false;
+            if ((mask & maxFlag) != 0 && value > max) return false;
+            return true;
+        }
+    }
 }

@@ -1,10 +1,17 @@
-namespace BDSP.Core.Optimization
+namespace BDSP.Core.Optimization.Search
 {
     /// <summary>
     /// Controls how feeding plans are scored and ranked.
     /// </summary>
     public readonly struct FeedingSearchOptions
     {
+        /// <summary>Default scoring options.</summary>
+        public static FeedingSearchOptions Default => new FeedingSearchOptions(
+            statsWeight: 1000,
+            poffinCountPenalty: 10,
+            sheenPenalty: 1,
+            rarityPenalty: 5,
+            rarityCostMode: RarityCostMode.MaxBerryRarity);
         /// <summary>Weight for total contest stat completion (higher is better).</summary>
         public readonly int StatsWeight;
         /// <summary>Penalty per poffin consumed (lower is better).</summary>

@@ -1,6 +1,4 @@
 using System;
-using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
 using BDSP.Core.Berries;
 using BDSP.Core.Poffins;
@@ -58,7 +56,7 @@ namespace BDSP.Core.Poffins.Search
                         options.Burns,
                         options.AmityBonus);
 
-                    if (!Matches(in poffin, in poffinOptions))
+                    if (!PoffinFilter.Matches(in poffin, in poffinOptions))
                     {
                         continue;
                     }
@@ -93,7 +91,7 @@ namespace BDSP.Core.Poffins.Search
                         burns,
                         amityBonus);
 
-                    if (Matches(in poffin, in poffinOptionsValue))
+                    if (PoffinFilter.Matches(in poffin, in poffinOptionsValue))
                     {
                         int score = Score(in poffin, in scoreOptions);
                         local.TryAdd(new PoffinResult(poffin, berryCount, score), score);
@@ -333,7 +331,7 @@ namespace BDSP.Core.Poffins.Search
 
         private static void AddIfMatch(in Poffin poffin, in PoffinSearchOptions options, in PoffinFilterOptions poffinOptions, TopK<PoffinResult> collector)
         {
-            if (!Matches(in poffin, in poffinOptions))
+            if (!PoffinFilter.Matches(in poffin, in poffinOptions))
             {
                 return;
             }
@@ -355,27 +353,6 @@ namespace BDSP.Core.Poffins.Search
             return score;
         }
 
-        private static bool Matches(in Poffin poffin, in PoffinFilterOptions o)
-        {
-            if (!InRange(poffin.Spicy, o.MinSpicy, o.MaxSpicy, o.Mask, PoffinFilterMask.MinSpicy, PoffinFilterMask.MaxSpicy)) return false;
-            if (!InRange(poffin.Dry, o.MinDry, o.MaxDry, o.Mask, PoffinFilterMask.MinDry, PoffinFilterMask.MaxDry)) return false;
-            if (!InRange(poffin.Sweet, o.MinSweet, o.MaxSweet, o.Mask, PoffinFilterMask.MinSweet, PoffinFilterMask.MaxSweet)) return false;
-            if (!InRange(poffin.Bitter, o.MinBitter, o.MaxBitter, o.Mask, PoffinFilterMask.MinBitter, PoffinFilterMask.MaxBitter)) return false;
-            if (!InRange(poffin.Sour, o.MinSour, o.MaxSour, o.Mask, PoffinFilterMask.MinSour, PoffinFilterMask.MaxSour)) return false;
-            if (!InRange(poffin.Smoothness, o.MinSmoothness, o.MaxSmoothness, o.Mask, PoffinFilterMask.MinSmoothness, PoffinFilterMask.MaxSmoothness)) return false;
-            if (!InRange(poffin.Level, o.MinLevel, o.MaxLevel, o.Mask, PoffinFilterMask.MinLevel, PoffinFilterMask.MaxLevel)) return false;
-            if (!InRange(poffin.NumFlavors, o.MinNumFlavors, o.MaxNumFlavors, o.Mask, PoffinFilterMask.MinNumFlavors, PoffinFilterMask.MaxNumFlavors)) return false;
-            if (o.RequireMainFlavor && poffin.MainFlavor != o.MainFlavor) return false;
-            if (o.RequireSecondaryFlavor && poffin.SecondaryFlavor != o.SecondaryFlavor) return false;
-            return true;
-        }
-
-        private static bool InRange(byte value, int min, int max, PoffinFilterMask mask, PoffinFilterMask minFlag, PoffinFilterMask maxFlag)
-        {
-            if ((mask & minFlag) != 0 && value < min) return false;
-            if ((mask & maxFlag) != 0 && value > max) return false;
-            return true;
-        }
 
         private static bool IsAllBerries(in BerryFilterOptions options)
         {
