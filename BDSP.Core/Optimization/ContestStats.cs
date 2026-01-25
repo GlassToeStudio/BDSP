@@ -2,36 +2,39 @@ namespace BDSP.Core.Optimization
 {
     /// <summary>
     /// Represents contest condition stats plus sheen.
-    /// Note: stat names follow flavor axes (Spicy, Dry, Sweet, Bitter, Sour).
     /// </summary>
+    /// <remarks>
+    /// Flavor mapping:
+    /// Spicy -> Coolness, Dry -> Beauty, Sweet -> Cuteness, Bitter -> Cleverness, Sour -> Toughness.
+    /// </remarks>
     public readonly struct ContestStats
     {
-        /// <summary>Spicy condition value (0-255).</summary>
-        public readonly byte Spicy;
-        /// <summary>Dry condition value (0-255).</summary>
-        public readonly byte Dry;
-        /// <summary>Sweet condition value (0-255).</summary>
-        public readonly byte Sweet;
-        /// <summary>Bitter condition value (0-255).</summary>
-        public readonly byte Bitter;
-        /// <summary>Sour condition value (0-255).</summary>
-        public readonly byte Sour;
+        /// <summary>Coolness condition value (Spicy, 0-255).</summary>
+        public readonly byte Coolness;
+        /// <summary>Beauty condition value (Dry, 0-255).</summary>
+        public readonly byte Beauty;
+        /// <summary>Cuteness condition value (Sweet, 0-255).</summary>
+        public readonly byte Cuteness;
+        /// <summary>Cleverness condition value (Bitter, 0-255).</summary>
+        public readonly byte Cleverness;
+        /// <summary>Toughness condition value (Sour, 0-255).</summary>
+        public readonly byte Toughness;
         /// <summary>Sheen value (0-255).</summary>
         public readonly byte Sheen;
 
         public ContestStats(
-            byte spicy,
-            byte dry,
-            byte sweet,
-            byte bitter,
-            byte sour,
+            byte coolness,
+            byte beauty,
+            byte cuteness,
+            byte cleverness,
+            byte toughness,
             byte sheen)
         {
-            Spicy = spicy;
-            Dry = dry;
-            Sweet = sweet;
-            Bitter = bitter;
-            Sour = sour;
+            Coolness = coolness;
+            Beauty = beauty;
+            Cuteness = cuteness;
+            Cleverness = cleverness;
+            Toughness = toughness;
             Sheen = sheen;
         }
     }

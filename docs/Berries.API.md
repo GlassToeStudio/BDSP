@@ -195,6 +195,17 @@ Key types:
 - `PoffinResult`
 - `TopK<T>`
 
+## Optimization Models (Draft)
+These are planned result structures for feeding plans and contest stats.
+
+### ContestStats
+Condition names (mapped from flavors):
+- Coolness (Spicy)
+- Beauty (Dry)
+- Cuteness (Sweet)
+- Cleverness (Bitter)
+- Toughness (Sour)
+
 ### PoffinFilterOptions
 Immutable struct of optional filter bounds.
 

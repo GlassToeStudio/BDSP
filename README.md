@@ -52,6 +52,30 @@ var results = PoffinSearch.Run(berryFilter, searchOptions, topK: 100, poffinFilt
 5. Set any negative flavors to 0.
 6. Cap flavor values to the generation limit (Gen IV = 99, Gen VIII = 100). The core library clamps to 100.
 
+## Flavor → Condition Mapping
+
+| Condition  | Flavor | Color  |
+| ---------- | ------ | ------ |
+| Coolness   | Spicy  | Red    |
+| Beauty     | Dry    | Blue   |
+| Cuteness   | Sweet  | Pink   |
+| Cleverness | Bitter | Green  |
+| Toughness  | Sour   | Yellow |
+
+## Nature Modifiers (Not Implemented Yet)
+These are documented rules for how nature affects condition gains. The core library does not
+apply these modifiers yet.
+
+No change ↘ / Decreased effect ↓ / Increased effect ↑
+
+| Increased effect ↑ | Coolness | Beauty | Cuteness | Cleverness | Toughness |
+| ------------------ | -------- | ------ | -------- | ---------- | --------- |
+| **Coolness**       | Bashful  | Adamant | Brave   | Naughty    | Lonely    |
+| **Beauty**         | Modest   | Docile  | Quiet   | Rash       | Mild      |
+| **Cuteness**       | Timid    | Jolly   | Hardy   | Naive      | Hasty     |
+| **Cleverness**     | Calm     | Careful | Sassy   | Quirky     | Gentle    |
+| **Toughness**      | Bold     | Impish  | Relaxed | Lax        | Serious   |
+
 ## Combo Cooking Example
 ```csharp
 ReadOnlySpan<PoffinComboBase> combos = PoffinComboTable.All;

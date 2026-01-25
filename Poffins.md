@@ -227,6 +227,16 @@ The following table lists the base smoothness for each Berry type.
 
 When a Pokemon eats a Poffin, its contest conditions increase based on the Poffin's flavors and the Pokemon's Nature.
 
+#### **Flavor → Condition Mapping**
+
+| Condition  | Flavor | Color  |
+| ---------- | ------ | ------ |
+| Coolness   | Spicy  | Red    |
+| Beauty     | Dry    | Blue   |
+| Cuteness   | Sweet  | Pink   |
+| Cleverness | Bitter | Green  |
+| Toughness  | Sour   | Yellow |
+
 #### **Calculating Condition Gains**
 
 - **Base Gain:** A Pokemon's condition increases by an amount equal to the Poffin's corresponding flavor strength.
@@ -239,6 +249,7 @@ When a Pokemon eats a Poffin, its contest conditions increase based on the Poffi
 #### **Pokemon Flavor Preferences by Nature**
 
 A Pokemon's liked and disliked flavors are determined by its Nature. Natures in _italics_ have no flavor preference.
+**Implementation note:** The core library does not apply nature modifiers yet.
 
 | v Liked Flavor | **Spicy** | **Dry**  | **Sweet** | **Bitter** | **Sour**  |
 | :------------- | :-------- | :------- | :-------- | :--------- | :-------- |
