@@ -3,7 +3,7 @@ namespace BDSP.Core.Optimization
     /// <summary>
     /// Controls how feeding plans are scored and ranked.
     /// </summary>
-    public readonly struct OptimizationOptions
+    public readonly struct FeedingSearchOptions
     {
         /// <summary>Weight for total contest stat completion (higher is better).</summary>
         public readonly int StatsWeight;
@@ -16,7 +16,7 @@ namespace BDSP.Core.Optimization
         /// <summary>How to compute rarity cost for a poffin recipe.</summary>
         public readonly RarityCostMode RarityCostMode;
 
-        public OptimizationOptions(
+        public FeedingSearchOptions(
             int statsWeight = 1000,
             int poffinCountPenalty = 10,
             int sheenPenalty = 1,
