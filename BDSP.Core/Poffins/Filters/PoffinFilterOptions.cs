@@ -28,7 +28,7 @@ namespace BDSP.Core.Poffins.Filters
     }
 
     /// <summary>
-    /// Filter options for cooked poffins. Use <see cref="Unset"/> for unused bounds.
+    /// Filter options for cooked poffins. Bounds are inclusive; use <see cref="Unset"/> for unused bounds.
     /// </summary>
     public readonly struct PoffinFilterOptions
     {

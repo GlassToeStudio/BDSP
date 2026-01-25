@@ -30,7 +30,7 @@ namespace BDSP.Core.Berries
     }
 
     /// <summary>
-    /// Filter options for berries. Use <see cref="Unset"/> for unused bounds.
+    /// Filter options for berries. Bounds are inclusive; use <see cref="Unset"/> for unused bounds.
     /// </summary>
     public readonly struct BerryFilterOptions
     {
