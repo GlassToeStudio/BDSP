@@ -22,12 +22,7 @@ namespace BDSP.Core.Poffins.Cooking
         /// <param name="spills">Number of spills during cooking.</param>
         /// <param name="burns">Number of burns during cooking.</param>
         /// <param name="amityBonus">Bonus smoothness reduction (BDSP cap is 9).</param>
-        public static Poffin Cook(
-            ReadOnlySpan<BerryBase> berries,
-            int cookTimeSeconds,
-            int spills,
-            int burns,
-            int amityBonus = 9)
+        public static Poffin Cook(ReadOnlySpan<BerryBase> berries,int cookTimeSeconds,int spills,int burns,int amityBonus = 9)
         {
             int count = berries.Length;
 
@@ -88,12 +83,7 @@ namespace BDSP.Core.Poffins.Cooking
         /// <param name="spills">Number of spills during cooking.</param>
         /// <param name="burns">Number of burns during cooking.</param>
         /// <param name="amityBonus">Bonus smoothness reduction (BDSP cap is 9).</param>
-        public static Poffin Cook(
-            in PoffinComboBase combo,
-            int cookTimeSeconds,
-            int spills,
-            int burns,
-            int amityBonus = 9)
+        public static Poffin Cook(in PoffinComboBase combo,int cookTimeSeconds,int spills,int burns,int amityBonus = 9)
         {
             return CookFromBase(
                 combo.WeakSpicySum,
@@ -112,18 +102,7 @@ namespace BDSP.Core.Poffins.Cooking
         /// <summary>
         /// Shared cooking logic for either per-berry sums or precomputed combo sums.
         /// </summary>
-        private static Poffin CookFromBase(
-            int spicySum,
-            int drySum,
-            int sweetSum,
-            int bitterSum,
-            int sourSum,
-            int smoothnessSum,
-            int count,
-            int cookTimeSeconds,
-            int spills,
-            int burns,
-            int amityBonus)
+        private static Poffin CookFromBase(int spicySum,int drySum,int sweetSum,int bitterSum,int sourSum,int smoothnessSum,int count,int cookTimeSeconds,int spills,int burns,int amityBonus)
         {
             int spicy = spicySum;
             int dry = drySum;

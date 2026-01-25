@@ -21,14 +21,7 @@ namespace BDSP.Core.Poffins.Cooking
         /// <summary>Number of berries in the combo (2–4).</summary>
         public readonly byte Count;
 
-        public PoffinComboBase(
-            short weakSpicySum,
-            short weakDrySum,
-            short weakSweetSum,
-            short weakBitterSum,
-            short weakSourSum,
-            ushort smoothnessSum,
-            byte count)
+        public PoffinComboBase(short weakSpicySum, short weakDrySum, short weakSweetSum, short weakBitterSum, short weakSourSum, ushort smoothnessSum, byte count)
         {
             WeakSpicySum = weakSpicySum;
             WeakDrySum = weakDrySum;
