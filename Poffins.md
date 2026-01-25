@@ -28,6 +28,9 @@ This keeps UI code simple while still using the fastest path.
 Use `PoffinComboBuilder.CreateFromSubset(...)` only if you explicitly reuse the same
 subset in multiple runs or want to manage caching yourself.
 
+`PoffinComboEnumerator` (BDSP.Core.Poffins.Enumeration) is a public, non-allocating helper for UI workflows.
+`PoffinSearch` uses inlined loops instead for lower overhead in the hot path.
+
 To measure your local crossover points, run:
 ```powershell
 dotnet run --project BDSP.Core.Benchmarks -c Release -- --filter *SubsetCookingBenchmarks*

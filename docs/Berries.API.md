@@ -121,7 +121,8 @@ Subset precompute helper for advanced workflows.
 - `PoffinComboBuilder.CreateFromSubset(ReadOnlySpan<BerryId>)`
 ### PoffinComboEnumerator
 Non-allocating enumeration of 2-4 berry combinations from an arbitrary subset.
-- `PoffinComboEnumerator.ForEach(source, choose, action)`
+- `BDSP.Core.Poffins.Enumeration.PoffinComboEnumerator.ForEach(source, choose, action)`
+Note: `PoffinSearch` uses inlined loops for lower overhead; the enumerator is a public utility.
 
 ### PoffinSearch (Unified Entry Point)
 Same call shape whether the user filtered berries or not. The engine automatically
@@ -229,7 +230,7 @@ for (int i = 0; i < combos.Length; i++)
 ### Subset combo enumeration (UI)
 ```csharp
 ReadOnlySpan<BerryId> selected = stackalloc BerryId[] { new BerryId(5), new BerryId(34), new BerryId(62) };
-PoffinComboEnumerator.ForEach(selected, 2, combo =>
+BDSP.Core.Poffins.Enumeration.PoffinComboEnumerator.ForEach(selected, 2, combo =>
 {
     Span<BerryBase> bases = stackalloc BerryBase[2];
     bases[0] = BerryTable.GetBase(combo[0]);

@@ -91,6 +91,11 @@
    - Feeding loop: stop at sheen >= 255, still apply final poffin boosts, cap at 255.
    - Include nature modifiers (1.1x/0.9x with truncation).
    - Tests: golden vectors and invariants (caps, sheen, ordering).
+8.1) Draft high-level optimization result models (no implementation yet).
+   - `PoffinRecipe` (berries + cook parameters, optional).
+   - `ContestStats` / `PokemonCondition` (current stats + sheen).
+   - `FeedingPlan` (ordered poffins + expected final stats + constraints).
+   - `OptimizationResult` (top plans + summary metrics).
 
 ### Phase 5: Search and Enumeration
 9) Implement combination/permutation enumerators for berries and poffins.
@@ -122,6 +127,13 @@
 - Property tests: invariants like non-negative values, caps, and ordering rules.
 - Benchmarks: cooking 1-4 berry recipes, filter+sort, and search end-to-end.
 
+## Additional Tests (Berry/Poffin Lock-In)
+- Berry filters: explicit zero bounds (min/max = 0), mask include/exclude, main/secondary flavor, num flavors.
+- Berry sorting: all fields, stability for equal keys, name ordering.
+- Poffin filters: explicit zero bounds, impossible bounds (min > 255), main/secondary flavor filters.
+- Poffin search: top-K ordering, subset path vs full-table path equivalence on small sets.
+- Poffin cooking: smoothness clamping to 0, foul recipe detection (debug), time modifier sanity.
+
 ## Open Questions to Resolve Before Coding
 - Should cook time be modeled as seconds or 1/30 sec ticks for BDSP?
 - Is smoothness bonus a fixed input parameter or always maxed at 9?
@@ -134,3 +146,4 @@
 - 2026-01-24: Added `BDSP.Core.Benchmarks` with cooking benchmarks (combo base vs span).
 - 2026-01-24: Added parallel cooking benchmarks for combo base and span.
 - 2026-01-24: Added unified `PoffinSearch` API with filters and scoring options.
+- 2026-01-25: Drafted optimization result model placeholders (recipe, stats, feeding plan).
