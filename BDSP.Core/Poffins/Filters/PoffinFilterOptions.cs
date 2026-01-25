@@ -38,34 +38,34 @@ namespace BDSP.Core.Poffins.Filters
         /// <summary>Sentinel value for unset bounds.</summary>
         public const int Unset = -1;
 
-        /// <summary>Minimum spicy value (0-255).</summary>
+        /// <summary>Minimum spicy value (0-100).</summary>
         public readonly int MinSpicy;
-        /// <summary>Maximum spicy value (0-255).</summary>
+        /// <summary>Maximum spicy value (0-100).</summary>
         public readonly int MaxSpicy;
-        /// <summary>Minimum dry value (0-255).</summary>
+        /// <summary>Minimum dry value (0-100).</summary>
         public readonly int MinDry;
-        /// <summary>Maximum dry value (0-255).</summary>
+        /// <summary>Maximum dry value (0-100).</summary>
         public readonly int MaxDry;
-        /// <summary>Minimum sweet value (0-255).</summary>
+        /// <summary>Minimum sweet value (0-100).</summary>
         public readonly int MinSweet;
-        /// <summary>Maximum sweet value (0-255).</summary>
+        /// <summary>Maximum sweet value (0-100).</summary>
         public readonly int MaxSweet;
-        /// <summary>Minimum bitter value (0-255).</summary>
+        /// <summary>Minimum bitter value (0-100).</summary>
         public readonly int MinBitter;
-        /// <summary>Maximum bitter value (0-255).</summary>
+        /// <summary>Maximum bitter value (0-100).</summary>
         public readonly int MaxBitter;
-        /// <summary>Minimum sour value (0-255).</summary>
+        /// <summary>Minimum sour value (0-100).</summary>
         public readonly int MinSour;
-        /// <summary>Maximum sour value (0-255).</summary>
+        /// <summary>Maximum sour value (0-100).</summary>
         public readonly int MaxSour;
 
         /// <summary>Minimum smoothness value (0-255).</summary>
         public readonly int MinSmoothness;
         /// <summary>Maximum smoothness value (0-255).</summary>
         public readonly int MaxSmoothness;
-        /// <summary>Minimum level (0-255).</summary>
+        /// <summary>Minimum level (0-100).</summary>
         public readonly int MinLevel;
-        /// <summary>Maximum level (0-255).</summary>
+        /// <summary>Maximum level (0-100).</summary>
         public readonly int MaxLevel;
         /// <summary>Minimum number of non-zero flavors (0-5).</summary>
         public readonly int MinNumFlavors;

@@ -43,6 +43,15 @@ var poffinFilter = new PoffinFilterOptions(minLevel: 30, maxSmoothness: 20);
 var results = PoffinSearch.Run(berryFilter, searchOptions, topK: 100, poffinFilter);
 ```
 
+## Cooking Rules (Summary)
+1. Add together the respective flavors of all berries used.
+2. For each flavor total, subtract the total of that flavor's weakening flavor (spicy <- dry, dry <- sweet, sweet <- bitter, bitter <- sour, sour <- spicy).
+3. For each flavor that is negative, subtract 1 from all five flavors.
+4. Multiply all flavors by `60 / cookTimeSeconds`, then subtract `burns + spills`.
+   - Implementation note: the core library uses integer truncation.
+5. Set any negative flavors to 0.
+6. Cap flavor values to the generation limit (Gen IV = 99, Gen VIII = 100). The core library clamps to 100.
+
 ## Combo Cooking Example
 ```csharp
 ReadOnlySpan<PoffinComboBase> combos = PoffinComboTable.All;

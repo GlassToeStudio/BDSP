@@ -202,9 +202,9 @@ Notes:
 - All bounds are inclusive.
 - Zero is a valid bound; use `default` or `PoffinFilterOptions.None` for "no filters".
 - Accepted ranges (poffins):
-  - Flavor values: 0-255
+  - Flavor values: 0-100
   - Smoothness: 0-255
-  - Level: 0-255
+  - Level: 0-100
   - NumFlavors: 0-5
 
 ### Benchmarks

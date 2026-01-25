@@ -17,6 +17,16 @@ Parallel threshold for subsets (when `useParallel = true`):
 
 This keeps UI code simple while still using the fastest path.
 
+### **Cooking Rules (Summary)**
+
+1. Add together the respective flavors of all berries used.
+2. For each flavor total, subtract the total of that flavor's weakening flavor (spicy <- dry, dry <- sweet, sweet <- bitter, bitter <- sour, sour <- spicy).
+3. For each flavor that is negative, subtract 1 from all five flavors.
+4. Multiply all flavors by `60 / cookTimeSeconds`, then subtract `burns + spills`.
+   - Implementation note: the core library uses integer truncation.
+5. Set any negative flavors to 0.
+6. Cap flavor values to the generation limit (Gen IV = 99, Gen VIII = 100). The core library clamps to 100.
+
 ### **Implementation Layout**
 - `BDSP.Core/Poffins/Cooking`: combo tables + cooker
 - `BDSP.Core/Poffins/Filters`: poffin filters
@@ -64,7 +74,7 @@ A Poffin's level is simply the value of its single strongest flavor.
 
 - **Example:** A Poffin with 12 Spiciness and 8 Dryness is a **Level 12** Poffin.
 - **Improving Level:** The level is increased by cooking faster and avoiding burns or spills.
-- **Implementation note:** The core library derives level from the max flavor value and does not clamp to 100.
+- **Implementation note:** The core library derives level from the max flavor value and clamps flavors to 100.
 
 ### **Poffin Calculation Example**
 

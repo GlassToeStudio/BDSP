@@ -20,7 +20,7 @@ namespace BDSP.Core.Tests.Poffins.Search
         public void Run_RespectsPoffinFilterOptions()
         {
             var options = new PoffinSearchOptions(choose: 2, cookTimeSeconds: 40, useParallel: false);
-            var filter = new PoffinFilterOptions(minLevel: 256);
+            var filter = new PoffinFilterOptions(minLevel: 101);
             var results = PoffinSearch.Run(default, options, topK: 50, filter);
             Assert.Empty(results);
         }

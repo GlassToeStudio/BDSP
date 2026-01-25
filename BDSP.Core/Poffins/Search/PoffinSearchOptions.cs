@@ -7,7 +7,7 @@ namespace BDSP.Core.Poffins.Search
     /// </summary>
     public readonly struct PoffinSearchOptions
     {
-        /// <summary>Number of berries per combo (2–4).</summary>
+        /// <summary>Number of berries per combo (2-4).</summary>
         public readonly int Choose;
         /// <summary>Cook time in seconds.</summary>
         public readonly int CookTimeSeconds;
@@ -81,3 +81,4 @@ namespace BDSP.Core.Poffins.Search
         }
     }
 }
+

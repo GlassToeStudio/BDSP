@@ -8,23 +8,23 @@ namespace BDSP.Core.Poffins
     /// </summary>
     public readonly struct Poffin
     {
-        /// <summary>Spicy flavor value (0-255).</summary>
+        /// <summary>Spicy flavor value (0-100).</summary>
         public readonly byte Spicy;
-        /// <summary>Dry flavor value (0-255).</summary>
+        /// <summary>Dry flavor value (0-100).</summary>
         public readonly byte Dry;
-        /// <summary>Sweet flavor value (0-255).</summary>
+        /// <summary>Sweet flavor value (0-100).</summary>
         public readonly byte Sweet;
-        /// <summary>Bitter flavor value (0-255).</summary>
+        /// <summary>Bitter flavor value (0-100).</summary>
         public readonly byte Bitter;
-        /// <summary>Sour flavor value (0-255).</summary>
+        /// <summary>Sour flavor value (0-100).</summary>
         public readonly byte Sour;
         /// <summary>Smoothness value (0-255).</summary>
         public readonly byte Smoothness;
         /// <summary>True if this poffin is foul (invalid recipe).</summary>
         public readonly bool IsFoul;
-        /// <summary>Highest flavor value (0-255).</summary>
+        /// <summary>Highest flavor value (0-100).</summary>
         public readonly byte Level;
-        /// <summary>Second-highest flavor value (0-255).</summary>
+        /// <summary>Second-highest flavor value (0-100).</summary>
         public readonly byte SecondLevel;
         /// <summary>Main flavor (highest value, priority tie-break).</summary>
         public readonly Flavor MainFlavor;
