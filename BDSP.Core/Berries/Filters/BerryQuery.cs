@@ -47,17 +47,17 @@ namespace BDSP.Core.Berries
 
         private static bool Matches(in Berry berry, in BerryFilterOptions o)
         {
-            if (!InRange(berry.Spicy, o.MinSpicy, o.MaxSpicy)) return false;
-            if (!InRange(berry.Dry, o.MinDry, o.MaxDry)) return false;
-            if (!InRange(berry.Sweet, o.MinSweet, o.MaxSweet)) return false;
-            if (!InRange(berry.Bitter, o.MinBitter, o.MaxBitter)) return false;
-            if (!InRange(berry.Sour, o.MinSour, o.MaxSour)) return false;
+            if (!InRange(berry.Spicy, o.MinSpicy, o.MaxSpicy, o.Mask, BerryFilterMask.MinSpicy, BerryFilterMask.MaxSpicy)) return false;
+            if (!InRange(berry.Dry, o.MinDry, o.MaxDry, o.Mask, BerryFilterMask.MinDry, BerryFilterMask.MaxDry)) return false;
+            if (!InRange(berry.Sweet, o.MinSweet, o.MaxSweet, o.Mask, BerryFilterMask.MinSweet, BerryFilterMask.MaxSweet)) return false;
+            if (!InRange(berry.Bitter, o.MinBitter, o.MaxBitter, o.Mask, BerryFilterMask.MinBitter, BerryFilterMask.MaxBitter)) return false;
+            if (!InRange(berry.Sour, o.MinSour, o.MaxSour, o.Mask, BerryFilterMask.MinSour, BerryFilterMask.MaxSour)) return false;
 
-            if (!InRange(berry.Smoothness, o.MinSmoothness, o.MaxSmoothness)) return false;
-            if (!InRange(berry.Rarity, o.MinRarity, o.MaxRarity)) return false;
-            if (!InRange(berry.MainFlavorValue, o.MinMainFlavorValue, o.MaxMainFlavorValue)) return false;
-            if (!InRange(berry.SecondaryFlavorValue, o.MinSecondaryFlavorValue, o.MaxSecondaryFlavorValue)) return false;
-            if (!InRange(berry.NumFlavors, o.MinNumFlavors, o.MaxNumFlavors)) return false;
+            if (!InRange(berry.Smoothness, o.MinSmoothness, o.MaxSmoothness, o.Mask, BerryFilterMask.MinSmoothness, BerryFilterMask.MaxSmoothness)) return false;
+            if (!InRange(berry.Rarity, o.MinRarity, o.MaxRarity, o.Mask, BerryFilterMask.MinRarity, BerryFilterMask.MaxRarity)) return false;
+            if (!InRange(berry.MainFlavorValue, o.MinMainFlavorValue, o.MaxMainFlavorValue, o.Mask, BerryFilterMask.MinMainFlavorValue, BerryFilterMask.MaxMainFlavorValue)) return false;
+            if (!InRange(berry.SecondaryFlavorValue, o.MinSecondaryFlavorValue, o.MaxSecondaryFlavorValue, o.Mask, BerryFilterMask.MinSecondaryFlavorValue, BerryFilterMask.MaxSecondaryFlavorValue)) return false;
+            if (!InRange(berry.NumFlavors, o.MinNumFlavors, o.MaxNumFlavors, o.Mask, BerryFilterMask.MinNumFlavors, BerryFilterMask.MaxNumFlavors)) return false;
 
             if (o.RequireMainFlavor && berry.MainFlavor != o.MainFlavor) return false;
             if (o.RequireSecondaryFlavor && berry.SecondaryFlavor != o.SecondaryFlavor) return false;
@@ -72,10 +72,16 @@ namespace BDSP.Core.Berries
             return true;
         }
 
-        private static bool InRange(byte value, int min, int max)
+        private static bool InRange(
+            byte value,
+            int min,
+            int max,
+            BerryFilterMask mask,
+            BerryFilterMask minFlag,
+            BerryFilterMask maxFlag)
         {
-            if (min != BerryFilterOptions.Unset && value < min) return false;
-            if (max != BerryFilterOptions.Unset && value > max) return false;
+            if ((mask & minFlag) != 0 && value < min) return false;
+            if ((mask & maxFlag) != 0 && value > max) return false;
             return true;
         }
 

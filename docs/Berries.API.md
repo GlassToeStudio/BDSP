@@ -41,6 +41,16 @@ Console.WriteLine(BerryAnsiFormatter.Format(berry));
 ### BerryFilterOptions
 Immutable struct of optional filter bounds and masks.
 
+Notes:
+- All bounds are inclusive.
+- Zero is a valid bound; use `default` or `BerryFilterOptions.None` for "no filters".
+- Accepted ranges (berries):
+  - Flavors: 0-40
+  - Smoothness: 20-60
+  - Rarity: 1-15
+  - Main/Secondary flavor values: 0-40
+  - NumFlavors: 1-5
+
 ### BerryQuery
 Filter + sort entry point:
 - `Execute(ReadOnlySpan<Berry> source, Span<Berry> destination, in BerryFilterOptions options, ReadOnlySpan<BerrySortKey> sortKeys)`

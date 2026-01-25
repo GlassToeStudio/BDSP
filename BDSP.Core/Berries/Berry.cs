@@ -9,29 +9,29 @@ namespace BDSP.Core.Berries
     {
         /// <summary>Identifier for this berry.</summary>
         public readonly BerryId Id;
-        /// <summary>Spicy flavor value.</summary>
+        /// <summary>Spicy flavor value (0-40).</summary>
         public readonly byte Spicy;
-        /// <summary>Dry flavor value.</summary>
+        /// <summary>Dry flavor value (0-40).</summary>
         public readonly byte Dry;
-        /// <summary>Sweet flavor value.</summary>
+        /// <summary>Sweet flavor value (0-40).</summary>
         public readonly byte Sweet;
-        /// <summary>Bitter flavor value.</summary>
+        /// <summary>Bitter flavor value (0-40).</summary>
         public readonly byte Bitter;
-        /// <summary>Sour flavor value.</summary>
+        /// <summary>Sour flavor value (0-40).</summary>
         public readonly byte Sour;
-        /// <summary>Smoothness value.</summary>
+        /// <summary>Smoothness value (20-60).</summary>
         public readonly byte Smoothness;
-        /// <summary>Rarity value.</summary>
+        /// <summary>Rarity value (1-15).</summary>
         public readonly byte Rarity;
         /// <summary>Main flavor (highest value, priority tie-break).</summary>
         public readonly Flavor MainFlavor;
         /// <summary>Secondary flavor (second highest value, priority tie-break).</summary>
         public readonly Flavor SecondaryFlavor;
-        /// <summary>Main flavor value.</summary>
+        /// <summary>Main flavor value (0-40).</summary>
         public readonly byte MainFlavorValue;
-        /// <summary>Secondary flavor value.</summary>
+        /// <summary>Secondary flavor value (0-40).</summary>
         public readonly byte SecondaryFlavorValue;
-        /// <summary>Number of non-zero flavors.</summary>
+        /// <summary>Number of non-zero flavors (1-5).</summary>
         public readonly byte NumFlavors;
 
         public Berry(

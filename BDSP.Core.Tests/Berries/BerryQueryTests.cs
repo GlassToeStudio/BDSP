@@ -140,6 +140,22 @@ namespace BDSP.Core.Tests.Berries
         }
 
         [Fact]
+        public void Filter_AllowsExplicitZeroBounds()
+        {
+            var options = new BerryFilterOptions(minSpicy: 0, maxSpicy: 0);
+
+            Span<Berry> buffer = stackalloc Berry[BerryTable.Count];
+            var count = BerryQuery.Execute(BerryTable.All, buffer, options, default);
+            var results = buffer[..count];
+
+            Assert.NotEmpty(results.ToArray());
+            foreach (var berry in results)
+            {
+                Assert.Equal(0, berry.Spicy);
+            }
+        }
+
+        [Fact]
         public void Sort_ByRarityThenName()
         {
             var keys = new[]

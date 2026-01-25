@@ -10,17 +10,17 @@ namespace BDSP.Core.Berries
     {
         /// <summary>Identifier for this berry.</summary>
         public readonly BerryId Id;
-        /// <summary>Spicy flavor value.</summary>
+        /// <summary>Spicy flavor value (0-40).</summary>
         public readonly byte Spicy;
-        /// <summary>Dry flavor value.</summary>
+        /// <summary>Dry flavor value (0-40).</summary>
         public readonly byte Dry;
-        /// <summary>Sweet flavor value.</summary>
+        /// <summary>Sweet flavor value (0-40).</summary>
         public readonly byte Sweet;
-        /// <summary>Bitter flavor value.</summary>
+        /// <summary>Bitter flavor value (0-40).</summary>
         public readonly byte Bitter;
-        /// <summary>Sour flavor value.</summary>
+        /// <summary>Sour flavor value (0-40).</summary>
         public readonly byte Sour;
-        /// <summary>Smoothness value.</summary>
+        /// <summary>Smoothness value (20-60).</summary>
         public readonly byte Smoothness;
         /// <summary>Spicy value after per-berry weakness subtraction.</summary>
         public readonly sbyte WeakSpicy;

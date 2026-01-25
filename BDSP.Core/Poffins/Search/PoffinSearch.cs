@@ -408,26 +408,7 @@ namespace BDSP.Core.Poffins.Search
 
         private static bool IsAllBerries(in BerryFilterOptions options)
         {
-            return options.MinSpicy == BerryFilterOptions.Unset &&
-                   options.MaxSpicy == BerryFilterOptions.Unset &&
-                   options.MinDry == BerryFilterOptions.Unset &&
-                   options.MaxDry == BerryFilterOptions.Unset &&
-                   options.MinSweet == BerryFilterOptions.Unset &&
-                   options.MaxSweet == BerryFilterOptions.Unset &&
-                   options.MinBitter == BerryFilterOptions.Unset &&
-                   options.MaxBitter == BerryFilterOptions.Unset &&
-                   options.MinSour == BerryFilterOptions.Unset &&
-                   options.MaxSour == BerryFilterOptions.Unset &&
-                   options.MinSmoothness == BerryFilterOptions.Unset &&
-                   options.MaxSmoothness == BerryFilterOptions.Unset &&
-                   options.MinRarity == BerryFilterOptions.Unset &&
-                   options.MaxRarity == BerryFilterOptions.Unset &&
-                   options.MinMainFlavorValue == BerryFilterOptions.Unset &&
-                   options.MaxMainFlavorValue == BerryFilterOptions.Unset &&
-                   options.MinSecondaryFlavorValue == BerryFilterOptions.Unset &&
-                   options.MaxSecondaryFlavorValue == BerryFilterOptions.Unset &&
-                   options.MinNumFlavors == BerryFilterOptions.Unset &&
-                   options.MaxNumFlavors == BerryFilterOptions.Unset &&
+            return options.Mask == BerryFilterMask.None &&
                    !options.RequireMainFlavor &&
                    !options.RequireSecondaryFlavor &&
                    options.RequiredFlavorMask == 0 &&
@@ -478,26 +459,7 @@ namespace BDSP.Core.Poffins.Search
 
         private static bool IsDefaultFilter(in BerryFilterOptions options)
         {
-            return options.MinSpicy == 0 &&
-                   options.MaxSpicy == 0 &&
-                   options.MinDry == 0 &&
-                   options.MaxDry == 0 &&
-                   options.MinSweet == 0 &&
-                   options.MaxSweet == 0 &&
-                   options.MinBitter == 0 &&
-                   options.MaxBitter == 0 &&
-                   options.MinSour == 0 &&
-                   options.MaxSour == 0 &&
-                   options.MinSmoothness == 0 &&
-                   options.MaxSmoothness == 0 &&
-                   options.MinRarity == 0 &&
-                   options.MaxRarity == 0 &&
-                   options.MinMainFlavorValue == 0 &&
-                   options.MaxMainFlavorValue == 0 &&
-                   options.MinSecondaryFlavorValue == 0 &&
-                   options.MaxSecondaryFlavorValue == 0 &&
-                   options.MinNumFlavors == 0 &&
-                   options.MaxNumFlavors == 0 &&
+            return options.Mask == BerryFilterMask.None &&
                    !options.RequireMainFlavor &&
                    !options.RequireSecondaryFlavor &&
                    options.RequiredFlavorMask == 0 &&
