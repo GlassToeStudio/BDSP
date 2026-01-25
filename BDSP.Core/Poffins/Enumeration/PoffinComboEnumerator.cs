@@ -1,19 +1,23 @@
 using System;
 using BDSP.Core.Berries;
 
-namespace BDSP.Core.Poffins.Cooking
+namespace BDSP.Core.Poffins.Enumeration
 {
     /// <summary>
-    /// Enumerates unique 2–4 berry combinations from an arbitrary berry subset.
+    /// Enumerates unique 2-4 berry combinations from an arbitrary berry subset.
     /// Intended for UI-driven scenarios where the user filters berries first.
     /// </summary>
+    /// <remarks>
+    /// This uses a delegate callback for flexibility. For hot-path cooking,
+    /// <see cref='Search.PoffinSearch'/> uses inlined loops for lower overhead.
+    /// </remarks>
     public static class PoffinComboEnumerator
     {
         /// <summary>
-        /// Enumerates all unique combinations of the specified size (2–4).
+        /// Enumerates all unique combinations of the specified size (2-4).
         /// </summary>
         /// <param name="source">The berry IDs to choose from.</param>
-        /// <param name="choose">Number of berries per combination (2–4).</param>
+        /// <param name="choose">Number of berries per combination (2-4).</param>
         /// <param name="action">
         /// Callback invoked for each generated combination.
         /// The span is only valid for the duration of the call.
@@ -115,3 +119,4 @@ namespace BDSP.Core.Poffins.Cooking
         }
     }
 }
+

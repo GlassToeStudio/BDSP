@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BDSP.Core.Berries;
-using BDSP.Core.Poffins.Cooking;
+using BDSP.Core.Poffins.Enumeration;
 using Xunit;
 
 namespace BDSP.Core.Tests.Cooking
