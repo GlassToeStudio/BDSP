@@ -5,6 +5,7 @@ using BDSP.Core.Berries;
 using BDSP.Core.Poffins.Cooking;
 using BDSP.Core.Poffins;
 using BDSP.Core.Poffins.Filters;
+using System.Diagnostics;
 
 namespace BDSP.Core.Poffins.Search
 {
@@ -23,6 +24,9 @@ namespace BDSP.Core.Poffins.Search
             int topK = 100,
             in PoffinFilterOptions poffinOptions = default)
         {
+            BerryFilterOptions normalizedBerryOptions = NormalizeDefaultFilter(in berryOptions);
+            PoffinFilterOptions normalizedPoffinOptions = NormalizeDefaultFilter(in poffinOptions);
+
             if (options.Choose < 2 || options.Choose > 4)
             {
                 throw new ArgumentOutOfRangeException(nameof(options.Choose), "Choose must be 2, 3, or 4.");
@@ -30,13 +34,13 @@ namespace BDSP.Core.Poffins.Search
 
             var collector = new TopK<PoffinResult>(topK);
 
-            if (IsAllBerries(in berryOptions) && options.UseComboTableWhenAllBerries)
+            if (IsAllBerries(in normalizedBerryOptions) && options.UseComboTableWhenAllBerries)
             {
-                RunFromComboTable(in options, in poffinOptions, topK, collector);
+                RunFromComboTable(in options, in normalizedPoffinOptions, topK, collector);
             }
             else
             {
-                RunFromSubset(in berryOptions, in options, in poffinOptions, topK, collector);
+                RunFromSubset(in normalizedBerryOptions, in options, in normalizedPoffinOptions, topK, collector);
             }
 
             return collector.ToSortedArray(CompareResults);
@@ -424,6 +428,76 @@ namespace BDSP.Core.Poffins.Search
                    options.MaxSecondaryFlavorValue == BerryFilterOptions.Unset &&
                    options.MinNumFlavors == BerryFilterOptions.Unset &&
                    options.MaxNumFlavors == BerryFilterOptions.Unset &&
+                   !options.RequireMainFlavor &&
+                   !options.RequireSecondaryFlavor &&
+                   options.RequiredFlavorMask == 0 &&
+                   options.ExcludedFlavorMask == 0;
+        }
+
+        private static PoffinFilterOptions NormalizeDefaultFilter(in PoffinFilterOptions options)
+        {
+            if (!IsDefaultFilter(in options))
+            {
+                return options;
+            }
+
+            return PoffinFilterOptions.None;
+        }
+
+        private static bool IsDefaultFilter(in PoffinFilterOptions options)
+        {
+            return options.MinSpicy == PoffinFilterOptions.Unset &&
+                   options.MaxSpicy == PoffinFilterOptions.Unset &&
+                   options.MinDry == PoffinFilterOptions.Unset &&
+                   options.MaxDry == PoffinFilterOptions.Unset &&
+                   options.MinSweet == PoffinFilterOptions.Unset &&
+                   options.MaxSweet == PoffinFilterOptions.Unset &&
+                   options.MinBitter == PoffinFilterOptions.Unset &&
+                   options.MaxBitter == PoffinFilterOptions.Unset &&
+                   options.MinSour == PoffinFilterOptions.Unset &&
+                   options.MaxSour == PoffinFilterOptions.Unset &&
+                   options.MinSmoothness == PoffinFilterOptions.Unset &&
+                   options.MaxSmoothness == PoffinFilterOptions.Unset &&
+                   options.MinLevel == PoffinFilterOptions.Unset &&
+                   options.MaxLevel == PoffinFilterOptions.Unset &&
+                   options.MinNumFlavors == PoffinFilterOptions.Unset &&
+                   options.MaxNumFlavors == PoffinFilterOptions.Unset &&
+                   !options.RequireMainFlavor &&
+                   !options.RequireSecondaryFlavor;
+        }
+
+        private static BerryFilterOptions NormalizeDefaultFilter(in BerryFilterOptions options)
+        {
+            if (!IsDefaultFilter(in options))
+            {
+                return options;
+            }
+
+            return BerryFilterOptions.None;
+        }
+
+        private static bool IsDefaultFilter(in BerryFilterOptions options)
+        {
+            return options.MinSpicy == 0 &&
+                   options.MaxSpicy == 0 &&
+                   options.MinDry == 0 &&
+                   options.MaxDry == 0 &&
+                   options.MinSweet == 0 &&
+                   options.MaxSweet == 0 &&
+                   options.MinBitter == 0 &&
+                   options.MaxBitter == 0 &&
+                   options.MinSour == 0 &&
+                   options.MaxSour == 0 &&
+                   options.MinSmoothness == 0 &&
+                   options.MaxSmoothness == 0 &&
+                   options.MinRarity == 0 &&
+                   options.MaxRarity == 0 &&
+                   options.MinMainFlavorValue == 0 &&
+                   options.MaxMainFlavorValue == 0 &&
+                   options.MinSecondaryFlavorValue == 0 &&
+                   options.MaxSecondaryFlavorValue == 0 &&
+                   options.MinNumFlavors == 0 &&
+                   options.MaxNumFlavors == 0 &&
                    !options.RequireMainFlavor &&
                    !options.RequireSecondaryFlavor &&
                    options.RequiredFlavorMask == 0 &&

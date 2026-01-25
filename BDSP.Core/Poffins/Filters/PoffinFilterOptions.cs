@@ -7,6 +7,9 @@ namespace BDSP.Core.Poffins.Filters
     /// </summary>
     public readonly struct PoffinFilterOptions
     {
+
+        /// <summary>Represents no filtering (all fields set to <see cref="unset"/>).</summary>
+        public static PoffinFilterOptions None => new PoffinFilterOptions(minSpicy: Unset);
         /// <summary>Sentinel value for unset bounds.</summary>
         public const int Unset = -1;
 

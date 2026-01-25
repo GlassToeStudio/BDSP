@@ -5,6 +5,8 @@ namespace BDSP.Core.Berries
     /// </summary>
     public readonly struct BerryFilterOptions
     {
+        public static BerryFilterOptions None => new BerryFilterOptions(minSpicy: Unset);
+
         /// <summary>
         /// Sentinel value for unset bounds.
         /// </summary>
