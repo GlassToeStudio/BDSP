@@ -77,6 +77,29 @@ namespace BDSP.Core.Poffins
             };
         }
 
+        /// <summary>
+        /// Returns an aligned, human-readable description of the poffin.
+        /// </summary>
+        /// <remarks>
+        /// Example: Spicy  (12) - Flavors [ 12,   8,   0,   0,   0] Smoothness: 17
+        /// </remarks>
+        public override string ToString()
+        {
+            string label = IsFoul ? "Foul" : MainFlavor.ToString();
+
+            return string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "{0,-6} ({1,2}) - Flavors [{2,3}, {3,3}, {4,3}, {5,3}, {6,3}] Smoothness: {7,2}",
+                label,
+                Level,
+                Spicy,
+                Dry,
+                Sweet,
+                Bitter,
+                Sour,
+                Smoothness);
+        }
+
         private static byte CountNonZero(byte spicy, byte dry, byte sweet, byte bitter, byte sour)
         {
             byte count = 0;
