@@ -188,6 +188,17 @@ namespace BDSP.Core.Tests.Berries
         }
 
         [Fact]
+        public void RarityMatchesSmoothnessTable()
+        {
+            for (var i = 0; i < BerryTable.Count; i++)
+            {
+                ref readonly var berry = ref BerryTable.Get(new BerryId((ushort)i));
+                var expected = SmoothnessToRarity(berry.Smoothness);
+                Assert.Equal(expected, berry.Rarity);
+            }
+        }
+
+        [Fact]
         public void ToString_FormatAligned()
         {
             ref readonly var ganlon = ref BerryTable.Get(new BerryId(18));
@@ -259,6 +270,21 @@ namespace BDSP.Core.Tests.Berries
                 Flavor.Bitter => 2,
                 Flavor.Sour => 1,
                 _ => 0
+            };
+        }
+
+        private static byte SmoothnessToRarity(byte smoothness)
+        {
+            return smoothness switch
+            {
+                20 => 1,
+                25 => 3,
+                30 => 5,
+                35 => 7,
+                40 => 9,
+                50 => 11,
+                60 => 15,
+                _ => 255
             };
         }
     }

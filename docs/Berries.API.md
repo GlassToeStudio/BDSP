@@ -15,6 +15,7 @@ Minimal data used by cooking (flavors + smoothness), plus precomputed weakened v
 
 ### Berry
 Full metadata used for filtering, sorting, pruning, and display.
+Note: rarity is derived from smoothness using a fixed table (20->1, 25->3, 30->5, 35->7, 40->9, 50->11, 60->15).
 
 ### BerryTable
 Canonical data tables.
