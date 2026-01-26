@@ -67,7 +67,11 @@ Identical poffin stat sets are deduplicated before pruning; the lowest rarity-co
 recipe is kept and `DuplicateCount` tracks how many recipes produced the same poffin.
 
 Baseline plan uses low-smoothness first, then lower rarity cost, then higher level.
-The baseline plan continues until sheen reaches 255 (it does not stop early when stats cap).
+The baseline plan stops when sheen reaches 255 or all 5 stats reach 255.
+Results include:
+- `NumPerfectValues` (0-5)
+- `Rank` (1 = perfect stats + max sheen, 2 = perfect stats, 3 = otherwise)
+- `UniqueBerries` (distinct berries across the plan)
 
 For UI/workflows, prefer `OptimizationPipeline` to run the full chain from berries
 to candidates and then into feeding or contest searches.
@@ -75,6 +79,46 @@ to candidates and then into feeding or contest searches.
 For exhaustive exploration, use ordered poffin permutations (no repetition) on a pruned candidate set.
 
 Contest stats search uses inlined permutation loops for performance (see `ContestStatsSearch`).
+
+### **Contest Scoring Mode**
+
+Contest scoring defaults to a balance-aware mode that rewards the weakest stat
+in addition to the total stat sum. This helps avoid spiky results with 0s in
+some categories.
+
+CLI flag: `--score balanced|sum` (default: `balanced`).
+The CLI now defaults to `--candidates 5000` for broader candidate pools.
+Use `--progress` to display an outer-loop progress indicator during contest searches.
+When `--progress` is set, the CLI also prints stage messages and counts
+(filtered berries, nCk combinations, candidate count, and estimated permutations).
+
+### **CLI Filters & Scoring**
+
+Berry filters (subset selection before cooking):
+- `--berry-min-rarity`, `--berry-max-rarity`
+- `--berry-min-smoothness`, `--berry-max-smoothness`
+- `--berry-min-spicy` / `--berry-max-spicy` (and Dry/Sweet/Bitter/Sour)
+- `--berry-main-flavor`, `--berry-secondary-flavor`
+- `--berry-required-flavors`, `--berry-excluded-flavors` (comma list)
+
+Poffin candidate filters:
+- `--poffin-min-level`, `--poffin-max-level`
+- `--poffin-min-smoothness`, `--poffin-max-smoothness`
+- `--poffin-min-spicy` / `--poffin-max-spicy` (and Dry/Sweet/Bitter/Sour)
+- `--poffin-main-flavor`, `--poffin-secondary-flavor`
+
+Scoring weights:
+- `--poffin-level-weight`, `--poffin-total-flavor-weight`, `--poffin-smoothness-penalty`
+- `--poffin-preferred-main-flavor`, `--poffin-preferred-main-bonus`
+- `--stats-weight`, `--poffin-penalty`, `--sheen-penalty`, `--rarity-penalty`
+- `--rarity-mode max|sum`, `--score balanced|sum`, `--min-stat-weight`
+
+Contest result filters (CLI post-filter):
+- `--max-rank`, `--max-poffins`
+
+Note: `--max-poffins` now also caps feeding during contest search (variable-length feeding).
+Contest results now include an extra count: additional poffins needed to reach sheen 255
+after maxing all stats (within the cap).
 
 ### **Usage Examples**
 
@@ -213,21 +257,20 @@ A bonus can be earned to make the Poffin smoother (lower value), allowing a Poke
 
 **Implementation note:** The core library currently models the BDSP cap (max bonus 9). Gen IV's max bonus (10) is not modeled in code.
 
-## **Usage Examples**
+## **CLI Examples**
 
-Run a fast search with min level and smoothness bounds:
+Contest search with berry + poffin filters:
 ```powershell
-dotnet run --project BDSP.Core.CLI -- --berries=4 --topk=50 --min-level=50 --max-smooth=20
+dotnet run --project BDSP.Core.CLI -- contest-search --choose 4 --time 40 --topk 50 --candidates 5000 --parallel ^
+  --berry-min-rarity 3 --berry-max-rarity 11 ^
+  --poffin-min-level 90 --poffin-min-num-flavors 1 ^
+  --score balanced --progress
 ```
 
-Run a Spicy-focused search:
+Contest search with strict rank/poffin limits:
 ```powershell
-dotnet run --project BDSP.Core.CLI -- --min-spicy=30 --sort=level:desc --then=smoothness:asc
-```
-
-Run a pruning-heavy search (filters + smoothness cap):
-```powershell
-dotnet run --project BDSP.Core.CLI -- --min-level=60 --min-spicy=25 --max-smooth=15
+dotnet run --project BDSP.Core.CLI -- contest-search --choose 3 --time 40 --topk 50 --candidates 5000 ^
+  --max-rank 2 --max-poffins 12
 ```
 
 ---

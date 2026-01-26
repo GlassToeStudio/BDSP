@@ -15,17 +15,50 @@ namespace BDSP.Core.Optimization.Search
         public readonly int? MaxDegreeOfParallelism;
         /// <summary>Starting stats (default = all zeros).</summary>
         public readonly ContestStats Start;
+        /// <summary>Maximum number of poffins to feed (0 = no cap).</summary>
+        public readonly int MaxPoffins;
+        /// <summary>Optional progress callback for long-running searches.</summary>
+        public readonly Action<ContestSearchProgress>? Progress;
+        /// <summary>Outer-loop interval for progress updates (0 disables).</summary>
+        public readonly int ProgressInterval;
 
         public ContestStatsSearchOptions(
             int choose = 3,
             bool useParallel = true,
             int? maxDegreeOfParallelism = null,
-            ContestStats start = default)
+            ContestStats start = default,
+            int maxPoffins = 0,
+            Action<ContestSearchProgress>? progress = null,
+            int progressInterval = 64)
         {
             Choose = choose;
             UseParallel = useParallel;
             MaxDegreeOfParallelism = maxDegreeOfParallelism;
             Start = start;
+            MaxPoffins = maxPoffins;
+            Progress = progress;
+            ProgressInterval = progressInterval;
+        }
+    }
+
+    /// <summary>
+    /// Progress payload for contest stat searches (outer-loop based).
+    /// </summary>
+    public readonly struct ContestSearchProgress
+    {
+        public readonly int CompletedOuter;
+        public readonly int TotalOuter;
+        public readonly int Choose;
+        public readonly bool IsParallel;
+        public readonly int CandidateCount;
+
+        public ContestSearchProgress(int completedOuter, int totalOuter, int choose, bool isParallel, int candidateCount)
+        {
+            CompletedOuter = completedOuter;
+            TotalOuter = totalOuter;
+            Choose = choose;
+            IsParallel = isParallel;
+            CandidateCount = candidateCount;
         }
     }
 }

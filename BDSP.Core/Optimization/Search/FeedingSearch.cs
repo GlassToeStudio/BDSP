@@ -26,6 +26,9 @@ namespace BDSP.Core.Optimization.Search
                 return new FeedingPlanResult(
                     Array.Empty<FeedingStep>(),
                     start,
+                    numPerfectValues: CountPerfect(in start),
+                    rank: RankFromStats(in start),
+                    uniqueBerries: 0,
                     totalRarityCost: 0,
                     totalPoffins: 0,
                     totalSheen: start.Sheen,
@@ -38,6 +41,9 @@ namespace BDSP.Core.Optimization.Search
                 return new FeedingPlanResult(
                     Array.Empty<FeedingStep>(),
                     start,
+                    numPerfectValues: CountPerfect(in start),
+                    rank: RankFromStats(in start),
+                    uniqueBerries: 0,
                     totalRarityCost: 0,
                     totalPoffins: 0,
                     totalSheen: start.Sheen,
@@ -68,13 +74,23 @@ namespace BDSP.Core.Optimization.Search
 
                 steps.Add(new FeedingStep(steps.Count, candidate, before, after));
                 current = after;
+                if (CountPerfect(in current) == 5)
+                {
+                    break;
+                }
             }
 
             int score = ScorePlan(in current, totalRarityCost, steps.Count, totalSheen, in options);
+            int numPerfect = CountPerfect(in current);
+            int rank = RankFromStats(in current);
+            int uniqueBerries = CountUniqueBerries(steps);
 
             return new FeedingPlanResult(
                 steps.ToArray(),
                 current,
+                numPerfect,
+                rank,
+                uniqueBerries,
                 totalRarityCost,
                 steps.Count,
                 totalSheen,
@@ -121,10 +137,63 @@ namespace BDSP.Core.Optimization.Search
                          finalStats.Toughness;
 
             int score = statSum * options.StatsWeight;
+            if (options.ScoreMode == ContestScoreMode.Balanced)
+            {
+                int minStat = finalStats.Coolness;
+                if (finalStats.Beauty < minStat) minStat = finalStats.Beauty;
+                if (finalStats.Cuteness < minStat) minStat = finalStats.Cuteness;
+                if (finalStats.Cleverness < minStat) minStat = finalStats.Cleverness;
+                if (finalStats.Toughness < minStat) minStat = finalStats.Toughness;
+                score += minStat * options.MinStatWeight;
+            }
             score -= poffinCount * options.PoffinCountPenalty;
             score -= totalSheen * options.SheenPenalty;
             score -= totalRarityCost * options.RarityPenalty;
             return score;
+        }
+
+        private static int CountPerfect(in ContestStats stats)
+        {
+            int count = 0;
+            if (stats.Coolness >= 255) count++;
+            if (stats.Beauty >= 255) count++;
+            if (stats.Cuteness >= 255) count++;
+            if (stats.Cleverness >= 255) count++;
+            if (stats.Toughness >= 255) count++;
+            return count;
+        }
+
+        private static int RankFromStats(in ContestStats stats)
+        {
+            int perfect = CountPerfect(in stats);
+            if (perfect == 5 && stats.Sheen >= 255) return 1;
+            if (perfect == 5) return 2;
+            return 3;
+        }
+
+        private static int CountUniqueBerries(List<FeedingStep> steps)
+        {
+            ulong mask0 = 0;
+            ulong mask1 = 0;
+
+            for (int i = 0; i < steps.Count; i++)
+            {
+                BerryId[] berries = steps[i].Poffin.Recipe.Berries;
+                for (int j = 0; j < berries.Length; j++)
+                {
+                    int id = berries[j].Value;
+                    if (id < 64)
+                    {
+                        mask0 |= 1UL << id;
+                    }
+                    else
+                    {
+                        mask1 |= 1UL << (id - 64);
+                    }
+                }
+            }
+
+            return System.Numerics.BitOperations.PopCount(mask0) + System.Numerics.BitOperations.PopCount(mask1);
         }
     }
 }

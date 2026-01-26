@@ -1,5 +1,7 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Numerics;
 using BDSP.Core.Berries;
 using BDSP.Core.Optimization.Core;
 using BDSP.Core.Optimization.Filters;
@@ -52,10 +54,13 @@ namespace BDSP.Core.Optimization.Search
             ContestStatsSearchOptions searchOptionsValue = searchOptions;
             FeedingSearchOptions scoreOptionsValue = scoreOptions;
             bool shouldParallel = searchOptionsValue.UseParallel && pruned.Length >= 64;
+            Action<ContestSearchProgress>? progress = searchOptionsValue.Progress;
+            int progressInterval = searchOptionsValue.ProgressInterval;
+            if (progressInterval < 0) progressInterval = 0;
 
             if (!shouldParallel)
             {
-                EvaluateSequential(pruned, rarityCosts, searchOptionsValue, scoreOptionsValue, collector);
+                EvaluateSequential(pruned, rarityCosts, searchOptionsValue, scoreOptionsValue, collector, progress, progressInterval);
                 return collector.ToSortedArray(CompareResults);
             }
 
@@ -67,6 +72,8 @@ namespace BDSP.Core.Optimization.Search
 
             object gate = new object();
             int choose = searchOptionsValue.Choose;
+            int totalOuter = pruned.Length;
+            int completedOuter = 0;
 
             Parallel.For(
                 0,
@@ -76,6 +83,14 @@ namespace BDSP.Core.Optimization.Search
                 (i, _, local) =>
                 {
                     EvaluateFromIndex(pruned, rarityCosts, i, choose, searchOptionsValue, scoreOptionsValue, local);
+                    if (progress is not null && progressInterval > 0)
+                    {
+                        int done = Interlocked.Increment(ref completedOuter);
+                        if (done % progressInterval == 0 || done == totalOuter)
+                        {
+                            progress(new ContestSearchProgress(done, totalOuter, choose, isParallel: true, candidateCount: totalOuter));
+                        }
+                    }
                     return local;
                 },
                 local =>
@@ -94,12 +109,23 @@ namespace BDSP.Core.Optimization.Search
             int[] rarityCosts,
             ContestStatsSearchOptions searchOptions,
             FeedingSearchOptions scoreOptions,
-            TopK<ContestStatsResult> collector)
+            TopK<ContestStatsResult> collector,
+            Action<ContestSearchProgress>? progress,
+            int progressInterval)
         {
             int choose = searchOptions.Choose;
+            int totalOuter = candidates.Length;
             for (int i = 0; i < candidates.Length; i++)
             {
                 EvaluateFromIndex(candidates, rarityCosts, i, choose, searchOptions, scoreOptions, collector);
+                if (progress is not null && progressInterval > 0)
+                {
+                    int done = i + 1;
+                    if (done % progressInterval == 0 || done == totalOuter)
+                    {
+                        progress(new ContestSearchProgress(done, totalOuter, choose, isParallel: false, candidateCount: totalOuter));
+                    }
+                }
             }
         }
 
@@ -161,56 +187,48 @@ namespace BDSP.Core.Optimization.Search
             int totalRarity = 0;
             int totalSheen = stats.Sheen;
             int poffinsEaten = 0;
+            int maxPoffins = searchOptions.MaxPoffins;
 
-            if (i >= 0)
+            Span<int> indices = stackalloc int[4];
+            int indexCount = 0;
+            if (i >= 0) indices[indexCount++] = i;
+            if (j >= 0) indices[indexCount++] = j;
+            if (k >= 0) indices[indexCount++] = k;
+            if (l >= 0) indices[indexCount++] = l;
+
+            if (maxPoffins <= 0)
             {
-                stats = FeedingApplier.Apply(in stats, in candidates[i].Poffin);
-                totalRarity += rarityCosts[i];
-                totalSheen = stats.Sheen;
-                poffinsEaten++;
-                if (totalSheen >= 255)
+                for (int idx = 0; idx < indexCount; idx++)
                 {
-                    AddResult();
-                    return;
+                    int pos = indices[idx];
+                    stats = FeedingApplier.Apply(in stats, in candidates[pos].Poffin);
+                    totalRarity += rarityCosts[pos];
+                    totalSheen = stats.Sheen;
+                    poffinsEaten++;
+                    if (totalSheen >= 255 || CountPerfect(in stats) == 5)
+                    {
+                        AddResult();
+                        return;
+                    }
                 }
             }
-
-            if (j >= 0)
+            else
             {
-                stats = FeedingApplier.Apply(in stats, in candidates[j].Poffin);
-                totalRarity += rarityCosts[j];
-                totalSheen = stats.Sheen;
-                poffinsEaten++;
-                if (totalSheen >= 255)
+                while (poffinsEaten < maxPoffins && totalSheen < 255 && CountPerfect(in stats) < 5)
                 {
-                    AddResult();
-                    return;
-                }
-            }
-
-            if (k >= 0)
-            {
-                stats = FeedingApplier.Apply(in stats, in candidates[k].Poffin);
-                totalRarity += rarityCosts[k];
-                totalSheen = stats.Sheen;
-                poffinsEaten++;
-                if (totalSheen >= 255)
-                {
-                    AddResult();
-                    return;
-                }
-            }
-
-            if (l >= 0)
-            {
-                stats = FeedingApplier.Apply(in stats, in candidates[l].Poffin);
-                totalRarity += rarityCosts[l];
-                totalSheen = stats.Sheen;
-                poffinsEaten++;
-                if (totalSheen >= 255)
-                {
-                    AddResult();
-                    return;
+                    for (int idx = 0; idx < indexCount && poffinsEaten < maxPoffins; idx++)
+                    {
+                        int pos = indices[idx];
+                        stats = FeedingApplier.Apply(in stats, in candidates[pos].Poffin);
+                        totalRarity += rarityCosts[pos];
+                        totalSheen = stats.Sheen;
+                        poffinsEaten++;
+                        if (totalSheen >= 255 || CountPerfect(in stats) == 5)
+                        {
+                            AddResult();
+                            return;
+                        }
+                    }
                 }
             }
 
@@ -218,9 +236,14 @@ namespace BDSP.Core.Optimization.Search
 
             void AddResult()
             {
-                int score = ScorePlan(in stats, totalRarity, poffinsEaten, totalSheen, scoreOptions);
+                int additional = ComputeAdditionalToMaxSheen(stats, candidates, i, j, k, l, searchOptions.MaxPoffins, poffinsEaten);
+                int totalPoffins = poffinsEaten + additional;
+                int score = ScorePlan(in stats, totalRarity, totalPoffins, totalSheen, scoreOptions);
                 var indices = new PoffinIndexSet(i, j, k, l, count);
-                collector.TryAdd(new ContestStatsResult(indices, stats, poffinsEaten, totalRarity, totalSheen, score), score);
+                int numPerfect = CountPerfect(in stats);
+                int rank = RankFromStats(in stats);
+                int uniqueBerries = CountUniqueBerries(candidates, i, j, k, l);
+                collector.TryAdd(new ContestStatsResult(indices, stats, poffinsEaten, totalRarity, totalSheen, score, numPerfect, rank, uniqueBerries, additional), score);
             }
         }
 
@@ -257,6 +280,15 @@ namespace BDSP.Core.Optimization.Search
                          finalStats.Toughness;
 
             int score = statSum * options.StatsWeight;
+            if (options.ScoreMode == ContestScoreMode.Balanced)
+            {
+                int minStat = finalStats.Coolness;
+                if (finalStats.Beauty < minStat) minStat = finalStats.Beauty;
+                if (finalStats.Cuteness < minStat) minStat = finalStats.Cuteness;
+                if (finalStats.Cleverness < minStat) minStat = finalStats.Cleverness;
+                if (finalStats.Toughness < minStat) minStat = finalStats.Toughness;
+                score += minStat * options.MinStatWeight;
+            }
             score -= poffinCount * options.PoffinCountPenalty;
             score -= totalSheen * options.SheenPenalty;
             score -= totalRarityCost * options.RarityPenalty;
@@ -266,6 +298,99 @@ namespace BDSP.Core.Optimization.Search
         private static int CompareResults(ContestStatsResult left, ContestStatsResult right)
         {
             return right.Score.CompareTo(left.Score);
+        }
+
+        private static int ComputeAdditionalToMaxSheen(
+            ContestStats stats,
+            PoffinWithRecipe[] candidates,
+            int i,
+            int j,
+            int k,
+            int l,
+            int maxPoffins,
+            int alreadyEaten)
+        {
+            int remainingCap = maxPoffins > 0 ? maxPoffins - alreadyEaten : int.MaxValue;
+            if (remainingCap <= 0)
+            {
+                return 0;
+            }
+
+            Span<int> indices = stackalloc int[4];
+            int indexCount = 0;
+            if (i >= 0) indices[indexCount++] = i;
+            if (j >= 0) indices[indexCount++] = j;
+            if (k >= 0) indices[indexCount++] = k;
+            if (l >= 0) indices[indexCount++] = l;
+            if (indexCount == 0)
+            {
+                return 0;
+            }
+
+            int additional = 0;
+            while (additional < remainingCap && stats.Sheen < 255)
+            {
+                for (int idx = 0; idx < indexCount && additional < remainingCap; idx++)
+                {
+                    int pos = indices[idx];
+                    stats = FeedingApplier.Apply(in stats, in candidates[pos].Poffin);
+                    additional++;
+                    if (stats.Sheen >= 255)
+                    {
+                        return additional;
+                    }
+                }
+            }
+
+            return additional;
+        }
+
+        private static int CountPerfect(in ContestStats stats)
+        {
+            int count = 0;
+            if (stats.Coolness >= 255) count++;
+            if (stats.Beauty >= 255) count++;
+            if (stats.Cuteness >= 255) count++;
+            if (stats.Cleverness >= 255) count++;
+            if (stats.Toughness >= 255) count++;
+            return count;
+        }
+
+        private static int RankFromStats(in ContestStats stats)
+        {
+            int perfect = CountPerfect(in stats);
+            if (perfect == 5 && stats.Sheen >= 255) return 1;
+            if (perfect == 5) return 2;
+            return 3;
+        }
+
+        private static int CountUniqueBerries(PoffinWithRecipe[] candidates, int i, int j, int k, int l)
+        {
+            ulong mask0 = 0;
+            ulong mask1 = 0;
+
+            if (i >= 0) AddRecipeBits(candidates[i].Recipe.Berries, ref mask0, ref mask1);
+            if (j >= 0) AddRecipeBits(candidates[j].Recipe.Berries, ref mask0, ref mask1);
+            if (k >= 0) AddRecipeBits(candidates[k].Recipe.Berries, ref mask0, ref mask1);
+            if (l >= 0) AddRecipeBits(candidates[l].Recipe.Berries, ref mask0, ref mask1);
+
+            return BitOperations.PopCount(mask0) + BitOperations.PopCount(mask1);
+        }
+
+        private static void AddRecipeBits(BerryId[] berries, ref ulong mask0, ref ulong mask1)
+        {
+            for (int i = 0; i < berries.Length; i++)
+            {
+                int id = berries[i].Value;
+                if (id < 64)
+                {
+                    mask0 |= 1UL << id;
+                }
+                else
+                {
+                    mask1 |= 1UL << (id - 64);
+                }
+            }
         }
     }
 
@@ -301,6 +426,10 @@ namespace BDSP.Core.Optimization.Search
         public readonly int TotalRarityCost;
         public readonly int TotalSheen;
         public readonly int Score;
+        public readonly int NumPerfectValues;
+        public readonly int Rank;
+        public readonly int UniqueBerries;
+        public readonly int AdditionalPoffinsToMaxSheen;
 
         public ContestStatsResult(
             PoffinIndexSet indices,
@@ -308,7 +437,11 @@ namespace BDSP.Core.Optimization.Search
             int poffinsEaten,
             int totalRarityCost,
             int totalSheen,
-            int score)
+            int score,
+            int numPerfectValues,
+            int rank,
+            int uniqueBerries,
+            int additionalPoffinsToMaxSheen)
         {
             Indices = indices;
             Stats = stats;
@@ -316,6 +449,10 @@ namespace BDSP.Core.Optimization.Search
             TotalRarityCost = totalRarityCost;
             TotalSheen = totalSheen;
             Score = score;
+            NumPerfectValues = numPerfectValues;
+            Rank = rank;
+            UniqueBerries = uniqueBerries;
+            AdditionalPoffinsToMaxSheen = additionalPoffinsToMaxSheen;
         }
     }
 }

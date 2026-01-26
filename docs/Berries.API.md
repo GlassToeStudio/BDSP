@@ -224,6 +224,13 @@ End-to-end orchestration from berries to feeding plans or contest stats:
 - `RunFeedingPlan(BerryFilterOptions, PoffinCandidateOptions, int candidateTopK, FeedingSearchOptions, ContestStats, bool dedup)`
 - `RunContestSearch(BerryFilterOptions, PoffinCandidateOptions, int candidateTopK, ContestStatsSearchOptions, FeedingSearchOptions, int topK, bool dedup)`
 
+### FeedingSearchOptions
+Controls scoring and rarity behavior for feeding plans and contest stats:
+- `ScoreMode`: `Balanced` (default) or `SumOnly`.
+- `MinStatWeight`: bonus for the weakest stat when `ScoreMode = Balanced`.
+- Standard weights/penalties: `StatsWeight`, `PoffinCountPenalty`, `SheenPenalty`, `RarityPenalty`.
+- `RarityCostMode`: `MaxBerryRarity` or `SumBerryRarity`.
+
 ### PoffinCandidateOptions
 Controls candidate generation (choose list, cooking params, score options, optional poffin filter).
 
@@ -237,9 +244,16 @@ Enumerates ordered permutations of candidate poffins (no repetition) for feeding
 
 ### ContestStatsSearch
 Runs inlined permutation loops over poffin candidates and returns top-ranked contest stat results.
+Results include `AdditionalPoffinsToMaxSheen` to indicate how many extra poffins
+are needed to reach sheen 255 after stats are maxed (within the max-poffins cap).
+
+### FeedingPlanResult
+Feeding plan summary now includes:
+- `NumPerfectValues` (0-5), `Rank` (1/2/3), and `UniqueBerries`.
 
 ### ContestStatsSearchOptions
 Controls permutation size, parallelism, and starting stats for contest-stat search.
+Optional progress reporting via a callback and a configurable interval.
 
 ### PoffinWithRecipe
 Poffin + recipe metadata + `DuplicateCount` (number of recipes that produced identical stats).

@@ -81,6 +81,9 @@ namespace BDSP.Core.Optimization.Search
                 return new FeedingPlanResult(
                     Array.Empty<FeedingStep>(),
                     start,
+                    numPerfectValues: 0,
+                    rank: 3,
+                    uniqueBerries: 0,
                     totalRarityCost: 0,
                     totalPoffins: 0,
                     totalSheen: start.Sheen,
