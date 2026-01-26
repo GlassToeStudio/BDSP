@@ -32,7 +32,7 @@ Canonical data tables.
 ### BerryNames
 Name lookup by `BerryId`.
 
-### BerryAnsiFormatter (BDSP.Tools)
+### BerryAnsiFormatter (BDSP.Core.CLI)
 ANSI-colored formatter for terminal output.
 
 ### ANSI Formatter Example
