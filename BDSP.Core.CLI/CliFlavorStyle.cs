@@ -17,7 +17,7 @@ namespace BDSP.Core.CLI
                 Flavor.Sweet => Colors.Color256(212),
                 Flavor.Bitter => Colors.Color256(40),
                 Flavor.Sour => Colors.Color256(226),
-                _ => Colors.DEFAULT
+                _ => Colors.Default
             };
         }
 

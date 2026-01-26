@@ -45,7 +45,7 @@ namespace BDSP.Core.CLI
             const int width = 36;
             const string indent = "        ";
             string outline = useColor ? Colors.Color256(168) : string.Empty;
-            string reset = useColor ? Colors.RESET : string.Empty;
+            string reset = useColor ? Colors.Reset : string.Empty;
 
             string coolLabel = FormatFlavorLabel(Flavor.Spicy, useColor);
             string dryLabel = FormatFlavorLabel(Flavor.Dry, useColor);
@@ -87,7 +87,7 @@ namespace BDSP.Core.CLI
         private static string FormatStatLabel(string name, int value, bool useColor)
         {
             string valueColor = useColor ? (value >= 255 ? CliFlavorStyle.ColorForFlavor(Flavor.Bitter) : Colors.Color256(196)) : string.Empty;
-            string reset = useColor ? Colors.RESET : string.Empty;
+            string reset = useColor ? Colors.Reset : string.Empty;
             return string.Format(CultureInfo.InvariantCulture, "{0,-14} : {1}{2,3}{3}", name, valueColor, value, reset);
         }
 
@@ -101,14 +101,14 @@ namespace BDSP.Core.CLI
             }
 
             string color = CliFlavorStyle.ColorForFlavor(flavor);
-            return $"{color}{raw}{Colors.RESET}{new string(' ', pad)}";
+            return $"{color}{raw}{Colors.Reset}{new string(' ', pad)}";
         }
 
         private static string FormatEatenSheen(ContestStatsResult result, bool useColor)
         {
-            string reset = useColor ? Colors.RESET : string.Empty;
+            string reset = useColor ? Colors.Reset : string.Empty;
             string eatenWarn = useColor ? (result.PoffinsEaten > 0 ? Colors.Color256(196) : string.Empty) : string.Empty;
-            string sheenColor = useColor ? (result.TotalSheen >= 255 ? Colors.BOLD : string.Empty) : string.Empty;
+            string sheenColor = useColor ? (result.TotalSheen >= 255 ? Colors.Bold : string.Empty) : string.Empty;
             return string.Format(
                 CultureInfo.InvariantCulture,
                 "Eaten{0}{1,6}{2}  Sheen         : {3}{4,3}{5} ",
@@ -125,7 +125,7 @@ namespace BDSP.Core.CLI
             string rankColor = useColor
                 ? (result.Rank == 1 ? CliFlavorStyle.ColorForFlavor(Flavor.Bitter) : result.Rank == 2 ? CliFlavorStyle.ColorForFlavor(Flavor.Spicy) : Colors.Color256(196))
                 : string.Empty;
-            string reset = useColor ? Colors.RESET : string.Empty;
+            string reset = useColor ? Colors.Reset : string.Empty;
             return string.Format(
                 CultureInfo.InvariantCulture,
                 "Rank : {0}{1,1}{2}     R/U        {3,2} : {4,2}  ",

@@ -41,11 +41,11 @@ namespace BDSP.Core.CLI
                 poffin.Level,
                 name,
                 poffin.Smoothness,
-                useColor ? $"{CliFlavorStyle.ColorForFlavor(Flavor.Spicy)}{poffin.Spicy,3}{Colors.RESET}" : poffin.Spicy.ToString(CultureInfo.InvariantCulture).PadLeft(3),
-                useColor ? $"{CliFlavorStyle.ColorForFlavor(Flavor.Dry)}{poffin.Dry,3}{Colors.RESET}" : poffin.Dry.ToString(CultureInfo.InvariantCulture).PadLeft(3),
-                useColor ? $"{CliFlavorStyle.ColorForFlavor(Flavor.Sweet)}{poffin.Sweet,3}{Colors.RESET}" : poffin.Sweet.ToString(CultureInfo.InvariantCulture).PadLeft(3),
-                useColor ? $"{CliFlavorStyle.ColorForFlavor(Flavor.Bitter)}{poffin.Bitter,3}{Colors.RESET}" : poffin.Bitter.ToString(CultureInfo.InvariantCulture).PadLeft(3),
-                useColor ? $"{CliFlavorStyle.ColorForFlavor(Flavor.Sour)}{poffin.Sour,3}{Colors.RESET}" : poffin.Sour.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+                useColor ? $"{CliFlavorStyle.ColorForFlavor(Flavor.Spicy)}{poffin.Spicy,3}{Colors.Reset}" : poffin.Spicy.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+                useColor ? $"{CliFlavorStyle.ColorForFlavor(Flavor.Dry)}{poffin.Dry,3}{Colors.Reset}" : poffin.Dry.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+                useColor ? $"{CliFlavorStyle.ColorForFlavor(Flavor.Sweet)}{poffin.Sweet,3}{Colors.Reset}" : poffin.Sweet.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+                useColor ? $"{CliFlavorStyle.ColorForFlavor(Flavor.Bitter)}{poffin.Bitter,3}{Colors.Reset}" : poffin.Bitter.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+                useColor ? $"{CliFlavorStyle.ColorForFlavor(Flavor.Sour)}{poffin.Sour,3}{Colors.Reset}" : poffin.Sour.ToString(CultureInfo.InvariantCulture).PadLeft(3),
                 recipeRarity);
         }
 
@@ -66,8 +66,8 @@ namespace BDSP.Core.CLI
             return string.Format(
                 CultureInfo.InvariantCulture,
                 "* {0,-6} {1,-8} ({2,3}, {3,2})",
-                useColor ? $"{CliFlavorStyle.ColorForFlavor(poffin.MainFlavor)}{poffin.MainFlavor}{Colors.RESET}" : poffin.MainFlavor.ToString(),
-                useColor ? $"{CliFlavorStyle.ColorForFlavor(poffin.SecondaryFlavor)}{poffin.SecondaryFlavor}{Colors.RESET}" : poffin.SecondaryFlavor.ToString(),
+                useColor ? $"{CliFlavorStyle.ColorForFlavor(poffin.MainFlavor)}{poffin.MainFlavor}{Colors.Reset}" : poffin.MainFlavor.ToString(),
+                useColor ? $"{CliFlavorStyle.ColorForFlavor(poffin.SecondaryFlavor)}{poffin.SecondaryFlavor}{Colors.Reset}" : poffin.SecondaryFlavor.ToString(),
                 poffin.Level,
                 poffin.SecondLevel);
         }
@@ -104,18 +104,18 @@ namespace BDSP.Core.CLI
             string padded = plain.PadRight(17);
             return kind switch
             {
-                PoffinNameKind.Foul => $"{Colors.BOLD}{Colors.Color256(237)}{padded}{Colors.RESET}",
+                PoffinNameKind.Foul => $"{Colors.Bold}{Colors.Color256(237)}{padded}{Colors.Reset}",
                 PoffinNameKind.SuperMild => $"{FormatSuperMildPoffin()}{new string(' ', Math.Max(0, 17 - plain.Length))}",
-                PoffinNameKind.Mild => $"{Colors.BOLD}{Colors.Color256(11)}{padded}{Colors.RESET}",
-                PoffinNameKind.Rich => $"{Colors.BOLD}{Colors.Color256(247)}{padded}{Colors.RESET}",
-                PoffinNameKind.Overripe => $"{Colors.BOLD}{Colors.Color256(242)}{padded}{Colors.RESET}",
+                PoffinNameKind.Mild => $"{Colors.Bold}{Colors.Color256(11)}{padded}{Colors.Reset}",
+                PoffinNameKind.Rich => $"{Colors.Bold}{Colors.Color256(247)}{padded}{Colors.Reset}",
+                PoffinNameKind.Overripe => $"{Colors.Bold}{Colors.Color256(242)}{padded}{Colors.Reset}",
                 _ => padded
             };
         }
 
         private static string FormatSuperMildPoffin()
         {
-            return $"{Colors.BOLD}{Colors.RGB_RED}SU{Colors.RGB_ORANGE}PER {Colors.RGB_YELLOW}MI{Colors.RGB_GREEN}LD {Colors.RGB_BLUE}PO{Colors.RGB_DARK_VIOLET}FF{Colors.RGB_VIOLET}IN{Colors.RESET}";
+            return $"{Colors.Bold}{Colors.RgbRed}SU{Colors.RgbOrange}PER {Colors.RgbYellow}MI{Colors.RgbGreen}LD {Colors.RgbBlue}PO{Colors.RgbDarkViolet}FF{Colors.RgbViolet}IN{Colors.Reset}";
         }
     }
 }
