@@ -14,6 +14,7 @@ namespace BDSP.Core.CLI
     /// Provides methods and constants for terminal color formatting and cursor control.
     /// <see href="https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797"/>
     /// <see href="https://en.wikipedia.org/wiki/Box-drawing_characters"/>
+    /// <see href="https://github.com/ClaireCJS/clairecjs_bat/blob/main/BAT-and-UTIL-files-2/set-ansi.bat"/>
     /// </summary>
     public static class Colors
     {
@@ -28,8 +29,8 @@ namespace BDSP.Core.CLI
         /// <summary>
         /// Clear the screen.
         /// </summary>
-        /// <remarks>"<see cref="Colors.Esc"/>c" or "\ec" or  "\x1bc"</remarks> 
-        /// <returns>"<see cref="Colors.Esc"/>[2J;H"</returns>
+        /// <remarks>"<see cref="Esc"/>c" or "\ec" or  "\x1bc"</remarks> 
+        /// <returns>"<see cref="Esc"/>[2J;H"</returns>
         public static string Clear() => "\u001b[2J;H";
 
         #region Color and Formatting Methods
@@ -39,7 +40,7 @@ namespace BDSP.Core.CLI
         /// <param name="r">Red ID (0-255)</param>
         /// <param name="g">Green ID (0-255)</param>
         /// <param name="b">Blue ID (0-255)</param>
-        /// <returns><see cref="Colors.Esc"/>[38;2;&lt;r&gt;;&lt;g&gt;;&lt;b&gt;m</returns>
+        /// <returns><see cref="Esc"/>[38;2;&lt;r&gt;;&lt;g&gt;;&lt;b&gt;m</returns>
         public static string Rgb(byte r, byte g, byte b) => $"\u001b[38;2;{r};{g};{b}m";
 
         /// <summary>
@@ -48,7 +49,7 @@ namespace BDSP.Core.CLI
         /// <param name="r">Red ID (0-255)</param>
         /// <param name="g">Green ID (0-255)</param>
         /// <param name="b">Blue ID (0-255)</param>
-        /// <returns><see cref="Colors.Esc"/>[48;2;&lt;r&gt;;&lt;g&gt;;&lt;b&gt;m</returns>
+        /// <returns><see cref="Esc"/>[48;2;&lt;r&gt;;&lt;g&gt;;&lt;b&gt;m</returns>
         public static string RgbBg(byte r, byte g, byte b) => $"\u001b[48;2;{r};{g};{b}m";
 
         /// <summary>
@@ -66,7 +67,7 @@ namespace BDSP.Core.CLI
         /// 232-255: grayscale from dark to light in 24 steps.
         /// </code>
         /// </remarks>
-        /// <returns><see cref="Colors.Esc"/>[38;5;&lt;ID&gt;m</returns>
+        /// <returns><see cref="Esc"/>[38;5;&lt;ID&gt;m</returns>
         public static string Color256(byte ID) => $"\u001b[38;5;{ID}m";
 
         /// <summary>
@@ -84,7 +85,7 @@ namespace BDSP.Core.CLI
         /// 232-255: grayscale from dark to light in 24 steps.
         /// </code>
         /// </remarks>
-        /// <returns><see cref="Colors.Esc"/>[48;5;&lt;ID&gt;m</returns>
+        /// <returns><see cref="Esc"/>[48;5;&lt;ID&gt;m</returns>
         public static string Color256Bg(byte ID) => $"\u001b[48;5;{ID}m";
 
         /// <summary>
@@ -166,7 +167,7 @@ namespace BDSP.Core.CLI
         public static readonly string Home = "\u001b[H";
 
         /// <summary>
-        /// request cursor position(reports as <see cref="Colors.Esc"/>[#;#R)
+        /// request cursor position(reports as <see cref="Esc"/>[#;#R)
         /// </summary>
         public static readonly string RequestPosition = "\u001b[6n";
 
