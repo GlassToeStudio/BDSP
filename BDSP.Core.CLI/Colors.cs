@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Globalization;
 using System.Linq;
 
@@ -13,7 +14,8 @@ namespace BDSP.Core.CLI
         /// <summary>
         /// ASCII escape character \u001b[
         /// </summary>
-        public const string Esc = "\u001b[";
+        public const string Esc = "\u001b["; //"\033["
+        public static string Clear() => "\u001b[2J;H";
 
         #region Color and Formatting Methods
         /// <summary>
@@ -54,194 +56,252 @@ namespace BDSP.Core.CLI
         /// Can be used to change many things at once without calling each one individually.
         /// </summary>
         /// <param name="args">Escape sequence codes</param>
-        /// <returns>ESC&lt;n1&gt;;&lt;n2&gt;;...&lt;n&gt;m</returns>
+        /// <returns><see cref="Esc"/>&lt;n1&gt;;&lt;n2&gt;;...&lt;n&gt;m</returns>
         public static string ChainSequence(params byte[] args)
         {
             string chained = string.Join(";", args.Select(a => a.ToString(CultureInfo.InvariantCulture)));
             return $"{Esc}{chained}m";
         }
-        #endregion
+        #endregion // Color and Formatting Methods
+
 
         #region Cursor Movement
-        /// <summary>
-        /// Move the cursor to row, column.
-        /// </summary>
-        /// <param name="rows">The row</param>
-        /// <param name="columns">The column</param>
-        /// <returns>ESC&lt;row&gt;;&lt;column&gt;H</returns>
-        public static string Move(byte rows, byte columns) => $"{Esc}{rows};{columns}H";
-
         /// <summary>
         /// Move up by number of lines.
         /// </summary>
         /// <param name="lines">Number of lines to move up</param>
-        /// <returns>ESC&lt;lines&gt;A</returns>
-        public static string Up(byte lines) => $"{Esc}{lines}A";
+        /// <returns><see cref="Esc"/>&lt;lines&gt;A</returns>
+        public static string MoveUpBy(byte lines) => $"{Esc}{lines}A";
 
         /// <summary>
         /// Move down by number of lines.
         /// </summary>
         /// <param name="lines">Number of lines to move down</param>
-        /// <returns>ESC&lt;lines&gt;B</returns>
-        public static string Down(byte lines) => $"{Esc}{lines}B";
+        /// <returns><see cref="Esc"/>&lt;lines&gt;B</returns>
+        public static string MoveDownBy(byte lines) => $"{Esc}{lines}B";
 
         /// <summary>
         /// Move right by number of columns.
         /// </summary>
         /// <param name="columns">Number of columns to move right</param>
-        /// <returns>ESC&lt;columns&gt;C</returns>
-        public static string Right(byte columns) => $"{Esc}{columns}C";
+        /// <returns><see cref="Esc"/>&lt;columns&gt;C</returns>
+        public static string MoveRightBy(byte columns) => $"{Esc}{columns}C";
 
         /// <summary>
         /// Move left by number of columns.
         /// </summary>
         /// <param name="columns">Number of columns to move left</param>
-        /// <returns>ESC&lt;columns&gt;D</returns>
-        public static string Left(byte columns) => $"{Esc}{columns}D";
+        /// <returns><see cref="Esc"/>&lt;columns&gt;D</returns>
+        public static string MoveLeftBy(byte columns) => $"{Esc}{columns}D";
 
         /// <summary>
-        /// Moves cursor to beginning of next line, specified lines down.
+        /// Moves cursor to beginning of next line, specified number of lines down.
         /// </summary>
-        /// <param name="amount">Number of lines to move down</param>
-        /// <returns>ESC&lt;amount&gt;E</returns>
-        public static string StartDown(byte amount) => $"{Esc}{amount}E";
+        /// <param name="lines">Number of lines to move down</param>
+        /// <returns><see cref="Esc"/>&lt;lines&gt;E</returns>
+        public static string StartDownBy(byte lines) => $"{Esc}{lines}E";
 
         /// <summary>
-        /// Moves cursor to beginning of previous line, specified lines up.
+        /// Moves cursor to beginning of previous line, specified number of lines up.
         /// </summary>
-        /// <param name="amount">Number of lines to move up</param>
-        /// <returns>ESC&lt;amount&gt;F</returns>
-        public static string StartUp(byte amount) => $"{Esc}{amount}F";
+        /// <param name="lines">Number of lines to move up</param>
+        /// <returns><see cref="Esc"/>&lt;lines&gt;F</returns>
+        public static string StartUpBy(byte lines) => $"{Esc}{lines}F";
 
         /// <summary>
         /// Moves cursor to specified column.
         /// </summary>
         /// <param name="column">Column number to move to</param>
-        /// <returns>ESC&lt;column&gt;G</returns>
+        /// <returns><see cref="Esc"/>&lt;column&gt;G</returns>
         public static string MoveToColumn(byte column) => $"{Esc}{column}G";
-        #endregion
+
+        /// <summary>
+        /// Move the cursor to line, column.
+        /// </summary>
+        /// <param name="line">The line</param>
+        /// <param name="column">The column</param>
+        /// <returns><see cref="Esc"/>&lt;line&gt;;&lt;column&gt;H</returns>
+        public static string MoveTo(byte line, byte column) => $"{Esc}{line};{column}H"; // or Esc[{line};{column}f
+
+        /// <summary>
+        /// Moves cursor to home position (0, 0),
+        /// </summary>
+        public static readonly string Home = "\u001b[H";
+
+        /// <summary>
+        /// request cursor position(reports as ESC[#;#R)
+        /// </summary>
+        public static readonly string RequestPosition = "\u001b[6n";
+
+        /// <summary>
+        /// Moves cursor one line up, scrolling if needed.
+        /// </summary>
+        public static readonly string MoveUp1 = "\u001b[M";
+
+        /*
+         * ESC 7	save cursor position (DEC)
+         * ESC 8	restores the cursor to the last saved position (DEC)
+         * 
+         * ESC[J	erase in display (same as ESC[0J)
+         * ESC[0J	erase from cursor until end of screen
+         * ESC[1J	erase from cursor to beginning of screen
+         * ESC[2J	erase entire screen
+         * ESC[3J	erase saved lines
+         * ESC[K	erase in line (same as ESC[0K)
+         * ESC[0K	erase from cursor to end of line
+         * ESC[1K	erase start of line to the cursor
+         * ESC[2K	erase the entire line
+         */
+        #endregion // Cursor Movement
+
 
         #region Basic ANSI Colors and Styles
-        // Basic text colors
+        // * Basic text colors
+
         /// <summary>Black text 30m</summary>
-        public static readonly string Black = $"{Esc}30m";
+        public static readonly string Black = "\u001b[30m";
         /// <summary>Red text 31m</summary>
-        public static readonly string Red = $"{Esc}31m";
+        public static readonly string Red = "\u001b[31m";
         /// <summary>Green text 32m</summary>
-        public static readonly string Green = $"{Esc}32m";
+        public static readonly string Green = "\u001b[32m";
         /// <summary>Yellow text 33m</summary>
-        public static readonly string Yellow = $"{Esc}33m";
+        public static readonly string Yellow = "\u001b[33m";
         /// <summary>Blue text 34m</summary>
-        public static readonly string Blue = $"{Esc}34m";
+        public static readonly string Blue = "\u001b[34m";
         /// <summary>Magenta text 35m</summary>
-        public static readonly string Magenta = $"{Esc}35m";
+        public static readonly string Magenta = "\u001b[35m";
         /// <summary>Cyan text 36m</summary>
-        public static readonly string Cyan = $"{Esc}36m";
+        public static readonly string Cyan = "\u001b[36m";
         /// <summary>White text 37m</summary>
-        public static readonly string White = $"{Esc}37m";
+        public static readonly string White = "\u001b[37m";
         /// <summary>Default text color 39m</summary>
-        public static readonly string Default = $"{Esc}39m";
+        public static readonly string Default = "\u001b[39m";
 
-        // Bright text colors
+        // * Bright text colors
+
+        // NOTE:
+        //  Most terminals, apart from the basic set of 8 colors,
+        //  also support the "bright" or "bold" colors.
+        //  These have their own set of codes, mirroring the normal colors,
+        //  but with an additional ;1 in their codes:
+        // Example: 
+        //  # Set style to bold, red foreground.
+        //  \u001b[1;31mHello
+        //  # Set style to dimmed white foreground with red background.
+        //  \u001b[2;37;41mWorld
+
         /// <summary>Bright black 90m</summary>
-        public static readonly string BlackBright = $"{Esc}90m";
+        public static readonly string BlackBright = "\u001b[90m";
         /// <summary>Bright red 91m</summary>
-        public static readonly string RedBright = $"{Esc}91m";
+        public static readonly string RedBright = "\u001b[91m";
         /// <summary>Bright green 92m</summary>
-        public static readonly string GreenBright = $"{Esc}92m";
+        public static readonly string GreenBright = "\u001b[92m";
         /// <summary>Bright yellow 93m</summary>
-        public static readonly string YellowBright = $"{Esc}93m";
+        public static readonly string YellowBright = "\u001b[93m";
         /// <summary>Bright blue 94m</summary>
-        public static readonly string BlueBright = $"{Esc}94m";
+        public static readonly string BlueBright = "\u001b[94m";
         /// <summary>Bright magenta 95m</summary>
-        public static readonly string MagentaBright = $"{Esc}95m";
+        public static readonly string MagentaBright = "\u001b[95m";
         /// <summary>Bright cyan 96m</summary>
-        public static readonly string CyanBright = $"{Esc}96m";
+        public static readonly string CyanBright = "\u001b[96m";
         /// <summary>Bright white 97m</summary>
-        public static readonly string WhiteBright = $"{Esc}97m";
+        public static readonly string WhiteBright = "\u001b[97m";
 
-        // Background colors
+
+        #region Background colors
+        // * Normal background colors
+
         /// <summary>Black background 40m</summary>
-        public static readonly string BlackBg = $"{Esc}40m";
+        public static readonly string BlackBg = "\u001b[40m";
         /// <summary>Red background 41m</summary>
-        public static readonly string RedBg = $"{Esc}41m";
+        public static readonly string RedBg = "\u001b[41m";
         /// <summary>Green background 42m</summary>
-        public static readonly string GreenBg = $"{Esc}42m";
+        public static readonly string GreenBg = "\u001b[42m";
         /// <summary>Yellow background 43m</summary>
-        public static readonly string YellowBg = $"{Esc}43m";
+        public static readonly string YellowBg = "\u001b[43m";
         /// <summary>Blue background 44m</summary>
-        public static readonly string BlueBg = $"{Esc}44m";
+        public static readonly string BlueBg = "\u001b[44m";
         /// <summary>Magenta background 45m</summary>
-        public static readonly string MagentaBg = $"{Esc}45m";
+        public static readonly string MagentaBg = "\u001b[45m";
         /// <summary>Cyan background 46m</summary>
-        public static readonly string CyanBg = $"{Esc}46m";
+        public static readonly string CyanBg = "\u001b[46m";
         /// <summary>White background 47m</summary>
-        public static readonly string WhiteBg = $"{Esc}47m";
+        public static readonly string WhiteBg = "\u001b[47m";
         /// <summary>Default background color 49m</summary>
-        public static readonly string DefaultBg = $"{Esc}49m";
+        public static readonly string DefaultBg = "\u001b[49m";
 
-        // Bright background colors
+        // * Bright background colors
+
         /// <summary>Bright black background 100m</summary>
-        public static readonly string BlackBrightBg = $"{Esc}100m";
+        public static readonly string BlackBrightBg = "\u001b[100m";
         /// <summary>Bright red background 101m</summary>
-        public static readonly string RedBrightBg = $"{Esc}101m";
+        public static readonly string RedBrightBg = "\u001b[101m";
         /// <summary>Bright green background 102m</summary>
-        public static readonly string GreenBrightBg = $"{Esc}102m";
+        public static readonly string GreenBrightBg = "\u001b[102m";
         /// <summary>Bright yellow background 103m</summary>
-        public static readonly string YellowBrightBg = $"{Esc}103m";
+        public static readonly string YellowBrightBg = "\u001b[103m";
         /// <summary>Bright blue background 104m</summary>
-        public static readonly string BlueBrightBg = $"{Esc}104m";
+        public static readonly string BlueBrightBg = "\u001b[104m";
         /// <summary>Bright magenta background 105m</summary>
-        public static readonly string MagentaBrightBg = $"{Esc}105m";
+        public static readonly string MagentaBrightBg = "\u001b[105m";
         /// <summary>Bright cyan background 106m</summary>
-        public static readonly string CyanBrightBg = $"{Esc}106m";
+        public static readonly string CyanBrightBg = "\u001b[106m";
         /// <summary>Bright white background 107m</summary>
-        public static readonly string WhiteBrightBg = $"{Esc}107m";
+        public static readonly string WhiteBrightBg = "\u001b[107m";
+        #endregion // Background colors
 
-        // Text formatting
+
+        #region Text formatting
+        // * Text formatting
+
         /// <summary>Bold text on 1m</summary>
-        public static readonly string Bold = $"{Esc}1m";
+        public static readonly string Bold = "\u001b[1m";
         /// <summary>Bold text off 22m (also turns off Dim)</summary>
-        public static readonly string NoBold = $"{Esc}22m";
+        public static readonly string NoBold = "\u001b[22m";
         /// <summary>Dim text on 2m</summary>
-        public static readonly string Dim = $"{Esc}2m";
+        public static readonly string Dim = "\u001b[2m";
         /// <summary>Dim text off 22m (also turns off Bold)</summary>
-        public static readonly string NoDim = $"{Esc}22m";
+        public static readonly string NoDim = NoBold;
         /// <summary>Italic text on 3m</summary>
-        public static readonly string Italic = $"{Esc}3m";
+        public static readonly string Italic = "\u001b[3m";
         /// <summary>Italic text off 23m</summary>
-        public static readonly string NoItalic = $"{Esc}23m";
+        public static readonly string NoItalic = "\u001b[23m";
         /// <summary>Underline text on 4m</summary>
-        public static readonly string Underline = $"{Esc}4m";
+        public static readonly string Underline = "\u001b[4m";
         /// <summary>Underline text off 24m</summary>
-        public static readonly string NoUnderline = $"{Esc}24m";
+        public static readonly string NoUnderline = "\u001b[24m";
+        /// <summary>The ESC[21m sequence is a non-specified sequence for double underline mode and only work in some terminals and is reset with ESC[24m</summary>
+        public static readonly string DoubleUnderline = "\u001b[21m";
+        /// <summary>Underline text off 24m</summary>
+        public static readonly string NoDoubleUnderline = NoUnderline;
         /// <summary>Slow blink on 5m</summary>
-        public static readonly string SlowBlink = $"{Esc}5m";
+        public static readonly string SlowBlink = "\u001b[5m";
         /// <summary>Slow blink off 25m</summary>
-        public static readonly string NoSlowBlink = $"{Esc}25m";
+        public static readonly string NoSlowBlink = "\u001b[25m";
         /// <summary>Rapid blink on 6m</summary>
-        public static readonly string RapidBlink = $"{Esc}6m";
+        public static readonly string RapidBlink = "\u001b[6m";
         /// <summary>Rapid blink off 26m</summary>
-        public static readonly string NoRapidBlink = $"{Esc}26m";
+        public static readonly string NoRapidBlink = "\u001b[26m";
         /// <summary>Strikethrough text on 9m</summary>
-        public static readonly string StrikeThrough = $"{Esc}9m";
+        public static readonly string StrikeThrough = "\u001b[9m";
         /// <summary>Strikethrough text off 29m</summary>
-        public static readonly string NoStrikeThrough = $"{Esc}29m";
+        public static readonly string NoStrikeThrough = "\u001b[29m";
 
-        // Special formatting
+        // * Special formatting
+
         /// <summary>Reset all styles 0m</summary>
-        public static readonly string Reset = $"{Esc}0m";
+        public static readonly string Reset = "\u001b[0m";
         /// <summary>Cursor invisible ?25l</summary>
-        public static readonly string CursorInvisible = $"{Esc}?25l";
+        public static readonly string CursorInvisible = "\u001b[?25l";
         /// <summary>Cursor visible ?25h</summary>
-        public static readonly string CursorVisible = $"{Esc}?25h";
+        public static readonly string CursorVisible = "\u001b[?25h";
         /// <summary>Hide text 8m</summary>
-        public static readonly string Hide = $"{Esc}8m";
+        public static readonly string Hide = "\u001b[8m";
         /// <summary>Unhide text 28m</summary>
-        public static readonly string NoHide = $"{Esc}28m";
-        /// <summary>Move to home position (1,1 or 0,0) H</summary>
-        public static readonly string Home = $"{Esc}H";
-        #endregion
+        public static readonly string NoHide = "\u001b[28m";
+        #endregion // Text formatting
+        #endregion //  Basic ANSI Colors and Styles
+
 
         #region Named RGB Colors - Rainbow Spectrum
         /// <summary>
@@ -293,6 +353,7 @@ namespace BDSP.Core.CLI
         /// <returns>Rgb(238, 130, 238)</returns>
         public static readonly string RgbViolet = Rgb(238, 130, 238);
         #endregion
+
 
         #region Named RGB Colors - Purple
         /// <summary>
@@ -401,6 +462,7 @@ namespace BDSP.Core.CLI
         public static readonly string RgbLavender = Rgb(230, 230, 250);
         #endregion
 
+
         #region Named RGB Colors - Pink
         /// <summary>
         /// <b>Medium Violet Red</b>
@@ -444,6 +506,7 @@ namespace BDSP.Core.CLI
         /// <returns>Rgb(255, 192, 203)</returns>
         public static readonly string RgbPink = Rgb(255, 192, 203);
         #endregion
+
 
         #region Named RGB Colors - Red
         /// <summary>
@@ -510,6 +573,7 @@ namespace BDSP.Core.CLI
         public static readonly string RgbLightSalmon = Rgb(255, 160, 122);
         #endregion
 
+
         #region Named RGB Colors - Orange
         /// <summary>
         /// <b>Orange Red</b>
@@ -546,6 +610,7 @@ namespace BDSP.Core.CLI
         /// <returns>Rgb(255, 165, 0)</returns>
         public static readonly string RgbLightOrange = Rgb(255, 165, 0);
         #endregion
+
 
         #region Named RGB Colors - Yellow
         /// <summary>
@@ -618,6 +683,7 @@ namespace BDSP.Core.CLI
         /// <returns>Rgb(255, 255, 224)</returns>
         public static readonly string RgbLightYellow = Rgb(255, 255, 224);
         #endregion
+
 
         #region Named RGB Colors - Brown
         /// <summary>
@@ -732,6 +798,7 @@ namespace BDSP.Core.CLI
         /// <returns>Rgb(255, 248, 220)</returns>
         public static readonly string RgbCornsilk = Rgb(255, 248, 220);
         #endregion
+
 
         #region Named RGB Colors - Green
         /// <summary>
@@ -868,6 +935,7 @@ namespace BDSP.Core.CLI
         public static readonly string RgbPaleGreen = Rgb(152, 251, 152);
         #endregion
 
+
         #region Named RGB Colors - Cyan
         /// <summary>
         /// <b>Teal</b>
@@ -953,6 +1021,7 @@ namespace BDSP.Core.CLI
         /// <returns>Rgb(224, 255, 255)</returns>
         public static readonly string RgbLightCyan = Rgb(224, 255, 255);
         #endregion
+
 
         #region Named RGB Colors - Blue
         /// <summary>
@@ -1053,6 +1122,7 @@ namespace BDSP.Core.CLI
         /// <returns>Rgb(176, 224, 230)</returns>
         public static readonly string RgbPowderBlue = Rgb(176, 224, 230);
         #endregion
+
 
         #region Named RGB Colors - White Tones
         /// <summary>
@@ -1174,6 +1244,7 @@ namespace BDSP.Core.CLI
         /// <returns>Rgb(255, 255, 255)</returns>
         public static readonly string RgbWhite = Rgb(255, 255, 255);
         #endregion
+
 
         #region Named RGB Colors - Gray and Black
         /// <summary>
