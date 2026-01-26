@@ -435,7 +435,12 @@ namespace BDSP.Core.CLI
         #endregion
 
         #region Named RGB Colors - White Tones
-        /// <summary>Misty Rose text. Calls Rgb(255, 228, 225)</summary>
+        /// <summary>
+        /// <b>Misty Rose</b>
+        /// </summary>
+        /// <remarks>
+        /// A delicate, pale pastel pink with soft, warm undertones, resembling a light-pink rose muted by haze or mist.
+        /// </remarks><returns>Rgb(255, 228, 225)</returns>
         public static readonly string RgbMistyRose = Rgb(255, 228, 225);
         /// <summary>Antique White text. Calls Rgb(250, 235, 215)</summary>
         public static readonly string RgbAntiqueWhite = Rgb(250, 235, 215);
