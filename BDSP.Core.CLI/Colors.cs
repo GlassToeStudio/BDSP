@@ -1,54 +1,91 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
+
+
+
 
 namespace BDSP.Core.CLI
 {
     /// <summary>
-    /// ANSI color and cursor helpers (ported from the Python colors.py).
+    /// ANSI color and cursor helpers.
     /// Provides methods and constants for terminal color formatting and cursor control.
+    /// <see href="https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797"/>
+    /// <see href="https://en.wikipedia.org/wiki/Box-drawing_characters"/>
     /// </summary>
     public static class Colors
     {
         /// <summary>
-        /// ASCII escape character \u001b[
+        /// ASCII escape character \u001b
         /// </summary>
-        public const string Esc = "\u001b["; //"\033["
+        /// <remarks>
+        /// "\u001b" or "\033["  or "\x1b"
+        /// </remarks>
+        public const string Esc = "\u001b";
+
+        /// <summary>
+        /// Clear the screen.
+        /// </summary>
+        /// <remarks>"<see cref="Colors.Esc"/>c" or "\ec" or  "\x1bc"</remarks> 
+        /// <returns>"<see cref="Colors.Esc"/>[2J;H"</returns>
         public static string Clear() => "\u001b[2J;H";
 
         #region Color and Formatting Methods
         /// <summary>
         /// Change the text to an RGB color.
         /// </summary>
-        /// <param name="r">Red value (0-255)</param>
-        /// <param name="g">Green value (0-255)</param>
-        /// <param name="b">Blue value (0-255)</param>
-        /// <returns>ESC 38;2;&lt;r&gt;;&lt;g&gt;;&lt;b&gt;m</returns>
-        public static string Rgb(byte r, byte g, byte b) => $"{Esc}38;2;{r};{g};{b}m";
+        /// <param name="r">Red ID (0-255)</param>
+        /// <param name="g">Green ID (0-255)</param>
+        /// <param name="b">Blue ID (0-255)</param>
+        /// <returns><see cref="Colors.Esc"/>[38;2;&lt;r&gt;;&lt;g&gt;;&lt;b&gt;m</returns>
+        public static string Rgb(byte r, byte g, byte b) => $"\u001b[38;2;{r};{g};{b}m";
 
         /// <summary>
         /// Change the background to an RGB color.
         /// </summary>
-        /// <param name="r">Red value (0-255)</param>
-        /// <param name="g">Green value (0-255)</param>
-        /// <param name="b">Blue value (0-255)</param>
-        /// <returns>ESC 48;2;&lt;r&gt;;&lt;g&gt;;&lt;b&gt;m</returns>
-        public static string RgbBg(byte r, byte g, byte b) => $"{Esc}48;2;{r};{g};{b}m";
+        /// <param name="r">Red ID (0-255)</param>
+        /// <param name="g">Green ID (0-255)</param>
+        /// <param name="b">Blue ID (0-255)</param>
+        /// <returns><see cref="Colors.Esc"/>[48;2;&lt;r&gt;;&lt;g&gt;;&lt;b&gt;m</returns>
+        public static string RgbBg(byte r, byte g, byte b) => $"\u001b[48;2;{r};{g};{b}m";
 
         /// <summary>
-        /// Change text to 1 of 256 colors.
+        /// Change text to one of 256 colors.
         /// </summary>
-        /// <param name="value">Color value (0-255)</param>
-        /// <returns>ESC 38;5;&lt;c&gt;m</returns>
-        public static string Color256(byte value) => $"{Esc}38;5;{value}m";
+        /// <param name="ID">Color ID (0-255)</param>
+        /// <remarks>
+        /// <code>
+        /// 0-7:    standard colors         (as in ESC[30–37 m)
+        /// 8–15:   high intensity colors   (as in ESC[90–97 m)
+        /// 16-231: 6 × 6 × 6 cube          (216 colors) : 16 + 36 × r + 6 × g + b(0 ≤ r, g, b ≤ 5)
+        ///     Some emulators interpret these steps as linear increments (256 / 24) 
+        ///     on all three channels while others may explicitly define these values.
+        /// 
+        /// 232-255: grayscale from dark to light in 24 steps.
+        /// </code>
+        /// </remarks>
+        /// <returns><see cref="Colors.Esc"/>[38;5;&lt;ID&gt;m</returns>
+        public static string Color256(byte ID) => $"\u001b[38;5;{ID}m";
 
         /// <summary>
-        /// Change background to 1 of 256 colors.
+        /// Change background to one of 256 colors.
         /// </summary>
-        /// <param name="value">Color value (0-255)</param>
-        /// <returns>ESC 48;5;&lt;c&gt;m</returns>
-        public static string Color256Bg(byte value) => $"{Esc}48;5;{value}m";
+        /// <param name="ID">Color ID (0-255)</param>
+        /// <remarks>
+        /// <code>
+        /// 0-7:    standard colors         (as in ESC[ 30–37 m)
+        /// 8–15:   high intensity colors   (as in ESC[ 90–97 m)
+        /// 16-231: 6 × 6 × 6 cube          (216 colors) : 16 + 36 × r + 6 × g + b(0 ≤ r, g, b ≤ 5)
+        ///     Some emulators interpret these steps as linear increments (256 / 24) 
+        ///     on all three channels while others may explicitly define these values.
+        /// 
+        /// 232-255: grayscale from dark to light in 24 steps.
+        /// </code>
+        /// </remarks>
+        /// <returns><see cref="Colors.Esc"/>[48;5;&lt;ID&gt;m</returns>
+        public static string Color256Bg(byte ID) => $"\u001b[48;5;{ID}m";
 
         /// <summary>
         /// Pass in any number of valid escape sequences and get a formatted string 
@@ -56,11 +93,11 @@ namespace BDSP.Core.CLI
         /// Can be used to change many things at once without calling each one individually.
         /// </summary>
         /// <param name="args">Escape sequence codes</param>
-        /// <returns><see cref="Esc"/>&lt;n1&gt;;&lt;n2&gt;;...&lt;n&gt;m</returns>
+        /// <returns><see cref="Esc"/>[&lt;n1&gt;;&lt;n2&gt;;...&lt;n&gt;m</returns>
         public static string ChainSequence(params byte[] args)
         {
             string chained = string.Join(";", args.Select(a => a.ToString(CultureInfo.InvariantCulture)));
-            return $"{Esc}{chained}m";
+            return $"\u001b[{chained}m";
         }
         #endregion // Color and Formatting Methods
 
@@ -70,58 +107,58 @@ namespace BDSP.Core.CLI
         /// Move up by number of lines.
         /// </summary>
         /// <param name="lines">Number of lines to move up</param>
-        /// <returns><see cref="Esc"/>&lt;lines&gt;A</returns>
-        public static string MoveUpBy(byte lines) => $"{Esc}{lines}A";
+        /// <returns><see cref="Esc"/>[&lt;lines&gt;A</returns>
+        public static string MoveUpBy(byte lines) => $"\u001b[{lines}A";
 
         /// <summary>
         /// Move down by number of lines.
         /// </summary>
         /// <param name="lines">Number of lines to move down</param>
-        /// <returns><see cref="Esc"/>&lt;lines&gt;B</returns>
-        public static string MoveDownBy(byte lines) => $"{Esc}{lines}B";
+        /// <returns><see cref="Esc"/>[&lt;lines&gt;B</returns>
+        public static string MoveDownBy(byte lines) => $"\u001b[{lines}B";
 
         /// <summary>
         /// Move right by number of columns.
         /// </summary>
         /// <param name="columns">Number of columns to move right</param>
-        /// <returns><see cref="Esc"/>&lt;columns&gt;C</returns>
-        public static string MoveRightBy(byte columns) => $"{Esc}{columns}C";
+        /// <returns><see cref="Esc"/>[&lt;columns&gt;C</returns>
+        public static string MoveRightBy(byte columns) => $"\u001b[{columns}C";
 
         /// <summary>
         /// Move left by number of columns.
         /// </summary>
         /// <param name="columns">Number of columns to move left</param>
-        /// <returns><see cref="Esc"/>&lt;columns&gt;D</returns>
-        public static string MoveLeftBy(byte columns) => $"{Esc}{columns}D";
+        /// <returns><see cref="Esc"/>[&lt;columns&gt;D</returns>
+        public static string MoveLeftBy(byte columns) => $"\u001b[{columns}D";
 
         /// <summary>
         /// Moves cursor to beginning of next line, specified number of lines down.
         /// </summary>
         /// <param name="lines">Number of lines to move down</param>
-        /// <returns><see cref="Esc"/>&lt;lines&gt;E</returns>
-        public static string StartDownBy(byte lines) => $"{Esc}{lines}E";
+        /// <returns><see cref="Esc"/>[&lt;lines&gt;E</returns>
+        public static string StartDownBy(byte lines) => $"\u001b[{lines}E";
 
         /// <summary>
         /// Moves cursor to beginning of previous line, specified number of lines up.
         /// </summary>
         /// <param name="lines">Number of lines to move up</param>
-        /// <returns><see cref="Esc"/>&lt;lines&gt;F</returns>
-        public static string StartUpBy(byte lines) => $"{Esc}{lines}F";
+        /// <returns><see cref="Esc"/>[&lt;lines&gt;F</returns>
+        public static string StartUpBy(byte lines) => $"\u001b[{lines}F";
 
         /// <summary>
         /// Moves cursor to specified column.
         /// </summary>
         /// <param name="column">Column number to move to</param>
-        /// <returns><see cref="Esc"/>&lt;column&gt;G</returns>
-        public static string MoveToColumn(byte column) => $"{Esc}{column}G";
+        /// <returns><see cref="Esc"/>[&lt;column&gt;G</returns>
+        public static string MoveToColumn(byte column) => $"\u001b[{column}G";
 
         /// <summary>
         /// Move the cursor to line, column.
         /// </summary>
         /// <param name="line">The line</param>
         /// <param name="column">The column</param>
-        /// <returns><see cref="Esc"/>&lt;line&gt;;&lt;column&gt;H</returns>
-        public static string MoveTo(byte line, byte column) => $"{Esc}{line};{column}H"; // or Esc[{line};{column}f
+        /// <returns><see cref="Esc"/>[&lt;line&gt;;&lt;column&gt;H</returns>
+        public static string MoveTo(byte line, byte column) => $"\u001b[{line};{column}H"; // or Esc[{line};{column}f
 
         /// <summary>
         /// Moves cursor to home position (0, 0),
@@ -129,7 +166,7 @@ namespace BDSP.Core.CLI
         public static readonly string Home = "\u001b[H";
 
         /// <summary>
-        /// request cursor position(reports as ESC[#;#R)
+        /// request cursor position(reports as <see cref="Colors.Esc"/>[#;#R)
         /// </summary>
         public static readonly string RequestPosition = "\u001b[6n";
 
@@ -151,6 +188,39 @@ namespace BDSP.Core.CLI
          * ESC[0K	erase from cursor to end of line
          * ESC[1K	erase start of line to the cursor
          * ESC[2K	erase the entire line
+         * 
+         * ESC[={value}h	Changes the screen width or type to the mode specified by value.
+         * ESC[=0h	40 x 25 monochrome (text)
+         * ESC[=1h	40 x 25 color (text)
+         * ESC[=2h	80 x 25 monochrome (text)
+         * ESC[=3h	80 x 25 color (text)
+         * ESC[=4h	320 x 200 4-color (graphics)
+         * ESC[=5h	320 x 200 monochrome (graphics)
+         * ESC[=6h	640 x 200 monochrome (graphics)
+         * ESC[=7h	Enables line wrapping
+         * ESC[=13h	320 x 200 color (graphics)
+         * ESC[=14h	640 x 200 color (16-color graphics)
+         * ESC[=15h	640 x 350 monochrome (2-color graphics)
+         * ESC[=16h	640 x 350 color (16-color graphics)
+         * ESC[=17h	640 x 480 monochrome (2-color graphics)
+         * ESC[=18h	640 x 480 color (16-color graphics)
+         * ESC[=19h	320 x 200 color (256-color graphics)
+         * ESC[={value}l	Resets the mode by using the same values that Set Mode uses, except for 7, which disables line wrapping. The last character in this escape sequence is a lowercase L.
+         * 
+         * ESC[?25l	make cursor invisible
+         * ESC[?25h	make cursor visible
+         * ESC[?47l	restore screen
+         * ESC[?47h	save screen
+         * ESC[?1049h	enables the alternative buffer
+         * ESC[?1049l	disables the alternative buffer
+         * 
+         * ESC[0 q	changes cursor shape to steady block
+         * ESC[1 q	changes cursor shape to steady block also
+         * ESC[2 q	changes cursor shape to blinking block
+         * ESC[3 q	changes cursor shape to steady underline
+         * ESC[4 q	changes cursor shape to blinking underline
+         * ESC[5 q	changes cursor shape to steady bar
+         * ESC[6 q	changes cursor shape to blinking bar
          */
         #endregion // Cursor Movement
 
