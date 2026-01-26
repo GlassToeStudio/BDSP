@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Globalization;
 using BDSP.Core.Berries;
+using BDSP.Core.CLI;
 using BDSP.Core.Optimization.Core;
 using BDSP.Core.Optimization.Search;
 using BDSP.Core.Poffins;
 using BDSP.Core.Poffins.Filters;
 using BDSP.Core.Poffins.Search;
-using BDSP.Core.CLI;
 
 
 if (args.Length > 0 && args[0].Equals("feeding-plan", StringComparison.OrdinalIgnoreCase))
@@ -36,11 +36,11 @@ return;
 
 static void RunFeedingPlan(string[] args)
 {
-    int choose = GetIntArg(args, "--choose", 2);
+    int choose = GetIntArg(args, "--choose", 4);
     int cookTimeSeconds = GetIntArg(args, "--time", 40);
     int topK = GetIntArg(args, "--topk", 10);
     string candidateChooseArg = GetStringArg(args, "--candidate-choose", "4");
-    bool showProgress = GetBoolArg(args, "--progress", fallback: false);
+    bool showProgress = GetBoolArg(args, "--progress", fallback: true);
     string berrySortSpec = GetStringArg(args, "--berry-sort", string.Empty);
     string poffinSortSpec = GetStringArg(args, "--poffin-sort", string.Empty);
     string berryIncludeSpec = GetStringArg(args, "--berry-include", string.Empty);
@@ -283,7 +283,6 @@ static void RunContestSearch(string[] args)
                 "{0,2}: Score {1,6} Poffins {2,2} ({3,2}+{4,2}) Sheen {5,3} Rarity {6,3} Unique {7,2} Perfect {8,1} Rank {9,1} Stats [C:{10,3} B:{11,3} Cu:{12,3} Cl:{13,3} T:{14,3}]",
                 i + 1,
                 r.Score,
-                totalPoffins,
                 toMaxStats,
                 afterStats,
                 r.TotalSheen,
@@ -493,6 +492,7 @@ static string[] FormatRecipe(BerryId[] ids)
 //         _ => "❔"
 //     };
 // }
+
 // static void PrintContestAward(ContestStatsResult result, bool useColor)
 // {
 //     const int width = 36;
@@ -1293,16 +1293,7 @@ static byte ParseFlavorMask(string value)
     return mask;
 }
 
-static ContestStatsResult[] FilterContestResults(
-    ContestStatsResult[] results,
-    int minRank,
-    int maxRank,
-    int minPoffins,
-    int maxPoffins,
-    int minRarity,
-    int maxRarity,
-    int minPerfect,
-    int maxPerfect)
+static ContestStatsResult[] FilterContestResults(ContestStatsResult[] results, int minRank, int maxRank, int minPoffins, int maxPoffins, int minRarity, int maxRarity, int minPerfect, int maxPerfect)
 {
     if (results.Length == 0 ||
         (minRank < 0 && maxRank < 0 &&
