@@ -103,6 +103,10 @@ Berry filters (subset selection before cooking):
 - `--berry-any-flavor-min`, `--berry-any-flavor-max`
 - `--berry-weak-main-min`, `--berry-weak-main-max`, `--berry-weak-main-flavor`
 - `--berry-id`, `--berry-exclude-id`
+Sort filtered berries before cooking with `--berry-sort` (comma list, optional `:desc`), e.g.
+`--berry-sort rarity:desc,name`.
+Supported fields: `id`, `name`, `rarity`, `smoothness`, `spicy`, `dry`, `sweet`, `bitter`, `sour`,
+`mainFlavor`, `secondaryFlavor`, `mainFlavorValue`, `secondaryFlavorValue`, `numFlavors`.
 
 Poffin candidate filters:
 - `--poffin-min-level`, `--poffin-max-level`
@@ -116,6 +120,11 @@ Poffin candidate filters:
 - `--poffin-id`, `--poffin-exclude-id`
 - `--poffin-min-rarity`, `--poffin-max-rarity`
 - `--poffin-max-similar`
+Sort candidate poffins with `--poffin-sort` (comma list, optional `:desc`), e.g.
+`--poffin-sort level:desc,smoothness`.
+Supported fields: `level`, `secondLevel`, `smoothness`, `totalFlavor`, `numFlavors`, `mainFlavor`,
+`secondaryFlavor`, `spicy`, `dry`, `sweet`, `bitter`, `sour`, `nameKind`,
+`levelToSmoothnessRatio`, `totalFlavorToSmoothnessRatio`.
 
 Scoring weights:
 - `--poffin-level-weight`, `--poffin-total-flavor-weight`, `--poffin-smoothness-penalty`
@@ -129,10 +138,15 @@ Contest result filters (CLI post-filter):
 - `--min-rarity`, `--max-rarity`
 - `--min-perfect`, `--max-perfect`
 Sort output with `--stats-sort` (comma list, optional `:desc`), e.g. `rank,poffins,rarity`.
+Search toggles:
+- `--no-prune` (skip dominated-poffin pruning before contest search)
+- `--no-dedup` or `--keep-duplicates` (keep duplicate-stat recipes during candidate generation)
 
-Note: `--max-poffins` now also caps feeding during contest search (variable-length feeding).
-Contest results now include an extra count: additional poffins needed to reach sheen 255
-after maxing all stats (within the cap).
+Note: `--max-poffins` caps feeding during contest search (variable-length feeding).
+Contest search always continues feeding until sheen reaches 255 or the max-poffins cap.
+Contest results include `PoffinsToMaxStats` plus the total `PoffinsEaten`.
+Use `--no-prune` to skip dominated-poffin pruning and `--keep-duplicates` (or `--no-dedup`)
+to keep duplicate-stat recipes for parity checks.
 
 ### **Usage Examples**
 

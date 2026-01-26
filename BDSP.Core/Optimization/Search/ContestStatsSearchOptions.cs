@@ -17,6 +17,8 @@ namespace BDSP.Core.Optimization.Search
         public readonly ContestStats Start;
         /// <summary>Maximum number of poffins to feed (0 = no cap).</summary>
         public readonly int MaxPoffins;
+        /// <summary>When true, prunes dominated poffins before permutation search.</summary>
+        public readonly bool PruneCandidates;
         /// <summary>Optional progress callback for long-running searches.</summary>
         public readonly Action<ContestSearchProgress>? Progress;
         /// <summary>Outer-loop interval for progress updates (0 disables).</summary>
@@ -28,6 +30,7 @@ namespace BDSP.Core.Optimization.Search
             int? maxDegreeOfParallelism = null,
             ContestStats start = default,
             int maxPoffins = 0,
+            bool pruneCandidates = true,
             Action<ContestSearchProgress>? progress = null,
             int progressInterval = 64)
         {
@@ -36,6 +39,7 @@ namespace BDSP.Core.Optimization.Search
             MaxDegreeOfParallelism = maxDegreeOfParallelism;
             Start = start;
             MaxPoffins = maxPoffins;
+            PruneCandidates = pruneCandidates;
             Progress = progress;
             ProgressInterval = progressInterval;
         }

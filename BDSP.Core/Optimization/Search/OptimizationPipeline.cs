@@ -75,6 +75,51 @@ namespace BDSP.Core.Optimization.Search
         }
 
         /// <summary>
+        /// Builds top-ranked poffin candidates (with recipes) from a prefiltered berry id list.
+        /// </summary>
+        public static PoffinWithRecipe[] BuildCandidatesFromIds(
+            ReadOnlySpan<BerryId> ids,
+            in PoffinCandidateOptions candidateOptions,
+            int topK,
+            bool dedup = true)
+        {
+            if (topK <= 0 || ids.Length < 2)
+            {
+                return Array.Empty<PoffinWithRecipe>();
+            }
+
+            if (candidateOptions.MaxSimilar > 1)
+            {
+                dedup = false;
+            }
+
+            if (dedup)
+            {
+                var unique = new Dictionary<PoffinKey, Candidate>(topK);
+                AddCandidates(ids, in candidateOptions, unique);
+
+                var top = new TopK<Candidate>(topK);
+                foreach (var kvp in unique)
+                {
+                    top.TryAdd(kvp.Value, kvp.Value.Score);
+                }
+
+                Candidate[] winners = top.ToSortedArray((a, b) => b.Score.CompareTo(a.Score));
+                return ExtractCandidates(winners);
+            }
+
+            var collector = new TopK<Candidate>(topK);
+            Dictionary<PoffinKey, int>? similarCounts = null;
+            if (candidateOptions.MaxSimilar > 0)
+            {
+                similarCounts = new Dictionary<PoffinKey, int>(topK);
+            }
+            AddCandidates(ids, in candidateOptions, collector, similarCounts);
+            Candidate[] results = collector.ToSortedArray((a, b) => b.Score.CompareTo(a.Score));
+            return ExtractCandidates(results);
+        }
+
+        /// <summary>
         /// Runs a feeding plan search from berries with candidate generation.
         /// </summary>
         public static FeedingPlanResult RunFeedingPlan(

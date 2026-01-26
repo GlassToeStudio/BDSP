@@ -205,6 +205,19 @@ Key types:
 - `PoffinResult`
 - `TopK<T>`
 
+### PoffinSortField / PoffinSortKey / PoffinSorter
+Multi-key sorting utility for candidate poffins.
+
+```csharp
+var keys = new[]
+{
+    new PoffinSortKey(PoffinSortField.Level, descending: true),
+    new PoffinSortKey(PoffinSortField.Smoothness)
+};
+Span<PoffinWithRecipe> buffer = candidates;
+PoffinSorter.Sort(buffer, buffer.Length, keys);
+```
+
 ## Optimization Models (Draft)
 These are planned result structures for feeding plans and contest stats.
 
@@ -248,8 +261,9 @@ Enumerates ordered permutations of candidate poffins (no repetition) for feeding
 
 ### ContestStatsSearch
 Runs inlined permutation loops over poffin candidates and returns top-ranked contest stat results.
-Results include `AdditionalPoffinsToMaxSheen` to indicate how many extra poffins
-are needed to reach sheen 255 after stats are maxed (within the max-poffins cap).
+Results include `PoffinsToMaxStats` to indicate how many poffins were needed
+to reach 5 perfect stats. `PoffinsEaten` is the total count after feeding until
+sheen 255 (or `MaxPoffins` cap).
 
 ### FeedingPlanResult
 Feeding plan summary now includes:
@@ -258,6 +272,7 @@ Feeding plan summary now includes:
 ### ContestStatsSearchOptions
 Controls permutation size, parallelism, and starting stats for contest-stat search.
 Optional progress reporting via a callback and a configurable interval.
+`PruneCandidates` can be disabled to keep dominated poffins for parity checks.
 
 ### PoffinWithRecipe
 Poffin + recipe metadata + `DuplicateCount` (number of recipes that produced identical stats).
@@ -280,6 +295,10 @@ Notes:
   - Smoothness: 0-255
   - Level: 0-100
   - NumFlavors: 0-5
+
+CLI sorting flags:
+- `--berry-sort` (comma list, optional `:desc`) for berry ordering prior to cooking.
+- `--poffin-sort` (comma list, optional `:desc`) for candidate ordering prior to feeding/contest searches.
 
 ### Benchmarks
 Benchmark project comparing combo-base cooking vs span-based cooking:

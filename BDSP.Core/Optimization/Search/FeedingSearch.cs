@@ -54,6 +54,7 @@ namespace BDSP.Core.Optimization.Search
 
             var steps = new List<FeedingStep>(ordered.Length);
             ContestStats current = start;
+            int perfectCount = CountPerfect(in current);
             int totalRarityCost = 0;
             int totalSheen = start.Sheen;
 
@@ -74,15 +75,16 @@ namespace BDSP.Core.Optimization.Search
 
                 steps.Add(new FeedingStep(steps.Count, candidate, before, after));
                 current = after;
-                if (CountPerfect(in current) == 5)
+                perfectCount = UpdatePerfectCount(perfectCount, in before, in after);
+                if (perfectCount == 5)
                 {
                     break;
                 }
             }
 
             int score = ScorePlan(in current, totalRarityCost, steps.Count, totalSheen, in options);
-            int numPerfect = CountPerfect(in current);
-            int rank = RankFromStats(in current);
+            int numPerfect = perfectCount;
+            int rank = RankFromCounts(perfectCount, totalSheen);
             int uniqueBerries = CountUniqueBerries(steps);
 
             return new FeedingPlanResult(
@@ -97,6 +99,7 @@ namespace BDSP.Core.Optimization.Search
                 score);
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int CompareCandidates(PoffinWithRecipe left, PoffinWithRecipe right)
         {
             int smooth = left.Poffin.Smoothness.CompareTo(right.Poffin.Smoothness);
@@ -109,6 +112,7 @@ namespace BDSP.Core.Optimization.Search
             return right.Poffin.Level.CompareTo(left.Poffin.Level);
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int ComputeRarityCost(in PoffinRecipe recipe, RarityCostMode mode)
         {
             int cost = 0;
@@ -128,6 +132,7 @@ namespace BDSP.Core.Optimization.Search
             return cost;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int ScorePlan(in ContestStats finalStats, int totalRarityCost, int poffinCount, int totalSheen, in FeedingSearchOptions options)
         {
             int statSum = finalStats.Coolness +
@@ -152,6 +157,7 @@ namespace BDSP.Core.Optimization.Search
             return score;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int CountPerfect(in ContestStats stats)
         {
             int count = 0;
@@ -163,6 +169,7 @@ namespace BDSP.Core.Optimization.Search
             return count;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int RankFromStats(in ContestStats stats)
         {
             int perfect = CountPerfect(in stats);
@@ -171,6 +178,27 @@ namespace BDSP.Core.Optimization.Search
             return 3;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static int RankFromCounts(int perfectCount, int sheen)
+        {
+            if (perfectCount == 5 && sheen >= 255) return 1;
+            if (perfectCount == 5) return 2;
+            return 3;
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static int UpdatePerfectCount(int current, in ContestStats before, in ContestStats after)
+        {
+            int count = current;
+            if (before.Coolness < 255 && after.Coolness >= 255) count++;
+            if (before.Beauty < 255 && after.Beauty >= 255) count++;
+            if (before.Cuteness < 255 && after.Cuteness >= 255) count++;
+            if (before.Cleverness < 255 && after.Cleverness >= 255) count++;
+            if (before.Toughness < 255 && after.Toughness >= 255) count++;
+            return count;
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int CountUniqueBerries(List<FeedingStep> steps)
         {
             ulong mask0 = 0;

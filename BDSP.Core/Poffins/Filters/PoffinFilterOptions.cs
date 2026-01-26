@@ -39,7 +39,7 @@ namespace BDSP.Core.Poffins.Filters
     public readonly struct PoffinFilterOptions
     {
 
-        /// <summary>Represents no filtering (all fields set to <see cref="unset"/>).</summary>
+        /// <summary>Represents no filtering (all fields set to <see cref="Unset"/>).</summary>
         public static PoffinFilterOptions None => new PoffinFilterOptions(minSpicy: Unset);
         /// <summary>Sentinel value for unset bounds.</summary>
         public const int Unset = -1;
@@ -286,14 +286,17 @@ namespace BDSP.Core.Poffins.Filters
             return true;
         }
 
-        private static PoffinNameKind GetNameKind(in Poffin poffin)
+        /// <summary>
+        /// Returns the named poffin category for the given poffin.
+        /// </summary>
+        public static PoffinNameKind GetNameKind(in Poffin poffin)
         {
             if (poffin.IsFoul || poffin.Level == 0)
             {
                 return PoffinNameKind.Foul;
             }
 
-            if (poffin.Level >= 100)
+            if (poffin.Level >= 95)
             {
                 return PoffinNameKind.SuperMild;
             }

@@ -123,6 +123,7 @@ classDiagram
         +PoffinIndexSet Indices
         +ContestStats Stats
         +int PoffinsEaten
+        +int PoffinsToMaxStats
         +int TotalRarityCost
         +int TotalSheen
         +int Score

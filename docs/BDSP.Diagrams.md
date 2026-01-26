@@ -524,7 +524,7 @@ flowchart TD
     D -->|Feeding| F[FeedingSearch.BuildPlan]
     D -->|Contest| G[ContestStatsSearch.Run]
     F --> H[FeedingPlanResult]
-    G --> I[ContestStatsResult[]]
+    G --> I[ContestStatsResult]
 
     style A fill:#b2dfdb,stroke:#00695c,stroke-width:2px
     style B fill:#e0f2f1,stroke:#00897b,stroke-width:2px
@@ -636,7 +636,7 @@ flowchart LR
 | **FeedingSearch** | Search | `BuildPlan(ReadOnlySpan<PoffinWithRecipe>, FeedingSearchOptions, ContestStats)` | Baseline feeding plan builder |
 | **FeedingPlanResult** | Result | `Steps, FinalStats, TotalRarityCost, TotalPoffins, TotalSheen, Score` | Feeding plan output |
 | **ContestStatsSearch** | Search | `Run(ReadOnlySpan<PoffinWithRecipe>, ContestStatsSearchOptions, FeedingSearchOptions, int)` | Ordered permutation search for contest stats |
-| **ContestStatsResult** | Result | `Indices, Stats, PoffinsEaten, TotalRarityCost, TotalSheen, Score` | Contest search output |
+| **ContestStatsResult** | Result | `Indices, Stats, PoffinsEaten, PoffinsToMaxStats, TotalRarityCost, TotalSheen, Score` | Contest search output |
 | **OptimizationPipeline** | Orchestrator | `BuildCandidates(...)`, `RunFeedingPlan(...)`, `RunContestSearch(...)` | End-to-end workflow runner |
 
 ---

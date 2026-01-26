@@ -34,6 +34,8 @@ static void RunFeedingPlan(string[] args)
     int topK = GetIntArg(args, "--topk", 10);
     string candidateChooseArg = GetStringArg(args, "--candidate-choose", choose.ToString(CultureInfo.InvariantCulture));
     bool showProgress = GetBoolArg(args, "--progress", fallback: false);
+    string berrySortSpec = GetStringArg(args, "--berry-sort", string.Empty);
+    string poffinSortSpec = GetStringArg(args, "--poffin-sort", string.Empty);
 
     BerryFilterOptions berryOptions = BuildBerryFilters(args);
     PoffinFilterOptions poffinFilter = BuildPoffinFilters(args);
@@ -51,12 +53,24 @@ static void RunFeedingPlan(string[] args)
         minRarityCost: minPoffinRarity,
         maxRarityCost: maxPoffinRarity,
         maxSimilar: maxSimilar);
+    BerrySortKey[] berrySortKeys = ParseBerrySortKeys(berrySortSpec);
+    PoffinSortKey[] poffinSortKeys = ParsePoffinSortKeys(poffinSortSpec);
     if (showProgress)
     {
         Console.WriteLine("Setting up berry filters...");
     }
 
-    int berryCount = CountFilteredBerries(in berryOptions);
+    BerryId[]? sortedBerryIds = null;
+    int berryCount;
+    if (berrySortKeys.Length > 0)
+    {
+        sortedBerryIds = GetFilteredBerryIds(in berryOptions, berrySortKeys);
+        berryCount = sortedBerryIds.Length;
+    }
+    else
+    {
+        berryCount = CountFilteredBerries(in berryOptions);
+    }
     if (showProgress)
     {
         Console.WriteLine($"Filtered berries: {berryCount}");
@@ -65,11 +79,13 @@ static void RunFeedingPlan(string[] args)
         Console.WriteLine("Cooking candidate poffins...");
     }
 
-    PoffinWithRecipe[] candidates = OptimizationPipeline.BuildCandidates(
-        in berryOptions,
-        in candidateOptions,
-        topK,
-        dedup: true);
+    PoffinWithRecipe[] candidates = sortedBerryIds is null
+        ? OptimizationPipeline.BuildCandidates(in berryOptions, in candidateOptions, topK, dedup: true)
+        : OptimizationPipeline.BuildCandidatesFromIds(sortedBerryIds, in candidateOptions, topK, dedup: true);
+    if (poffinSortKeys.Length > 0)
+    {
+        PoffinSorter.Sort(candidates, candidates.Length, poffinSortKeys);
+    }
 
     if (showProgress)
     {
@@ -108,7 +124,11 @@ static void RunContestSearch(string[] args)
     string candidateChooseArg = GetStringArg(args, "--candidate-choose", "2,3,4");
     bool useParallel = GetBoolArg(args, "--parallel", fallback: false);
     bool dedup = !GetBoolArg(args, "--no-dedup", fallback: false);
+    bool keepDuplicates = GetBoolArg(args, "--keep-duplicates", fallback: false);
+    bool pruneCandidates = !GetBoolArg(args, "--no-prune", fallback: false);
     bool showProgress = GetBoolArg(args, "--progress", fallback: false);
+    string berrySortSpec = GetStringArg(args, "--berry-sort", string.Empty);
+    string poffinSortSpec = GetStringArg(args, "--poffin-sort", string.Empty);
     ContestScoreMode scoreMode = ParseScoreMode(GetStringArg(args, "--score", "balanced"));
     int maxRank = GetIntArg(args, "--max-rank", -1);
     int maxPoffins = GetIntArg(args, "--max-poffins", -1);
@@ -128,11 +148,19 @@ static void RunContestSearch(string[] args)
         minRarityCost: minPoffinRarity,
         maxRarityCost: maxPoffinRarity,
         maxSimilar: maxSimilar);
+    BerrySortKey[] berrySortKeys = ParseBerrySortKeys(berrySortSpec);
+    PoffinSortKey[] poffinSortKeys = ParsePoffinSortKeys(poffinSortSpec);
     var option = BuildFeedingOptions(args, scoreMode);
+    if (keepDuplicates)
+    {
+        dedup = false;
+    }
+
     var contestOptions = new ContestStatsSearchOptions(
         choose: choose,
         useParallel: useParallel,
         maxPoffins: maxPoffins,
+        pruneCandidates: pruneCandidates,
         progress: showProgress ? ReportContestProgress : null,
         progressInterval: 64);
 
@@ -141,7 +169,17 @@ static void RunContestSearch(string[] args)
         Console.WriteLine("Setting up berry filters...");
     }
 
-    int berryCount = CountFilteredBerries(in berryOptions);
+    BerryId[]? sortedBerryIds = null;
+    int berryCount;
+    if (berrySortKeys.Length > 0)
+    {
+        sortedBerryIds = GetFilteredBerryIds(in berryOptions, berrySortKeys);
+        berryCount = sortedBerryIds.Length;
+    }
+    else
+    {
+        berryCount = CountFilteredBerries(in berryOptions);
+    }
     if (showProgress)
     {
         Console.WriteLine($"Filtered berries: {berryCount}");
@@ -150,11 +188,13 @@ static void RunContestSearch(string[] args)
         Console.WriteLine("Cooking candidate poffins...");
     }
 
-    PoffinWithRecipe[] candidates = OptimizationPipeline.BuildCandidates(
-        in berryOptions,
-        in candidateOptions,
-        candidateCount,
-        dedup: dedup);
+    PoffinWithRecipe[] candidates = sortedBerryIds is null
+        ? OptimizationPipeline.BuildCandidates(in berryOptions, in candidateOptions, candidateCount, dedup: dedup)
+        : OptimizationPipeline.BuildCandidatesFromIds(sortedBerryIds, in candidateOptions, candidateCount, dedup: dedup);
+    if (poffinSortKeys.Length > 0)
+    {
+        PoffinSorter.Sort(candidates, candidates.Length, poffinSortKeys);
+    }
 
     if (showProgress)
     {
@@ -187,14 +227,18 @@ static void RunContestSearch(string[] args)
     for (int i = 0; i < filtered.Length; i++)
     {
         var r = filtered[i];
+        int totalPoffins = r.PoffinsEaten;
+        int toMaxStats = r.PoffinsToMaxStats > 0 ? r.PoffinsToMaxStats : totalPoffins;
+        int afterStats = totalPoffins - toMaxStats;
         Console.WriteLine(
             string.Format(
                 CultureInfo.InvariantCulture,
-                "{0,2}: Score {1,6} Poffins {2,2} +{3,2} Sheen {4,3} Rarity {5,3} Unique {6,2} Perfect {7,1} Rank {8,1} Stats [C:{9,3} B:{10,3} Cu:{11,3} Cl:{12,3} T:{13,3}]",
+                "{0,2}: Score {1,6} Poffins {2,2} ({3,2}+{4,2}) Sheen {5,3} Rarity {6,3} Unique {7,2} Perfect {8,1} Rank {9,1} Stats [C:{10,3} B:{11,3} Cu:{12,3} Cl:{13,3} T:{14,3}]",
                 i + 1,
                 r.Score,
-                r.PoffinsEaten,
-                r.AdditionalPoffinsToMaxSheen,
+                totalPoffins,
+                toMaxStats,
+                afterStats,
                 r.TotalSheen,
                 r.TotalRarityCost,
                 r.UniqueBerries,
@@ -332,6 +376,23 @@ static int CountFilteredBerries(in BerryFilterOptions options)
     Span<Berry> buffer = stackalloc Berry[BerryTable.Count];
     int count = BerryQuery.Execute(BerryTable.All, buffer, options, default);
     return count;
+}
+
+static BerryId[] GetFilteredBerryIds(in BerryFilterOptions options, ReadOnlySpan<BerrySortKey> sortKeys)
+{
+    Span<Berry> buffer = stackalloc Berry[BerryTable.Count];
+    int count = BerryQuery.Execute(BerryTable.All, buffer, options, sortKeys);
+    if (count <= 0)
+    {
+        return Array.Empty<BerryId>();
+    }
+
+    var ids = new BerryId[count];
+    for (int i = 0; i < count; i++)
+    {
+        ids[i] = buffer[i].Id;
+    }
+    return ids;
 }
 
 static long CountCombinations(int n, int[] chooseList)
@@ -583,14 +644,149 @@ static Flavor ParseFlavor(string value)
     return Flavor.None;
 }
 
+static BerrySortKey[] ParseBerrySortKeys(string sortSpec)
+{
+    if (string.IsNullOrWhiteSpace(sortSpec))
+    {
+        return Array.Empty<BerrySortKey>();
+    }
+
+    string[] parts = sortSpec.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var keys = new BerrySortKey[parts.Length];
+    int count = 0;
+    for (int i = 0; i < parts.Length; i++)
+    {
+        string part = parts[i];
+        bool desc = false;
+        int colon = part.IndexOf(':');
+        if (colon >= 0)
+        {
+            string dir = part[(colon + 1)..];
+            part = part[..colon];
+            desc = dir.Equals("desc", StringComparison.OrdinalIgnoreCase);
+        }
+
+        string token = NormalizeSortToken(part);
+        BerrySortField field = token switch
+        {
+            "id" => BerrySortField.Id,
+            "spicy" => BerrySortField.Spicy,
+            "dry" => BerrySortField.Dry,
+            "sweet" => BerrySortField.Sweet,
+            "bitter" => BerrySortField.Bitter,
+            "sour" => BerrySortField.Sour,
+            "smoothness" => BerrySortField.Smoothness,
+            "rarity" => BerrySortField.Rarity,
+            "main" => BerrySortField.MainFlavor,
+            "mainflavor" => BerrySortField.MainFlavor,
+            "secondary" => BerrySortField.SecondaryFlavor,
+            "secondaryflavor" => BerrySortField.SecondaryFlavor,
+            "mainvalue" => BerrySortField.MainFlavorValue,
+            "mainflavorvalue" => BerrySortField.MainFlavorValue,
+            "secondaryvalue" => BerrySortField.SecondaryFlavorValue,
+            "secondaryflavorvalue" => BerrySortField.SecondaryFlavorValue,
+            "numflavors" => BerrySortField.NumFlavors,
+            "name" => BerrySortField.Name,
+            _ => BerrySortField.Id
+        };
+
+        keys[count++] = new BerrySortKey(field, desc);
+    }
+
+    if (count == keys.Length)
+    {
+        return keys;
+    }
+
+    var trimmed = new BerrySortKey[count];
+    Array.Copy(keys, trimmed, count);
+    return trimmed;
+}
+
+static PoffinSortKey[] ParsePoffinSortKeys(string sortSpec)
+{
+    if (string.IsNullOrWhiteSpace(sortSpec))
+    {
+        return Array.Empty<PoffinSortKey>();
+    }
+
+    string[] parts = sortSpec.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var keys = new PoffinSortKey[parts.Length];
+    int count = 0;
+    for (int i = 0; i < parts.Length; i++)
+    {
+        string part = parts[i];
+        bool desc = false;
+        int colon = part.IndexOf(':');
+        if (colon >= 0)
+        {
+            string dir = part[(colon + 1)..];
+            part = part[..colon];
+            desc = dir.Equals("desc", StringComparison.OrdinalIgnoreCase);
+        }
+
+        string token = NormalizeSortToken(part);
+        PoffinSortField field = token switch
+        {
+            "spicy" => PoffinSortField.Spicy,
+            "dry" => PoffinSortField.Dry,
+            "sweet" => PoffinSortField.Sweet,
+            "bitter" => PoffinSortField.Bitter,
+            "sour" => PoffinSortField.Sour,
+            "totalflavor" => PoffinSortField.TotalFlavor,
+            "smoothness" => PoffinSortField.Smoothness,
+            "level" => PoffinSortField.Level,
+            "secondlevel" => PoffinSortField.SecondLevel,
+            "mainflavor" => PoffinSortField.MainFlavor,
+            "secondaryflavor" => PoffinSortField.SecondaryFlavor,
+            "numflavors" => PoffinSortField.NumFlavors,
+            "name" => PoffinSortField.NameKind,
+            "namekind" => PoffinSortField.NameKind,
+            "levelratio" => PoffinSortField.LevelToSmoothnessRatio,
+            "leveltosmoothnessratio" => PoffinSortField.LevelToSmoothnessRatio,
+            "totalratio" => PoffinSortField.TotalFlavorToSmoothnessRatio,
+            "totalflavortosmoothnessratio" => PoffinSortField.TotalFlavorToSmoothnessRatio,
+            _ => PoffinSortField.Level
+        };
+
+        keys[count++] = new PoffinSortKey(field, desc);
+    }
+
+    if (count == keys.Length)
+    {
+        return keys;
+    }
+
+    var trimmed = new PoffinSortKey[count];
+    Array.Copy(keys, trimmed, count);
+    return trimmed;
+}
+
+static string NormalizeSortToken(string value)
+{
+    return value.Trim().Replace("-", string.Empty).Replace("_", string.Empty).ToLowerInvariant();
+}
+
 static PoffinNameKind ParsePoffinNameKind(string value)
 {
     if (string.IsNullOrWhiteSpace(value)) return PoffinNameKind.None;
-    if (value.Equals("foul poffin", StringComparison.OrdinalIgnoreCase)) return PoffinNameKind.Foul;
-    if (value.Equals("mild poffin", StringComparison.OrdinalIgnoreCase)) return PoffinNameKind.Mild;
-    if (value.Equals("rich poffin", StringComparison.OrdinalIgnoreCase)) return PoffinNameKind.Rich;
-    if (value.Equals("overripe poffin", StringComparison.OrdinalIgnoreCase)) return PoffinNameKind.Overripe;
-    if (value.Equals("super mild poffin", StringComparison.OrdinalIgnoreCase)) return PoffinNameKind.SuperMild;
+    string normalized = value.Trim().Replace("-", " ").Replace("_", " ");
+    if (normalized.Equals("foul", StringComparison.OrdinalIgnoreCase) ||
+        normalized.Equals("foul poffin", StringComparison.OrdinalIgnoreCase))
+        return PoffinNameKind.Foul;
+    if (normalized.Equals("mild", StringComparison.OrdinalIgnoreCase) ||
+        normalized.Equals("mild poffin", StringComparison.OrdinalIgnoreCase))
+        return PoffinNameKind.Mild;
+    if (normalized.Equals("rich", StringComparison.OrdinalIgnoreCase) ||
+        normalized.Equals("rich poffin", StringComparison.OrdinalIgnoreCase))
+        return PoffinNameKind.Rich;
+    if (normalized.Equals("overripe", StringComparison.OrdinalIgnoreCase) ||
+        normalized.Equals("overripe poffin", StringComparison.OrdinalIgnoreCase))
+        return PoffinNameKind.Overripe;
+    if (normalized.Equals("super mild", StringComparison.OrdinalIgnoreCase) ||
+        normalized.Equals("super mild poffin", StringComparison.OrdinalIgnoreCase) ||
+        normalized.Equals("supermild", StringComparison.OrdinalIgnoreCase))
+        return PoffinNameKind.SuperMild;
     return PoffinNameKind.None;
 }
 
