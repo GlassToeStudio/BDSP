@@ -439,12 +439,12 @@ static string GetFlavorEmoji(Flavor flavor)
 {
     return flavor switch
     {
-        Flavor.Spicy => "???",
-        Flavor.Dry => "??",
-        Flavor.Sweet => "??",
-        Flavor.Bitter => "??",
-        Flavor.Sour => "??",
-        _ => "?"
+        Flavor.Spicy => "🌶️",
+        Flavor.Dry => "🍇",
+        Flavor.Sweet => "🍑",
+        Flavor.Bitter => "🍐",
+        Flavor.Sour => "🍋",
+        _ => "❔"
     };
 }
 static void PrintContestAward(ContestStatsResult result, bool useColor)
@@ -461,9 +461,9 @@ static void PrintContestAward(ContestStatsResult result, bool useColor)
     string sourLabel = useColor ? $"{ColorForFlavor(Flavor.Sour)}(Sour){reset}" : "(Sour)";
 
     Console.WriteLine($"{indent}{outline}{new string('-', width)}{reset}      ---------------");
-    Console.WriteLine($"{indent}{outline}| ******   Contest Stats    ****** |{reset}     \\####|�����|####/");
-    Console.WriteLine($"{indent}{outline}{new string('-', width)}{reset}      \\###|�����|###/");
-    Console.WriteLine($"{indent}{outline}| {coolLabel,-8} ->  {FormatStatLabel("Coolness", result.Stats.Coolness, useColor),-18}{outline}|{reset}       `##|�����|##'");
+    Console.WriteLine($"{indent}{outline}| ******   Contest Stats    ****** |{reset}     \\####|▓▓▓██|####/");
+    Console.WriteLine($"{indent}{outline}{new string('-', width)}{reset}      \\###|█▓▓▓█|###/");
+    Console.WriteLine($"{indent}{outline}| {coolLabel,-8} ->  {FormatStatLabel("Coolness", result.Stats.Coolness, useColor),-18}{outline}|{reset}       `##|██▓▓▓|##'");
     Console.WriteLine($"{indent}{outline}| {dryLabel,-8} ->  {FormatStatLabel("Beauty", result.Stats.Beauty, useColor),-18}{outline}|{reset}            (O)");
     Console.WriteLine($"{indent}{outline}| {sweetLabel,-8} ->  {FormatStatLabel("Cuteness", result.Stats.Cuteness, useColor),-18}{outline}|{reset}         .-'''''-.");
     Console.WriteLine($"{indent}{outline}| {bitterLabel,-8} ->  {FormatStatLabel("Cleverness", result.Stats.Cleverness, useColor),-18}{outline}|{reset}       .'  * * *  `.");
@@ -479,7 +479,7 @@ static string FormatStatLabel(string name, int value, bool useColor)
 {
     string valueColor = useColor ? (value >= 255 ? ColorForFlavor(Flavor.Bitter) : Colors.Color256(196)) : string.Empty;
     string reset = useColor ? Colors.RESET : string.Empty;
-    return string.Format(CultureInfo.InvariantCulture, "{0,-10}:{1}{2,4}{3}", name, valueColor, value, reset);
+    return string.Format(CultureInfo.InvariantCulture, "{0,-14} : {1}{2,3}{3}", name, valueColor, value, reset);
 }
 
 static string FormatEatenSheen(ContestStatsResult result, bool useColor)
@@ -489,7 +489,7 @@ static string FormatEatenSheen(ContestStatsResult result, bool useColor)
     string sheenColor = useColor ? (result.TotalSheen >= 255 ? Colors.BOLD : string.Empty) : string.Empty;
     return string.Format(
         CultureInfo.InvariantCulture,
-        "Eaten {0}{1,4}{2}  Sheen:{3}{4,4}{5}",
+        "Eaten{0}{1,6}{2}  Sheen         : {3}{4,3}{5}",
         eatenWarn,
         result.PoffinsEaten,
         reset,
@@ -506,7 +506,8 @@ static string FormatRankLine(ContestStatsResult result, bool useColor)
     string reset = useColor ? Colors.RESET : string.Empty;
     return string.Format(
         CultureInfo.InvariantCulture,
-        "Rank :{0,2}{1}    R/U  {2,3} : {3,2}",
+        "Rank : {0}{1,1}{2}     R/U        {3,2} : {4,2}  ",
+        rankColor,
         result.Rank,
         reset,
         result.TotalRarityCost,
@@ -1355,4 +1356,3 @@ static int CompareContestResults(ContestStatsResult left, ContestStatsResult rig
 
     return 0;
 }
-
