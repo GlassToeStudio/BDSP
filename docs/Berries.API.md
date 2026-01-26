@@ -56,6 +56,10 @@ Notes:
   - Rarity: 1-15
   - Main/Secondary flavor values: 0-40
   - NumFlavors: 1-5
+- Additional filters:
+  - Any-flavor min/max (applies to non-zero flavors).
+  - Weakened main flavor value/name.
+  - Berry id (concatenated flavor values).
 
 ### BerryQuery
 Filter + sort entry point:
@@ -265,6 +269,12 @@ Notes:
 - All bounds are inclusive.
 - Zero is a valid bound; use `default` or `PoffinFilterOptions.None` for "no filters".
 - Optional exact-flavor filters are available via `RequireMainFlavor` / `RequireSecondaryFlavor`.
+- Additional filters:
+  - Any-flavor min/max (applies to non-zero flavors).
+  - Second-level min/max.
+  - Exclude main/secondary flavor.
+  - Named poffin categories (foul/mild/rich/overripe/super mild).
+  - Poffin id (concatenated flavor values).
 - Accepted ranges (poffins):
   - Flavor values: 0-100
   - Smoothness: 0-255

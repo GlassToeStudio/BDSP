@@ -61,6 +61,7 @@ namespace BDSP.Core.Berries
 
             if (o.RequireMainFlavor && berry.MainFlavor != o.MainFlavor) return false;
             if (o.RequireSecondaryFlavor && berry.SecondaryFlavor != o.SecondaryFlavor) return false;
+            if (o.RequireWeakenedMainFlavor && GetWeakenedMainFlavor(in berry) != o.WeakenedMainFlavor) return false;
 
             if (o.RequiredFlavorMask != 0 || o.ExcludedFlavorMask != 0)
             {
@@ -68,6 +69,12 @@ namespace BDSP.Core.Berries
                 if ((mask & o.RequiredFlavorMask) != o.RequiredFlavorMask) return false;
                 if ((mask & o.ExcludedFlavorMask) != 0) return false;
             }
+
+            if (!AnyFlavorInRange(in berry, in o)) return false;
+            if (!WeakenedMainFlavorInRange(in berry, in o)) return false;
+
+            if ((o.Mask & BerryFilterMask.IdEquals) != 0 && ComputeId(in berry) != o.IdEquals) return false;
+            if ((o.Mask & BerryFilterMask.IdNotEquals) != 0 && ComputeId(in berry) == o.IdNotEquals) return false;
 
             return true;
         }
@@ -94,6 +101,118 @@ namespace BDSP.Core.Berries
             if (berry.Bitter > 0) mask |= 1 << 3;
             if (berry.Sour > 0) mask |= 1 << 4;
             return mask;
+        }
+
+        private static bool AnyFlavorInRange(in Berry berry, in BerryFilterOptions o)
+        {
+            if ((o.Mask & BerryFilterMask.MinAnyFlavorValue) != 0)
+            {
+                int min = o.MinAnyFlavorValue;
+                if (berry.Spicy > 0 && berry.Spicy < min) return false;
+                if (berry.Dry > 0 && berry.Dry < min) return false;
+                if (berry.Sweet > 0 && berry.Sweet < min) return false;
+                if (berry.Bitter > 0 && berry.Bitter < min) return false;
+                if (berry.Sour > 0 && berry.Sour < min) return false;
+            }
+
+            if ((o.Mask & BerryFilterMask.MaxAnyFlavorValue) != 0)
+            {
+                int max = o.MaxAnyFlavorValue;
+                if (berry.Spicy > max) return false;
+                if (berry.Dry > max) return false;
+                if (berry.Sweet > max) return false;
+                if (berry.Bitter > max) return false;
+                if (berry.Sour > max) return false;
+            }
+
+            return true;
+        }
+
+        private static bool WeakenedMainFlavorInRange(in Berry berry, in BerryFilterOptions o)
+        {
+            if ((o.Mask & (BerryFilterMask.MinWeakMainFlavorValue | BerryFilterMask.MaxWeakMainFlavorValue)) == 0)
+            {
+                return true;
+            }
+
+            BerryBase baseBerry = BerryTable.GetBase(berry.Id);
+            int weakenedMain = baseBerry.GetWeakenedFlavor(berry.MainFlavor);
+            if ((o.Mask & BerryFilterMask.MinWeakMainFlavorValue) != 0 && weakenedMain < o.MinWeakMainFlavorValue) return false;
+            if ((o.Mask & BerryFilterMask.MaxWeakMainFlavorValue) != 0 && weakenedMain > o.MaxWeakMainFlavorValue) return false;
+            return true;
+        }
+
+        private static Flavor GetWeakenedMainFlavor(in Berry berry)
+        {
+            BerryBase baseBerry = BerryTable.GetBase(berry.Id);
+            sbyte spicy = baseBerry.WeakSpicy;
+            sbyte dry = baseBerry.WeakDry;
+            sbyte sweet = baseBerry.WeakSweet;
+            sbyte bitter = baseBerry.WeakBitter;
+            sbyte sour = baseBerry.WeakSour;
+
+            Flavor bestFlavor = Flavor.Spicy;
+            sbyte bestValue = spicy;
+            ConsiderWeakened(Flavor.Dry, dry, ref bestFlavor, ref bestValue);
+            ConsiderWeakened(Flavor.Sweet, sweet, ref bestFlavor, ref bestValue);
+            ConsiderWeakened(Flavor.Bitter, bitter, ref bestFlavor, ref bestValue);
+            ConsiderWeakened(Flavor.Sour, sour, ref bestFlavor, ref bestValue);
+            return bestFlavor;
+        }
+
+        private static void ConsiderWeakened(Flavor flavor, sbyte value, ref Flavor bestFlavor, ref sbyte bestValue)
+        {
+            if (value > bestValue || (value == bestValue && HasHigherPriority(flavor, bestFlavor)))
+            {
+                bestFlavor = flavor;
+                bestValue = value;
+            }
+        }
+
+        private static bool HasHigherPriority(Flavor candidate, Flavor current)
+        {
+            return GetPriority(candidate) > GetPriority(current);
+        }
+
+        private static int GetPriority(Flavor flavor)
+        {
+            return flavor switch
+            {
+                Flavor.Spicy => 5,
+                Flavor.Dry => 4,
+                Flavor.Sweet => 3,
+                Flavor.Bitter => 2,
+                Flavor.Sour => 1,
+                _ => 0
+            };
+        }
+
+        private static int ComputeId(in Berry berry)
+        {
+            int id = 0;
+            AppendDigits(ref id, berry.Spicy);
+            AppendDigits(ref id, berry.Dry);
+            AppendDigits(ref id, berry.Sweet);
+            AppendDigits(ref id, berry.Bitter);
+            AppendDigits(ref id, berry.Sour);
+            return id;
+        }
+
+        private static void AppendDigits(ref int id, int value)
+        {
+            if (value >= 100)
+            {
+                id = id * 1000 + value;
+                return;
+            }
+
+            if (value >= 10)
+            {
+                id = id * 100 + value;
+                return;
+            }
+
+            id = id * 10 + value;
         }
     }
 }

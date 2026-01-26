@@ -26,7 +26,13 @@ namespace BDSP.Core.Berries
         MinSecondaryFlavorValue = 1 << 16,
         MaxSecondaryFlavorValue = 1 << 17,
         MinNumFlavors = 1 << 18,
-        MaxNumFlavors = 1 << 19
+        MaxNumFlavors = 1 << 19,
+        MinAnyFlavorValue = 1 << 20,
+        MaxAnyFlavorValue = 1 << 21,
+        MinWeakMainFlavorValue = 1 << 22,
+        MaxWeakMainFlavorValue = 1 << 23,
+        IdEquals = 1 << 24,
+        IdNotEquals = 1 << 25
     }
 
     /// <summary>
@@ -84,6 +90,22 @@ namespace BDSP.Core.Berries
         public readonly int MinNumFlavors;
         /// <summary>Maximum number of non-zero flavors (1-5).</summary>
         public readonly int MaxNumFlavors;
+        /// <summary>Minimum value for any non-zero flavor (0-40).</summary>
+        public readonly int MinAnyFlavorValue;
+        /// <summary>Maximum value for any flavor (0-40).</summary>
+        public readonly int MaxAnyFlavorValue;
+        /// <summary>Minimum weakened main flavor value.</summary>
+        public readonly int MinWeakMainFlavorValue;
+        /// <summary>Maximum weakened main flavor value.</summary>
+        public readonly int MaxWeakMainFlavorValue;
+        /// <summary>Require a weakened main flavor name.</summary>
+        public readonly bool RequireWeakenedMainFlavor;
+        /// <summary>Required weakened main flavor name.</summary>
+        public readonly Flavor WeakenedMainFlavor;
+        /// <summary>Berry id value that must match.</summary>
+        public readonly int IdEquals;
+        /// <summary>Berry id value that must not match.</summary>
+        public readonly int IdNotEquals;
 
         /// <summary>Mask of active bounds for fast checks.</summary>
         public readonly BerryFilterMask Mask;
@@ -139,6 +161,14 @@ namespace BDSP.Core.Berries
             int maxSecondaryFlavorValue = Unset,
             int minNumFlavors = Unset,
             int maxNumFlavors = Unset,
+            int minAnyFlavorValue = Unset,
+            int maxAnyFlavorValue = Unset,
+            int minWeakMainFlavorValue = Unset,
+            int maxWeakMainFlavorValue = Unset,
+            bool requireWeakenedMainFlavor = false,
+            Flavor weakenedMainFlavor = Flavor.None,
+            int idEquals = Unset,
+            int idNotEquals = Unset,
             bool requireMainFlavor = false,
             Flavor mainFlavor = Flavor.None,
             bool requireSecondaryFlavor = false,
@@ -167,6 +197,12 @@ namespace BDSP.Core.Berries
             if (maxSecondaryFlavorValue != Unset) mask |= BerryFilterMask.MaxSecondaryFlavorValue;
             if (minNumFlavors != Unset) mask |= BerryFilterMask.MinNumFlavors;
             if (maxNumFlavors != Unset) mask |= BerryFilterMask.MaxNumFlavors;
+            if (minAnyFlavorValue != Unset) mask |= BerryFilterMask.MinAnyFlavorValue;
+            if (maxAnyFlavorValue != Unset) mask |= BerryFilterMask.MaxAnyFlavorValue;
+            if (minWeakMainFlavorValue != Unset) mask |= BerryFilterMask.MinWeakMainFlavorValue;
+            if (maxWeakMainFlavorValue != Unset) mask |= BerryFilterMask.MaxWeakMainFlavorValue;
+            if (idEquals != Unset) mask |= BerryFilterMask.IdEquals;
+            if (idNotEquals != Unset) mask |= BerryFilterMask.IdNotEquals;
 
             MinSpicy = minSpicy;
             MaxSpicy = maxSpicy;
@@ -191,6 +227,14 @@ namespace BDSP.Core.Berries
 
             MinNumFlavors = minNumFlavors;
             MaxNumFlavors = maxNumFlavors;
+            MinAnyFlavorValue = minAnyFlavorValue;
+            MaxAnyFlavorValue = maxAnyFlavorValue;
+            MinWeakMainFlavorValue = minWeakMainFlavorValue;
+            MaxWeakMainFlavorValue = maxWeakMainFlavorValue;
+            RequireWeakenedMainFlavor = requireWeakenedMainFlavor;
+            WeakenedMainFlavor = weakenedMainFlavor;
+            IdEquals = idEquals;
+            IdNotEquals = idNotEquals;
 
             Mask = mask;
             RequireMainFlavor = requireMainFlavor;

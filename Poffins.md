@@ -100,12 +100,22 @@ Berry filters (subset selection before cooking):
 - `--berry-min-spicy` / `--berry-max-spicy` (and Dry/Sweet/Bitter/Sour)
 - `--berry-main-flavor`, `--berry-secondary-flavor`
 - `--berry-required-flavors`, `--berry-excluded-flavors` (comma list)
+- `--berry-any-flavor-min`, `--berry-any-flavor-max`
+- `--berry-weak-main-min`, `--berry-weak-main-max`, `--berry-weak-main-flavor`
+- `--berry-id`, `--berry-exclude-id`
 
 Poffin candidate filters:
 - `--poffin-min-level`, `--poffin-max-level`
+- `--poffin-min-second-level`, `--poffin-max-second-level`
 - `--poffin-min-smoothness`, `--poffin-max-smoothness`
 - `--poffin-min-spicy` / `--poffin-max-spicy` (and Dry/Sweet/Bitter/Sour)
 - `--poffin-main-flavor`, `--poffin-secondary-flavor`
+- `--poffin-exclude-main-flavor`, `--poffin-exclude-secondary-flavor`
+- `--poffin-any-flavor-min`, `--poffin-any-flavor-max`
+- `--poffin-name`, `--poffin-exclude-name`
+- `--poffin-id`, `--poffin-exclude-id`
+- `--poffin-min-rarity`, `--poffin-max-rarity`
+- `--poffin-max-similar`
 
 Scoring weights:
 - `--poffin-level-weight`, `--poffin-total-flavor-weight`, `--poffin-smoothness-penalty`
@@ -114,7 +124,11 @@ Scoring weights:
 - `--rarity-mode max|sum`, `--score balanced|sum`, `--min-stat-weight`
 
 Contest result filters (CLI post-filter):
-- `--max-rank`, `--max-poffins`
+- `--min-rank`, `--max-rank`
+- `--min-poffins`, `--max-poffins`
+- `--min-rarity`, `--max-rarity`
+- `--min-perfect`, `--max-perfect`
+Sort output with `--stats-sort` (comma list, optional `:desc`), e.g. `rank,poffins,rarity`.
 
 Note: `--max-poffins` now also caps feeding during contest search (variable-length feeding).
 Contest results now include an extra count: additional poffins needed to reach sheen 255

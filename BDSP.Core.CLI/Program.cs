@@ -39,12 +39,18 @@ static void RunFeedingPlan(string[] args)
     PoffinFilterOptions poffinFilter = BuildPoffinFilters(args);
     PoffinScoreOptions poffinScore = BuildPoffinScoreOptions(args);
     FeedingSearchOptions feedingOptions = BuildFeedingOptions(args);
+    int minPoffinRarity = GetIntArg(args, "--poffin-min-rarity", -1);
+    int maxPoffinRarity = GetIntArg(args, "--poffin-max-rarity", -1);
+    int maxSimilar = GetIntArg(args, "--poffin-max-similar", 0);
 
     var candidateOptions = new PoffinCandidateOptions(
         chooseList: ParseChooseList(candidateChooseArg),
         cookTimeSeconds: cookTimeSeconds,
         scoreOptions: poffinScore,
-        filterOptions: poffinFilter);
+        filterOptions: poffinFilter,
+        minRarityCost: minPoffinRarity,
+        maxRarityCost: maxPoffinRarity,
+        maxSimilar: maxSimilar);
     if (showProgress)
     {
         Console.WriteLine("Setting up berry filters...");
@@ -111,11 +117,17 @@ static void RunContestSearch(string[] args)
     BerryFilterOptions berryOptions = BuildBerryFilters(args);
     PoffinFilterOptions poffinFilter = BuildPoffinFilters(args);
     PoffinScoreOptions poffinScore = BuildPoffinScoreOptions(args);
+    int minPoffinRarity = GetIntArg(args, "--poffin-min-rarity", -1);
+    int maxPoffinRarity = GetIntArg(args, "--poffin-max-rarity", -1);
+    int maxSimilar = GetIntArg(args, "--poffin-max-similar", 0);
     var candidateOptions = new PoffinCandidateOptions(
         chooseList: chooseList,
         cookTimeSeconds: cookTimeSeconds,
         scoreOptions: poffinScore,
-        filterOptions: poffinFilter);
+        filterOptions: poffinFilter,
+        minRarityCost: minPoffinRarity,
+        maxRarityCost: maxPoffinRarity,
+        maxSimilar: maxSimilar);
     var option = BuildFeedingOptions(args, scoreMode);
     var contestOptions = new ContestStatsSearchOptions(
         choose: choose,
@@ -158,7 +170,19 @@ static void RunContestSearch(string[] args)
 
     ContestStatsResult[] results = ContestStatsSearch.Run(candidates, in contestOptions, in option, topK);
 
-    ContestStatsResult[] filtered = FilterContestResults(results, maxRank, maxPoffins);
+    int minRank = GetIntArg(args, "--min-rank", -1);
+    int minPoffins = GetIntArg(args, "--min-poffins", -1);
+    int minRarity = GetIntArg(args, "--min-rarity", -1);
+    int maxRarity = GetIntArg(args, "--max-rarity", -1);
+    int minPerfect = GetIntArg(args, "--min-perfect", -1);
+    int maxPerfect = GetIntArg(args, "--max-perfect", -1);
+    string statsSort = GetStringArg(args, "--stats-sort", string.Empty);
+
+    ContestStatsResult[] filtered = FilterContestResults(results, minRank, maxRank, minPoffins, maxPoffins, minRarity, maxRarity, minPerfect, maxPerfect);
+    if (!string.IsNullOrWhiteSpace(statsSort))
+    {
+        SortContestResults(filtered, statsSort);
+    }
     Console.WriteLine($"Contest search results: {filtered.Length}");
     for (int i = 0; i < filtered.Length; i++)
     {
@@ -369,6 +393,12 @@ static BerryFilterOptions BuildBerryFilters(string[] args)
     int maxSecondary = GetIntArgOrUnset(args, "--berry-max-secondary", unset);
     int minNumFlavors = GetIntArgOrUnset(args, "--berry-min-num-flavors", unset);
     int maxNumFlavors = GetIntArgOrUnset(args, "--berry-max-num-flavors", unset);
+    int minAnyFlavor = GetIntArgOrUnset(args, "--berry-any-flavor-min", unset);
+    int maxAnyFlavor = GetIntArgOrUnset(args, "--berry-any-flavor-max", unset);
+    int minWeakMain = GetIntArgOrUnset(args, "--berry-weak-main-min", unset);
+    int maxWeakMain = GetIntArgOrUnset(args, "--berry-weak-main-max", unset);
+    int idEquals = GetIntArgOrUnset(args, "--berry-id", unset);
+    int idNotEquals = GetIntArgOrUnset(args, "--berry-exclude-id", unset);
 
     bool hasMainFlavor = TryGetStringArg(args, "--berry-main-flavor", out string mainFlavorRaw);
     Flavor mainFlavor = hasMainFlavor ? ParseFlavor(mainFlavorRaw) : Flavor.None;
@@ -377,6 +407,10 @@ static BerryFilterOptions BuildBerryFilters(string[] args)
     bool hasSecondaryFlavor = TryGetStringArg(args, "--berry-secondary-flavor", out string secondaryFlavorRaw);
     Flavor secondaryFlavor = hasSecondaryFlavor ? ParseFlavor(secondaryFlavorRaw) : Flavor.None;
     bool requireSecondary = (hasSecondaryFlavor || GetBoolArg(args, "--berry-require-secondary", fallback: false)) && secondaryFlavor != Flavor.None;
+
+    bool hasWeakMainFlavor = TryGetStringArg(args, "--berry-weak-main-flavor", out string weakMainRaw);
+    Flavor weakMainFlavor = hasWeakMainFlavor ? ParseFlavor(weakMainRaw) : Flavor.None;
+    bool requireWeakMain = (hasWeakMainFlavor || GetBoolArg(args, "--berry-require-weak-main", fallback: false)) && weakMainFlavor != Flavor.None;
 
     byte requiredMask = ParseFlavorMask(GetStringArg(args, "--berry-required-flavors", string.Empty));
     byte excludedMask = ParseFlavorMask(GetStringArg(args, "--berry-excluded-flavors", string.Empty));
@@ -402,6 +436,14 @@ static BerryFilterOptions BuildBerryFilters(string[] args)
         maxSecondaryFlavorValue: maxSecondary,
         minNumFlavors: minNumFlavors,
         maxNumFlavors: maxNumFlavors,
+        minAnyFlavorValue: minAnyFlavor,
+        maxAnyFlavorValue: maxAnyFlavor,
+        minWeakMainFlavorValue: minWeakMain,
+        maxWeakMainFlavorValue: maxWeakMain,
+        requireWeakenedMainFlavor: requireWeakMain,
+        weakenedMainFlavor: weakMainFlavor,
+        idEquals: idEquals,
+        idNotEquals: idNotEquals,
         requireMainFlavor: requireMain,
         mainFlavor: mainFlavor,
         requireSecondaryFlavor: requireSecondary,
@@ -427,16 +469,31 @@ static PoffinFilterOptions BuildPoffinFilters(string[] args)
     int maxSmoothness = GetIntArgOrUnset(args, "--poffin-max-smoothness", unset);
     int minLevel = GetIntArgOrUnset(args, "--poffin-min-level", unset);
     int maxLevel = GetIntArgOrUnset(args, "--poffin-max-level", unset);
+    int minSecondLevel = GetIntArgOrUnset(args, "--poffin-min-second-level", unset);
+    int maxSecondLevel = GetIntArgOrUnset(args, "--poffin-max-second-level", unset);
     int minNumFlavors = GetIntArgOrUnset(args, "--poffin-min-num-flavors", unset);
     int maxNumFlavors = GetIntArgOrUnset(args, "--poffin-max-num-flavors", unset);
+    int minAnyFlavor = GetIntArgOrUnset(args, "--poffin-any-flavor-min", unset);
+    int maxAnyFlavor = GetIntArgOrUnset(args, "--poffin-any-flavor-max", unset);
+    int idEquals = GetIntArgOrUnset(args, "--poffin-id", unset);
+    int idNotEquals = GetIntArgOrUnset(args, "--poffin-exclude-id", unset);
 
     bool hasMainFlavor = TryGetStringArg(args, "--poffin-main-flavor", out string mainFlavorRaw);
     Flavor mainFlavor = hasMainFlavor ? ParseFlavor(mainFlavorRaw) : Flavor.None;
     bool requireMain = (hasMainFlavor || GetBoolArg(args, "--poffin-require-main", fallback: false)) && mainFlavor != Flavor.None;
+    bool hasExcludedMain = TryGetStringArg(args, "--poffin-exclude-main-flavor", out string excludedMainRaw);
+    Flavor excludedMain = hasExcludedMain ? ParseFlavor(excludedMainRaw) : Flavor.None;
+    bool excludeMain = hasExcludedMain && excludedMain != Flavor.None;
 
     bool hasSecondaryFlavor = TryGetStringArg(args, "--poffin-secondary-flavor", out string secondaryFlavorRaw);
     Flavor secondaryFlavor = hasSecondaryFlavor ? ParseFlavor(secondaryFlavorRaw) : Flavor.None;
     bool requireSecondary = (hasSecondaryFlavor || GetBoolArg(args, "--poffin-require-secondary", fallback: false)) && secondaryFlavor != Flavor.None;
+    bool hasExcludedSecondary = TryGetStringArg(args, "--poffin-exclude-secondary-flavor", out string excludedSecondaryRaw);
+    Flavor excludedSecondary = hasExcludedSecondary ? ParseFlavor(excludedSecondaryRaw) : Flavor.None;
+    bool excludeSecondary = hasExcludedSecondary && excludedSecondary != Flavor.None;
+
+    PoffinNameKind nameEquals = ParsePoffinNameKind(GetStringArg(args, "--poffin-name", string.Empty));
+    PoffinNameKind nameNotEquals = ParsePoffinNameKind(GetStringArg(args, "--poffin-exclude-name", string.Empty));
 
     return new PoffinFilterOptions(
         minSpicy: minSpicy,
@@ -453,12 +510,24 @@ static PoffinFilterOptions BuildPoffinFilters(string[] args)
         maxSmoothness: maxSmoothness,
         minLevel: minLevel,
         maxLevel: maxLevel,
+        minSecondLevel: minSecondLevel,
+        maxSecondLevel: maxSecondLevel,
         minNumFlavors: minNumFlavors,
         maxNumFlavors: maxNumFlavors,
+        minAnyFlavorValue: minAnyFlavor,
+        maxAnyFlavorValue: maxAnyFlavor,
+        idEquals: idEquals,
+        idNotEquals: idNotEquals,
         requireMainFlavor: requireMain,
         mainFlavor: mainFlavor,
+        excludeMainFlavor: excludeMain,
+        excludedMainFlavor: excludedMain,
         requireSecondaryFlavor: requireSecondary,
-        secondaryFlavor: secondaryFlavor);
+        secondaryFlavor: secondaryFlavor,
+        excludeSecondaryFlavor: excludeSecondary,
+        excludedSecondaryFlavor: excludedSecondary,
+        nameEquals: nameEquals,
+        nameNotEquals: nameNotEquals);
 }
 
 static PoffinScoreOptions BuildPoffinScoreOptions(string[] args)
@@ -514,6 +583,17 @@ static Flavor ParseFlavor(string value)
     return Flavor.None;
 }
 
+static PoffinNameKind ParsePoffinNameKind(string value)
+{
+    if (string.IsNullOrWhiteSpace(value)) return PoffinNameKind.None;
+    if (value.Equals("foul poffin", StringComparison.OrdinalIgnoreCase)) return PoffinNameKind.Foul;
+    if (value.Equals("mild poffin", StringComparison.OrdinalIgnoreCase)) return PoffinNameKind.Mild;
+    if (value.Equals("rich poffin", StringComparison.OrdinalIgnoreCase)) return PoffinNameKind.Rich;
+    if (value.Equals("overripe poffin", StringComparison.OrdinalIgnoreCase)) return PoffinNameKind.Overripe;
+    if (value.Equals("super mild poffin", StringComparison.OrdinalIgnoreCase)) return PoffinNameKind.SuperMild;
+    return PoffinNameKind.None;
+}
+
 static byte ParseFlavorMask(string value)
 {
     if (string.IsNullOrWhiteSpace(value)) return 0;
@@ -544,9 +624,22 @@ static byte ParseFlavorMask(string value)
     return mask;
 }
 
-static ContestStatsResult[] FilterContestResults(ContestStatsResult[] results, int maxRank, int maxPoffins)
+static ContestStatsResult[] FilterContestResults(
+    ContestStatsResult[] results,
+    int minRank,
+    int maxRank,
+    int minPoffins,
+    int maxPoffins,
+    int minRarity,
+    int maxRarity,
+    int minPerfect,
+    int maxPerfect)
 {
-    if (results.Length == 0 || (maxRank < 0 && maxPoffins < 0))
+    if (results.Length == 0 ||
+        (minRank < 0 && maxRank < 0 &&
+         minPoffins < 0 && maxPoffins < 0 &&
+         minRarity < 0 && maxRarity < 0 &&
+         minPerfect < 0 && maxPerfect < 0))
     {
         return results;
     }
@@ -556,11 +649,35 @@ static ContestStatsResult[] FilterContestResults(ContestStatsResult[] results, i
     for (int i = 0; i < results.Length; i++)
     {
         ContestStatsResult result = results[i];
+        if (minRank >= 0 && result.Rank < minRank)
+        {
+            continue;
+        }
         if (maxRank >= 0 && result.Rank > maxRank)
         {
             continue;
         }
+        if (minPoffins >= 0 && result.PoffinsEaten < minPoffins)
+        {
+            continue;
+        }
         if (maxPoffins >= 0 && result.PoffinsEaten > maxPoffins)
+        {
+            continue;
+        }
+        if (minRarity >= 0 && result.TotalRarityCost < minRarity)
+        {
+            continue;
+        }
+        if (maxRarity >= 0 && result.TotalRarityCost > maxRarity)
+        {
+            continue;
+        }
+        if (minPerfect >= 0 && result.NumPerfectValues < minPerfect)
+        {
+            continue;
+        }
+        if (maxPerfect >= 0 && result.NumPerfectValues > maxPerfect)
         {
             continue;
         }
@@ -575,4 +692,65 @@ static ContestStatsResult[] FilterContestResults(ContestStatsResult[] results, i
     var trimmed = new ContestStatsResult[count];
     Array.Copy(buffer, trimmed, count);
     return trimmed;
+}
+
+static void SortContestResults(ContestStatsResult[] results, string sortSpec)
+{
+    if (results.Length < 2)
+    {
+        return;
+    }
+
+    string[] parts = sortSpec.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    if (parts.Length == 0)
+    {
+        return;
+    }
+
+    var keys = new (string Key, bool Desc)[parts.Length];
+    for (int i = 0; i < parts.Length; i++)
+    {
+        string part = parts[i];
+        bool desc = false;
+        int colon = part.IndexOf(':');
+        if (colon >= 0)
+        {
+            string dir = part[(colon + 1)..];
+            part = part[..colon];
+            desc = dir.Equals("desc", StringComparison.OrdinalIgnoreCase);
+        }
+        keys[i] = (part.Trim(), desc);
+    }
+
+    Array.Sort(results, (left, right) => CompareContestResults(left, right, keys));
+}
+
+static int CompareContestResults(ContestStatsResult left, ContestStatsResult right, (string Key, bool Desc)[] keys)
+{
+    for (int i = 0; i < keys.Length; i++)
+    {
+        int cmp = keys[i].Key.ToLowerInvariant() switch
+        {
+            "rank" => left.Rank.CompareTo(right.Rank),
+            "poffins" => left.PoffinsEaten.CompareTo(right.PoffinsEaten),
+            "rarity" => left.TotalRarityCost.CompareTo(right.TotalRarityCost),
+            "unique" => left.UniqueBerries.CompareTo(right.UniqueBerries),
+            "perfect" => left.NumPerfectValues.CompareTo(right.NumPerfectValues),
+            "coolness" => left.Stats.Coolness.CompareTo(right.Stats.Coolness),
+            "beauty" => left.Stats.Beauty.CompareTo(right.Stats.Beauty),
+            "cuteness" => left.Stats.Cuteness.CompareTo(right.Stats.Cuteness),
+            "cleverness" => left.Stats.Cleverness.CompareTo(right.Stats.Cleverness),
+            "toughness" => left.Stats.Toughness.CompareTo(right.Stats.Toughness),
+            "sheen" => left.TotalSheen.CompareTo(right.TotalSheen),
+            "score" => left.Score.CompareTo(right.Score),
+            _ => 0
+        };
+
+        if (cmp != 0)
+        {
+            return keys[i].Desc ? -cmp : cmp;
+        }
+    }
+
+    return 0;
 }

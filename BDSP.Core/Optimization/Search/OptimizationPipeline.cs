@@ -43,6 +43,11 @@ namespace BDSP.Core.Optimization.Search
                 ids[i] = buffer[i].Id;
             }
 
+            if (candidateOptions.MaxSimilar > 1)
+            {
+                dedup = false;
+            }
+
             if (dedup)
             {
                 var unique = new Dictionary<PoffinKey, Candidate>(topK);
@@ -59,7 +64,12 @@ namespace BDSP.Core.Optimization.Search
             }
 
             var collector = new TopK<Candidate>(topK);
-            AddCandidates(ids, in candidateOptions, collector);
+            Dictionary<PoffinKey, int>? similarCounts = null;
+            if (candidateOptions.MaxSimilar > 0)
+            {
+                similarCounts = new Dictionary<PoffinKey, int>(topK);
+            }
+            AddCandidates(ids, in candidateOptions, collector, similarCounts);
             Candidate[] results = collector.ToSortedArray((a, b) => b.Score.CompareTo(a.Score));
             return ExtractCandidates(results);
         }
@@ -117,7 +127,8 @@ namespace BDSP.Core.Optimization.Search
         private static void AddCandidates(
             ReadOnlySpan<BerryId> ids,
             in PoffinCandidateOptions options,
-            TopK<Candidate> top)
+            TopK<Candidate> top,
+            Dictionary<PoffinKey, int>? similarCounts)
         {
             PoffinCandidateOptions optionsValue = options;
             for (int c = 0; c < optionsValue.ChooseList.Length; c++)
@@ -127,7 +138,7 @@ namespace BDSP.Core.Optimization.Search
                 {
                     continue;
                 }
-                AddCandidatesForChoose(ids, choose, in optionsValue, top);
+                AddCandidatesForChoose(ids, choose, in optionsValue, top, similarCounts);
             }
         }
 
@@ -152,7 +163,8 @@ namespace BDSP.Core.Optimization.Search
             ReadOnlySpan<BerryId> ids,
             int choose,
             in PoffinCandidateOptions options,
-            TopK<Candidate> top)
+            TopK<Candidate> top,
+            Dictionary<PoffinKey, int>? similarCounts)
         {
             PoffinCandidateOptions optionsValue = options;
             PoffinComboEnumerator.ForEach(ids, choose, combo =>
@@ -177,9 +189,23 @@ namespace BDSP.Core.Optimization.Search
                     return;
                 }
 
+                int rarityCost = ComputeRarityCost(recipeIds);
+                if (optionsValue.MinRarityCost >= 0 && rarityCost < optionsValue.MinRarityCost) return;
+                if (optionsValue.MaxRarityCost >= 0 && rarityCost > optionsValue.MaxRarityCost) return;
+
                 int score = Score(in poffin, in optionsValue.ScoreOptions);
                 var recipe = new PoffinRecipe(recipeIds, optionsValue.CookTimeSeconds, optionsValue.Spills, optionsValue.Burns, optionsValue.AmityBonus);
                 var candidate = new Candidate(new PoffinWithRecipe(poffin, recipe), score);
+
+                if (optionsValue.MaxSimilar > 0)
+                {
+                    var key = new PoffinKey(in poffin);
+                    if (!TryIncrementSimilar(similarCounts, key, optionsValue.MaxSimilar))
+                    {
+                        return;
+                    }
+                }
+
                 top.TryAdd(candidate, score);
             });
         }
@@ -213,6 +239,10 @@ namespace BDSP.Core.Optimization.Search
                     return;
                 }
 
+                int rarityCost = ComputeRarityCost(recipeIds);
+                if (optionsValue.MinRarityCost >= 0 && rarityCost < optionsValue.MinRarityCost) return;
+                if (optionsValue.MaxRarityCost >= 0 && rarityCost > optionsValue.MaxRarityCost) return;
+
                 int score = Score(in poffin, in optionsValue.ScoreOptions);
                 var recipe = new PoffinRecipe(recipeIds, optionsValue.CookTimeSeconds, optionsValue.Spills, optionsValue.Burns, optionsValue.AmityBonus);
                 var candidate = new Candidate(new PoffinWithRecipe(poffin, recipe), score);
@@ -232,6 +262,37 @@ namespace BDSP.Core.Optimization.Search
 
                 unique[key] = candidate;
             });
+        }
+
+        private static bool TryIncrementSimilar(Dictionary<PoffinKey, int>? counts, PoffinKey key, int maxSimilar)
+        {
+            if (counts is null)
+            {
+                return true;
+            }
+
+            if (counts.TryGetValue(key, out int current))
+            {
+                if (current >= maxSimilar)
+                {
+                    return false;
+                }
+                counts[key] = current + 1;
+                return true;
+            }
+
+            counts[key] = 1;
+            return true;
+        }
+
+        private static int ComputeRarityCost(BerryId[] recipeIds)
+        {
+            int cost = 0;
+            for (int i = 0; i < recipeIds.Length; i++)
+            {
+                cost += BerryTable.Get(recipeIds[i]).Rarity;
+            }
+            return cost;
         }
 
         private static PoffinWithRecipe[] ExtractCandidates(Candidate[] candidates)
@@ -355,6 +416,12 @@ namespace BDSP.Core.Optimization.Search
         public readonly PoffinScoreOptions ScoreOptions;
         /// <summary>Optional filter for candidate poffins.</summary>
         public readonly PoffinFilterOptions FilterOptions;
+        /// <summary>Minimum rarity cost (sum of berry rarities).</summary>
+        public readonly int MinRarityCost;
+        /// <summary>Maximum rarity cost (sum of berry rarities).</summary>
+        public readonly int MaxRarityCost;
+        /// <summary>Maximum number of identical poffins to keep (0 = no cap).</summary>
+        public readonly int MaxSimilar;
 
         public PoffinCandidateOptions(
             int[]? chooseList = null,
@@ -363,7 +430,10 @@ namespace BDSP.Core.Optimization.Search
             int burns = 0,
             int amityBonus = 9,
             PoffinScoreOptions scoreOptions = default,
-            PoffinFilterOptions filterOptions = default)
+            PoffinFilterOptions filterOptions = default,
+            int minRarityCost = -1,
+            int maxRarityCost = -1,
+            int maxSimilar = 0)
         {
             ChooseList = chooseList ?? new[] { 2, 3, 4 };
             CookTimeSeconds = cookTimeSeconds;
@@ -372,6 +442,9 @@ namespace BDSP.Core.Optimization.Search
             AmityBonus = amityBonus;
             ScoreOptions = scoreOptions;
             FilterOptions = filterOptions;
+            MinRarityCost = minRarityCost;
+            MaxRarityCost = maxRarityCost;
+            MaxSimilar = maxSimilar;
         }
     }
 }
