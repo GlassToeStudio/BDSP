@@ -43,6 +43,9 @@ var poffinFilter = new PoffinFilterOptions(minLevel: 30, maxSmoothness: 20);
 var results = PoffinSearch.Run(berryFilter, searchOptions, topK: 100, poffinFilter);
 ```
 
+Default candidate generation assumes 4-berry recipes. Override with `PoffinCandidateOptions`
+or CLI `--candidate-choose` if you need 2/3-berry cooking.
+
 ## Cooking Rules (Summary)
 1. Add together the respective flavors of all berries used.
 2. For each flavor total, subtract the total of that flavor's weakening flavor (spicy <- dry, dry <- sweet, sweet <- bitter, bitter <- sour, sour <- spicy).
@@ -52,7 +55,7 @@ var results = PoffinSearch.Run(berryFilter, searchOptions, topK: 100, poffinFilt
 5. Set any negative flavors to 0.
 6. Cap flavor values to the generation limit (Gen IV = 99, Gen VIII = 100). The core library clamps to 100.
 
-## Flavor → Condition Mapping
+## Flavor -> Condition Mapping
 
 | Condition  | Flavor | Color  |
 | ---------- | ------ | ------ |
@@ -99,3 +102,5 @@ dotnet test BDSP.slnx
 ```powershell
 dotnet run --project BDSP.Core.Benchmarks -c Release
 ```
+
+

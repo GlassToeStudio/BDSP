@@ -299,6 +299,10 @@ Notes:
 CLI sorting flags:
 - `--berry-sort` (comma list, optional `:desc`) for berry ordering prior to cooking.
 - `--poffin-sort` (comma list, optional `:desc`) for candidate ordering prior to feeding/contest searches.
+CLI berry lists:
+- `--berry-include` / `--berry-exclude` (comma list of names; accepts with/without “Berry”).
+Candidate defaults:
+- `--candidate-choose` defaults to `4` (4-berry recipes) unless overridden.
 
 ### Benchmarks
 Benchmark project comparing combo-base cooking vs span-based cooking:

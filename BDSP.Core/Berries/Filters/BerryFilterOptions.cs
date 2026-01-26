@@ -32,7 +32,9 @@ namespace BDSP.Core.Berries
         MinWeakMainFlavorValue = 1 << 22,
         MaxWeakMainFlavorValue = 1 << 23,
         IdEquals = 1 << 24,
-        IdNotEquals = 1 << 25
+        IdNotEquals = 1 << 25,
+        RequiredFlavorMask = 1 << 26,
+        ExcludedFlavorMask = 1 << 27
     }
 
     /// <summary>
@@ -203,6 +205,8 @@ namespace BDSP.Core.Berries
             if (maxWeakMainFlavorValue != Unset) mask |= BerryFilterMask.MaxWeakMainFlavorValue;
             if (idEquals != Unset) mask |= BerryFilterMask.IdEquals;
             if (idNotEquals != Unset) mask |= BerryFilterMask.IdNotEquals;
+            if (requiredFlavorMask != 0) mask |= BerryFilterMask.RequiredFlavorMask;
+            if (excludedFlavorMask != 0) mask |= BerryFilterMask.ExcludedFlavorMask;
 
             MinSpicy = minSpicy;
             MaxSpicy = maxSpicy;

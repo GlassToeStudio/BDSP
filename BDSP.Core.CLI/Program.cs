@@ -6,6 +6,8 @@ using BDSP.Core.Optimization.Search;
 using BDSP.Core.Poffins;
 using BDSP.Core.Poffins.Filters;
 using BDSP.Core.Poffins.Search;
+using BDSP.Core.CLI;
+
 
 if (args.Length > 0 && args[0].Equals("feeding-plan", StringComparison.OrdinalIgnoreCase))
 {
@@ -32,10 +34,12 @@ static void RunFeedingPlan(string[] args)
     int choose = GetIntArg(args, "--choose", 2);
     int cookTimeSeconds = GetIntArg(args, "--time", 40);
     int topK = GetIntArg(args, "--topk", 10);
-    string candidateChooseArg = GetStringArg(args, "--candidate-choose", choose.ToString(CultureInfo.InvariantCulture));
+    string candidateChooseArg = GetStringArg(args, "--candidate-choose", "4");
     bool showProgress = GetBoolArg(args, "--progress", fallback: false);
     string berrySortSpec = GetStringArg(args, "--berry-sort", string.Empty);
     string poffinSortSpec = GetStringArg(args, "--poffin-sort", string.Empty);
+    string berryIncludeSpec = GetStringArg(args, "--berry-include", string.Empty);
+    string berryExcludeSpec = GetStringArg(args, "--berry-exclude", string.Empty);
 
     BerryFilterOptions berryOptions = BuildBerryFilters(args);
     PoffinFilterOptions poffinFilter = BuildPoffinFilters(args);
@@ -61,15 +65,31 @@ static void RunFeedingPlan(string[] args)
     }
 
     BerryId[]? sortedBerryIds = null;
+    BerryId[]? berryInclude = ParseBerryNameList(berryIncludeSpec);
+    BerryId[]? berryExclude = ParseBerryNameList(berryExcludeSpec);
     int berryCount;
-    if (berrySortKeys.Length > 0)
+    if (berryInclude is not null)
     {
-        sortedBerryIds = GetFilteredBerryIds(in berryOptions, berrySortKeys);
+        sortedBerryIds = FilterBerryIds(berryInclude, berryExclude, in berryOptions, berrySortKeys);
         berryCount = sortedBerryIds.Length;
     }
     else
     {
-        berryCount = CountFilteredBerries(in berryOptions);
+        if (berryExclude is not null)
+        {
+            var all = GetFilteredBerryIds(in berryOptions, berrySortKeys);
+            sortedBerryIds = FilterBerryIds(all, berryExclude, in berryOptions, berrySortKeys);
+            berryCount = sortedBerryIds.Length;
+        }
+        else if (berrySortKeys.Length > 0)
+        {
+            sortedBerryIds = GetFilteredBerryIds(in berryOptions, berrySortKeys);
+            berryCount = sortedBerryIds.Length;
+        }
+        else
+        {
+            berryCount = CountFilteredBerries(in berryOptions);
+        }
     }
     if (showProgress)
     {
@@ -121,14 +141,20 @@ static void RunContestSearch(string[] args)
     int cookTimeSeconds = GetIntArg(args, "--time", 40);
     int topK = GetIntArg(args, "--topk", 50);
     int candidateCount = GetIntArg(args, "--candidates", 5000);
-    string candidateChooseArg = GetStringArg(args, "--candidate-choose", "2,3,4");
+    string candidateChooseArg = GetStringArg(args, "--candidate-choose", "4");
     bool useParallel = GetBoolArg(args, "--parallel", fallback: false);
     bool dedup = !GetBoolArg(args, "--no-dedup", fallback: false);
     bool keepDuplicates = GetBoolArg(args, "--keep-duplicates", fallback: false);
     bool pruneCandidates = !GetBoolArg(args, "--no-prune", fallback: false);
     bool showProgress = GetBoolArg(args, "--progress", fallback: false);
+    bool showRecipes = GetBoolArg(args, "--show-recipes", fallback: false);
+    int showRecipesCount = GetIntArg(args, "--show-recipes-count", 1);
+    bool showAward = GetBoolArg(args, "--show-award", fallback: false);
+    bool noColor = GetBoolArg(args, "--no-color", fallback: false);
     string berrySortSpec = GetStringArg(args, "--berry-sort", string.Empty);
     string poffinSortSpec = GetStringArg(args, "--poffin-sort", string.Empty);
+    string berryIncludeSpec = GetStringArg(args, "--berry-include", string.Empty);
+    string berryExcludeSpec = GetStringArg(args, "--berry-exclude", string.Empty);
     ContestScoreMode scoreMode = ParseScoreMode(GetStringArg(args, "--score", "balanced"));
     int maxRank = GetIntArg(args, "--max-rank", -1);
     int maxPoffins = GetIntArg(args, "--max-poffins", -1);
@@ -170,15 +196,31 @@ static void RunContestSearch(string[] args)
     }
 
     BerryId[]? sortedBerryIds = null;
+    BerryId[]? berryInclude = ParseBerryNameList(berryIncludeSpec);
+    BerryId[]? berryExclude = ParseBerryNameList(berryExcludeSpec);
     int berryCount;
-    if (berrySortKeys.Length > 0)
+    if (berryInclude is not null)
     {
-        sortedBerryIds = GetFilteredBerryIds(in berryOptions, berrySortKeys);
+        sortedBerryIds = FilterBerryIds(berryInclude, berryExclude, in berryOptions, berrySortKeys);
         berryCount = sortedBerryIds.Length;
     }
     else
     {
-        berryCount = CountFilteredBerries(in berryOptions);
+        if (berryExclude is not null)
+        {
+            var all = GetFilteredBerryIds(in berryOptions, berrySortKeys);
+            sortedBerryIds = FilterBerryIds(all, berryExclude, in berryOptions, berrySortKeys);
+            berryCount = sortedBerryIds.Length;
+        }
+        else if (berrySortKeys.Length > 0)
+        {
+            sortedBerryIds = GetFilteredBerryIds(in berryOptions, berrySortKeys);
+            berryCount = sortedBerryIds.Length;
+        }
+        else
+        {
+            berryCount = CountFilteredBerries(in berryOptions);
+        }
     }
     if (showProgress)
     {
@@ -250,6 +292,15 @@ static void RunContestSearch(string[] args)
                 r.Stats.Cleverness,
                 r.Stats.Toughness));
     }
+
+    if (showRecipes && filtered.Length > 0)
+    {
+        int count = Math.Min(Math.Max(showRecipesCount, 1), filtered.Length);
+        for (int i = 0; i < count; i++)
+        {
+            PrintContestResultDetails(filtered[i], candidates, i + 1, useColor: !noColor, showAward: showAward);
+        }
+    }
 }
 
 static void ReportContestProgress(ContestSearchProgress progress)
@@ -270,6 +321,255 @@ static string[] FormatRecipe(BerryId[] ids)
         names[i] = BerryNames.GetName(ids[i]);
     }
     return names;
+}
+
+static void PrintContestResultDetails(ContestStatsResult result, PoffinWithRecipe[] candidates, int index, bool useColor, bool showAward)
+{
+    Console.WriteLine();
+    Console.WriteLine($"Result {index}: Rank {result.Rank} Poffins eaten: {result.PoffinsEaten} Rarity: {result.TotalRarityCost} Unique Berries: {result.UniqueBerries}");
+    Console.WriteLine(new string('-', 75));
+
+    int[] indices = GetIndices(result.Indices);
+    for (int i = 0; i < indices.Length; i++)
+    {
+        int candidateIndex = indices[i];
+        if ((uint)candidateIndex >= (uint)candidates.Length)
+        {
+            Console.WriteLine($"* Missing candidate index {candidateIndex}");
+            continue;
+        }
+
+        ref readonly var candidate = ref candidates[candidateIndex];
+        int recipeRarity = ComputeRecipeRarity(candidate.Recipe.Berries);
+        string name = FormatPoffinName(candidate.Poffin, useColor);
+        Console.WriteLine(
+            string.Format(
+                CultureInfo.InvariantCulture,
+                "{0,3} - {1} {2,2} - Flavors [{3,3}, {4,3}, {5,3}, {6,3}, {7,3}] Rarity: {8,2}",
+                candidate.Poffin.Level,
+                name,
+                candidate.Poffin.Smoothness,
+                useColor ? $"{ColorForFlavor(Flavor.Spicy)}{candidate.Poffin.Spicy,3}{Colors.RESET}" : candidate.Poffin.Spicy.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+                useColor ? $"{ColorForFlavor(Flavor.Dry)}{candidate.Poffin.Dry,3}{Colors.RESET}" : candidate.Poffin.Dry.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+                useColor ? $"{ColorForFlavor(Flavor.Sweet)}{candidate.Poffin.Sweet,3}{Colors.RESET}" : candidate.Poffin.Sweet.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+                useColor ? $"{ColorForFlavor(Flavor.Bitter)}{candidate.Poffin.Bitter,3}{Colors.RESET}" : candidate.Poffin.Bitter.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+                useColor ? $"{ColorForFlavor(Flavor.Sour)}{candidate.Poffin.Sour,3}{Colors.RESET}" : candidate.Poffin.Sour.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+                recipeRarity));
+
+        if (candidate.Poffin.SecondaryFlavor != Flavor.None)
+        {
+            Console.WriteLine(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "* {0,-6} {1,-8} ({2,3}, {3,2})",
+                    useColor ? $"{ColorForFlavor(candidate.Poffin.MainFlavor)}{candidate.Poffin.MainFlavor}{Colors.RESET}" : candidate.Poffin.MainFlavor.ToString(),
+                    useColor ? $"{ColorForFlavor(candidate.Poffin.SecondaryFlavor)}{candidate.Poffin.SecondaryFlavor}{Colors.RESET}" : candidate.Poffin.SecondaryFlavor.ToString(),
+                    candidate.Poffin.Level,
+                    candidate.Poffin.SecondLevel));
+        }
+        else
+        {
+            Console.WriteLine(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "* {0} ({1})",
+                    candidate.Poffin.MainFlavor,
+                    candidate.Poffin.Level));
+        }
+
+        Console.WriteLine("* Berries used:");
+        for (int b = 0; b < candidate.Recipe.Berries.Length; b++)
+        {
+            ref readonly Berry berry = ref BerryTable.Get(candidate.Recipe.Berries[b]);
+            Console.WriteLine(FormatBerryLine(berry, useColor));
+        }
+
+        Console.WriteLine(new string('-', 75));
+    }
+
+    if (showAward)
+    {
+        PrintContestAward(result, useColor);
+    }
+}
+
+static int[] GetIndices(PoffinIndexSet indices)
+{
+    int count = indices.Count;
+    var list = new int[count];
+    if (count > 0) list[0] = indices.I0;
+    if (count > 1) list[1] = indices.I1;
+    if (count > 2) list[2] = indices.I2;
+    if (count > 3) list[3] = indices.I3;
+    return list;
+}
+
+static string FormatBerryLine(in Berry berry, bool useColor)
+{
+    string name = BerryNames.GetName(berry.Id);
+    if (name.EndsWith(" Berry", StringComparison.Ordinal))
+    {
+        name = name[..^6];
+    }
+    name = name.ToLowerInvariant();
+    string emoji = GetFlavorEmoji(berry.MainFlavor);
+    string flavorText = berry.MainFlavor.ToString();
+    string flavorDisplay = useColor
+        ? $"{ColorForFlavor(berry.MainFlavor)}{flavorText}{Colors.RESET}"
+        : flavorText;
+    string flavor = berry.MainFlavor.ToString();
+    int flavorPad = Math.Max(0, 6 - flavor.Length);
+    return string.Format(
+        CultureInfo.InvariantCulture,
+        "     {0} {1,-6} ({2}){3} {4,2} - Flavors [{5,3}, {6,3}, {7,3}, {8,3}, {9,3}] Rarity: {10,2}",
+        emoji,
+        name,
+        flavorDisplay,
+        new string(' ', flavorPad),
+        berry.Smoothness,
+        useColor ? $"{ColorForFlavor(Flavor.Spicy)}{berry.Spicy,3}{Colors.RESET}" : berry.Spicy.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+        useColor ? $"{ColorForFlavor(Flavor.Dry)}{berry.Dry,3}{Colors.RESET}" : berry.Dry.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+        useColor ? $"{ColorForFlavor(Flavor.Sweet)}{berry.Sweet,3}{Colors.RESET}" : berry.Sweet.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+        useColor ? $"{ColorForFlavor(Flavor.Bitter)}{berry.Bitter,3}{Colors.RESET}" : berry.Bitter.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+        useColor ? $"{ColorForFlavor(Flavor.Sour)}{berry.Sour,3}{Colors.RESET}" : berry.Sour.ToString(CultureInfo.InvariantCulture).PadLeft(3),
+        berry.Rarity);
+}
+
+static string GetFlavorEmoji(Flavor flavor)
+{
+    return flavor switch
+    {
+        Flavor.Spicy => "???",
+        Flavor.Dry => "??",
+        Flavor.Sweet => "??",
+        Flavor.Bitter => "??",
+        Flavor.Sour => "??",
+        _ => "?"
+    };
+}
+static void PrintContestAward(ContestStatsResult result, bool useColor)
+{
+    const int width = 36;
+    const string indent = "        ";
+    string outline = useColor ? Colors.Color256(168) : string.Empty;
+    string reset = useColor ? Colors.RESET : string.Empty;
+
+    string coolLabel = useColor ? $"{ColorForFlavor(Flavor.Spicy)}(Spicy){reset}" : "(Spicy)";
+    string dryLabel = useColor ? $"{ColorForFlavor(Flavor.Dry)}(Dry){reset}" : "(Dry)";
+    string sweetLabel = useColor ? $"{ColorForFlavor(Flavor.Sweet)}(Sweet){reset}" : "(Sweet)";
+    string bitterLabel = useColor ? $"{ColorForFlavor(Flavor.Bitter)}(Bitter){reset}" : "(Bitter)";
+    string sourLabel = useColor ? $"{ColorForFlavor(Flavor.Sour)}(Sour){reset}" : "(Sour)";
+
+    Console.WriteLine($"{indent}{outline}{new string('-', width)}{reset}      ---------------");
+    Console.WriteLine($"{indent}{outline}| ******   Contest Stats    ****** |{reset}     \\####|�����|####/");
+    Console.WriteLine($"{indent}{outline}{new string('-', width)}{reset}      \\###|�����|###/");
+    Console.WriteLine($"{indent}{outline}| {coolLabel,-8} ->  {FormatStatLabel("Coolness", result.Stats.Coolness, useColor),-18}{outline}|{reset}       `##|�����|##'");
+    Console.WriteLine($"{indent}{outline}| {dryLabel,-8} ->  {FormatStatLabel("Beauty", result.Stats.Beauty, useColor),-18}{outline}|{reset}            (O)");
+    Console.WriteLine($"{indent}{outline}| {sweetLabel,-8} ->  {FormatStatLabel("Cuteness", result.Stats.Cuteness, useColor),-18}{outline}|{reset}         .-'''''-.");
+    Console.WriteLine($"{indent}{outline}| {bitterLabel,-8} ->  {FormatStatLabel("Cleverness", result.Stats.Cleverness, useColor),-18}{outline}|{reset}       .'  * * *  `.");
+    Console.WriteLine($"{indent}{outline}| {sourLabel,-8} ->  {FormatStatLabel("Toughness", result.Stats.Toughness, useColor),-18}{outline}|{reset}      :  *       *  :");
+    Console.WriteLine($"{indent}{outline}{new string('-', width)}{reset}     : ~ PO F F IN ~ :");
+    Console.WriteLine($"{indent}{outline}| {FormatEatenSheen(result, useColor),-31}{outline}|{reset}     : ~ A W A R D ~ :");
+    Console.WriteLine($"{indent}{outline}{new string('-', width)}{reset}      :  *       *  :");
+    Console.WriteLine($"{indent}{outline}| {FormatRankLine(result, useColor),-31}{outline}|{reset}       `.  * * *  .'");
+    Console.WriteLine($"{indent}{outline}{new string('-', width)}{reset}         `-.....-'");
+    Console.WriteLine(new string('-', 75));
+}
+static string FormatStatLabel(string name, int value, bool useColor)
+{
+    string valueColor = useColor ? (value >= 255 ? ColorForFlavor(Flavor.Bitter) : Colors.Color256(196)) : string.Empty;
+    string reset = useColor ? Colors.RESET : string.Empty;
+    return string.Format(CultureInfo.InvariantCulture, "{0,-10}:{1}{2,4}{3}", name, valueColor, value, reset);
+}
+
+static string FormatEatenSheen(ContestStatsResult result, bool useColor)
+{
+    string reset = useColor ? Colors.RESET : string.Empty;
+    string eatenWarn = useColor ? (result.PoffinsEaten > 0 ? Colors.Color256(196) : string.Empty) : string.Empty;
+    string sheenColor = useColor ? (result.TotalSheen >= 255 ? Colors.BOLD : string.Empty) : string.Empty;
+    return string.Format(
+        CultureInfo.InvariantCulture,
+        "Eaten {0}{1,4}{2}  Sheen:{3}{4,4}{5}",
+        eatenWarn,
+        result.PoffinsEaten,
+        reset,
+        sheenColor,
+        result.TotalSheen,
+        reset);
+}
+
+static string FormatRankLine(ContestStatsResult result, bool useColor)
+{
+    string rankColor = useColor
+        ? (result.Rank == 1 ? ColorForFlavor(Flavor.Bitter) : result.Rank == 2 ? ColorForFlavor(Flavor.Spicy) : Colors.Color256(196))
+        : string.Empty;
+    string reset = useColor ? Colors.RESET : string.Empty;
+    return string.Format(
+        CultureInfo.InvariantCulture,
+        "Rank :{0,2}{1}    R/U  {2,3} : {3,2}",
+        result.Rank,
+        reset,
+        result.TotalRarityCost,
+        result.UniqueBerries);
+}
+
+static int ComputeRecipeRarity(BerryId[] berries)
+{
+    int total = 0;
+    for (int i = 0; i < berries.Length; i++)
+    {
+        ref readonly Berry berry = ref BerryTable.Get(berries[i]);
+        total += berry.Rarity;
+    }
+    return total;
+}
+
+static string FormatPoffinName(in Poffin poffin, bool useColor)
+{
+    PoffinNameKind kind = PoffinFilter.GetNameKind(in poffin);
+    string plain = kind switch
+    {
+        PoffinNameKind.Foul => "FOUL POFFIN",
+        PoffinNameKind.SuperMild => "SUPER MILD POFFIN",
+        PoffinNameKind.Mild => "MILD POFFIN",
+        PoffinNameKind.Rich => "RICH POFFIN",
+        PoffinNameKind.Overripe => "OVERRIPE POFFIN",
+        _ => "POFFIN"
+    };
+
+    if (!useColor)
+    {
+        return plain.PadRight(17);
+    }
+
+    string padded = plain.PadRight(17);
+    return kind switch
+    {
+        PoffinNameKind.Foul => $"{Colors.BOLD}{Colors.Color256(237)}{padded}{Colors.RESET}",
+        PoffinNameKind.SuperMild => $"{FormatSuperMildPoffin()}{new string(' ', Math.Max(0, 17 - plain.Length))}",
+        PoffinNameKind.Mild => $"{Colors.BOLD}{Colors.Color256(11)}{padded}{Colors.RESET}",
+        PoffinNameKind.Rich => $"{Colors.BOLD}{Colors.Color256(247)}{padded}{Colors.RESET}",
+        PoffinNameKind.Overripe => $"{Colors.BOLD}{Colors.Color256(242)}{padded}{Colors.RESET}",
+        _ => padded
+    };
+}
+
+static string FormatSuperMildPoffin()
+{
+    return $"{Colors.BOLD}{Colors.RGB_RED}SU{Colors.RGB_ORANGE}PER {Colors.RGB_YELLOW}MI{Colors.RGB_GREEN}LD {Colors.RGB_BLUE}PO{Colors.RGB_DARK_VIOLET}FF{Colors.RGB_VIOLET}IN{Colors.RESET}";
+}
+
+static string ColorForFlavor(Flavor flavor)
+{
+    return flavor switch
+    {
+        Flavor.Spicy => Colors.Color256(208),
+        Flavor.Dry => Colors.Color256(39),
+        Flavor.Sweet => Colors.Color256(212),
+        Flavor.Bitter => Colors.Color256(40),
+        Flavor.Sour => Colors.Color256(226),
+        _ => Colors.DEFAULT
+    };
 }
 
 static int GetIntArg(string[] args, string name, int fallback)
@@ -393,6 +693,111 @@ static BerryId[] GetFilteredBerryIds(in BerryFilterOptions options, ReadOnlySpan
         ids[i] = buffer[i].Id;
     }
     return ids;
+}
+
+static BerryId[] FilterBerryIds(BerryId[] include, BerryId[]? exclude, in BerryFilterOptions options, ReadOnlySpan<BerrySortKey> sortKeys)
+{
+    var berries = new Berry[include.Length];
+    for (int i = 0; i < include.Length; i++)
+    {
+        berries[i] = BerryTable.Get(include[i]);
+    }
+
+    Span<Berry> buffer = stackalloc Berry[BerryTable.Count];
+    int count = BerryQuery.Execute(berries, buffer, options, sortKeys);
+    if (count <= 0)
+    {
+        return Array.Empty<BerryId>();
+    }
+
+    BerryId[] ids = new BerryId[count];
+    int write = 0;
+    if (exclude is null || exclude.Length == 0)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            ids[write++] = buffer[i].Id;
+        }
+    }
+    else
+    {
+        var excluded = new System.Collections.Generic.HashSet<int>();
+        for (int i = 0; i < exclude.Length; i++)
+        {
+            excluded.Add(exclude[i].Value);
+        }
+        for (int i = 0; i < count; i++)
+        {
+            int id = buffer[i].Id.Value;
+            if (!excluded.Contains(id))
+            {
+                ids[write++] = buffer[i].Id;
+            }
+        }
+    }
+
+    if (write == ids.Length)
+    {
+        return ids;
+    }
+
+    var trimmed = new BerryId[write];
+    Array.Copy(ids, trimmed, write);
+    return trimmed;
+}
+
+static BerryId[]? ParseBerryNameList(string value)
+{
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        return null;
+    }
+
+    string[] parts = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    if (parts.Length == 0)
+    {
+        return null;
+    }
+
+    var ids = new System.Collections.Generic.List<BerryId>(parts.Length);
+    var seen = new System.Collections.Generic.HashSet<int>();
+    for (int i = 0; i < parts.Length; i++)
+    {
+        if (TryResolveBerryName(parts[i], out BerryId id) && seen.Add(id.Value))
+        {
+            ids.Add(id);
+        }
+    }
+
+    return ids.Count == 0 ? null : ids.ToArray();
+}
+
+static bool TryResolveBerryName(string raw, out BerryId id)
+{
+    string token = NormalizeBerryName(raw);
+    for (ushort i = 0; i < BerryTable.Count; i++)
+    {
+        BerryId candidate = new BerryId(i);
+        string name = NormalizeBerryName(BerryNames.GetName(candidate));
+        if (name.Equals(token, StringComparison.OrdinalIgnoreCase))
+        {
+            id = candidate;
+            return true;
+        }
+    }
+
+    id = default;
+    return false;
+}
+
+static string NormalizeBerryName(string value)
+{
+    string name = value.Trim();
+    if (name.EndsWith("berry", StringComparison.OrdinalIgnoreCase))
+    {
+        name = name[..^5].Trim();
+    }
+    return name.Replace("-", string.Empty).Replace("_", string.Empty).ToLowerInvariant();
 }
 
 static long CountCombinations(int n, int[] chooseList)
@@ -950,3 +1355,4 @@ static int CompareContestResults(ContestStatsResult left, ContestStatsResult rig
 
     return 0;
 }
+

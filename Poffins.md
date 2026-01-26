@@ -103,6 +103,11 @@ Berry filters (subset selection before cooking):
 - `--berry-any-flavor-min`, `--berry-any-flavor-max`
 - `--berry-weak-main-min`, `--berry-weak-main-max`, `--berry-weak-main-flavor`
 - `--berry-id`, `--berry-exclude-id`
+- `--berry-include`, `--berry-exclude` (comma list of names; accepts with/without “Berry”)
+
+Candidate selection:
+- Default cooking assumes 4-berry recipes.
+- Override with `--candidate-choose` (e.g. `--candidate-choose 2,3,4`).
 Sort filtered berries before cooking with `--berry-sort` (comma list, optional `:desc`), e.g.
 `--berry-sort rarity:desc,name`.
 Supported fields: `id`, `name`, `rarity`, `smoothness`, `spicy`, `dry`, `sweet`, `bitter`, `sour`,
@@ -293,6 +298,13 @@ dotnet run --project BDSP.Core.CLI -- contest-search --choose 4 --time 40 --topk
   --berry-min-rarity 3 --berry-max-rarity 11 ^
   --poffin-min-level 90 --poffin-min-num-flavors 1 ^
   --score balanced --progress
+```
+
+Contest search restricted to a fixed berry list:
+```powershell
+dotnet run --project BDSP.Core.CLI -- contest-search --choose 3 --time 40 --topk 50 --candidates 5000 --parallel ^
+  --berry-include aguav,coba,passho,ganlon,figy,chople,rindo,petaya,payapa,salac,lansat,starf ^
+  --score sum --rarity-mode sum --max-poffins 12 --keep-duplicates --no-prune --progress
 ```
 
 Contest search with strict rank/poffin limits:

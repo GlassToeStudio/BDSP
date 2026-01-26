@@ -468,6 +468,9 @@ namespace BDSP.Core.Optimization.Search
         /// <summary>Maximum number of identical poffins to keep (0 = no cap).</summary>
         public readonly int MaxSimilar;
 
+        /// <summary>
+        /// Candidate-generation settings for cooking.
+        /// </summary>
         public PoffinCandidateOptions(
             int[]? chooseList = null,
             int cookTimeSeconds = 40,
@@ -480,7 +483,8 @@ namespace BDSP.Core.Optimization.Search
             int maxRarityCost = -1,
             int maxSimilar = 0)
         {
-            ChooseList = chooseList ?? new[] { 2, 3, 4 };
+            // Default to 4-berry recipes for parity with BDSP's highest-quality cooking.
+            ChooseList = chooseList ?? new[] { 4 };
             CookTimeSeconds = cookTimeSeconds;
             Spills = spills;
             Burns = burns;

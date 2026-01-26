@@ -254,6 +254,7 @@ namespace BDSP.Core.Poffins.Filters
             return true;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static bool InRange(byte value, int min, int max, PoffinFilterMask mask, PoffinFilterMask minFlag, PoffinFilterMask maxFlag)
         {
             if ((mask & minFlag) != 0 && value < min) return false;
@@ -261,6 +262,7 @@ namespace BDSP.Core.Poffins.Filters
             return true;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static bool AnyFlavorInRange(in Poffin poffin, in PoffinFilterOptions o)
         {
             if ((o.Mask & PoffinFilterMask.MinAnyFlavorValue) != 0)
@@ -289,6 +291,7 @@ namespace BDSP.Core.Poffins.Filters
         /// <summary>
         /// Returns the named poffin category for the given poffin.
         /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static PoffinNameKind GetNameKind(in Poffin poffin)
         {
             if (poffin.IsFoul || poffin.Level == 0)
@@ -319,6 +322,7 @@ namespace BDSP.Core.Poffins.Filters
             return PoffinNameKind.None;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int ComputeId(in Poffin poffin)
         {
             int id = 0;
@@ -330,6 +334,7 @@ namespace BDSP.Core.Poffins.Filters
             return id;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static void AppendDigits(ref int id, int value)
         {
             if (value >= 100)

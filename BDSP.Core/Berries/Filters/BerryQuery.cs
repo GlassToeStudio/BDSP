@@ -63,15 +63,17 @@ namespace BDSP.Core.Berries
             if (o.RequireSecondaryFlavor && berry.SecondaryFlavor != o.SecondaryFlavor) return false;
             if (o.RequireWeakenedMainFlavor && GetWeakenedMainFlavor(in berry) != o.WeakenedMainFlavor) return false;
 
-            if (o.RequiredFlavorMask != 0 || o.ExcludedFlavorMask != 0)
+            if ((o.Mask & (BerryFilterMask.RequiredFlavorMask | BerryFilterMask.ExcludedFlavorMask)) != 0)
             {
                 var mask = GetFlavorMask(in berry);
                 if ((mask & o.RequiredFlavorMask) != o.RequiredFlavorMask) return false;
                 if ((mask & o.ExcludedFlavorMask) != 0) return false;
             }
 
-            if (!AnyFlavorInRange(in berry, in o)) return false;
-            if (!WeakenedMainFlavorInRange(in berry, in o)) return false;
+            if ((o.Mask & (BerryFilterMask.MinAnyFlavorValue | BerryFilterMask.MaxAnyFlavorValue)) != 0 &&
+                !AnyFlavorInRange(in berry, in o)) return false;
+            if ((o.Mask & (BerryFilterMask.MinWeakMainFlavorValue | BerryFilterMask.MaxWeakMainFlavorValue)) != 0 &&
+                !WeakenedMainFlavorInRange(in berry, in o)) return false;
 
             if ((o.Mask & BerryFilterMask.IdEquals) != 0 && ComputeId(in berry) != o.IdEquals) return false;
             if ((o.Mask & BerryFilterMask.IdNotEquals) != 0 && ComputeId(in berry) == o.IdNotEquals) return false;
@@ -79,6 +81,7 @@ namespace BDSP.Core.Berries
             return true;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static bool InRange(
             byte value,
             int min,
@@ -92,6 +95,7 @@ namespace BDSP.Core.Berries
             return true;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static byte GetFlavorMask(in Berry berry)
         {
             byte mask = 0;
@@ -103,6 +107,7 @@ namespace BDSP.Core.Berries
             return mask;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static bool AnyFlavorInRange(in Berry berry, in BerryFilterOptions o)
         {
             if ((o.Mask & BerryFilterMask.MinAnyFlavorValue) != 0)
@@ -128,6 +133,7 @@ namespace BDSP.Core.Berries
             return true;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static bool WeakenedMainFlavorInRange(in Berry berry, in BerryFilterOptions o)
         {
             if ((o.Mask & (BerryFilterMask.MinWeakMainFlavorValue | BerryFilterMask.MaxWeakMainFlavorValue)) == 0)
@@ -142,6 +148,7 @@ namespace BDSP.Core.Berries
             return true;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static Flavor GetWeakenedMainFlavor(in Berry berry)
         {
             BerryBase baseBerry = BerryTable.GetBase(berry.Id);
@@ -160,20 +167,23 @@ namespace BDSP.Core.Berries
             return bestFlavor;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static void ConsiderWeakened(Flavor flavor, sbyte value, ref Flavor bestFlavor, ref sbyte bestValue)
         {
-            if (value > bestValue || (value == bestValue && HasHigherPriority(flavor, bestFlavor)))
+            if (value > bestValue)
             {
                 bestFlavor = flavor;
                 bestValue = value;
             }
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static bool HasHigherPriority(Flavor candidate, Flavor current)
         {
             return GetPriority(candidate) > GetPriority(current);
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int GetPriority(Flavor flavor)
         {
             return flavor switch
@@ -187,6 +197,7 @@ namespace BDSP.Core.Berries
             };
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int ComputeId(in Berry berry)
         {
             int id = 0;
@@ -198,6 +209,7 @@ namespace BDSP.Core.Berries
             return id;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static void AppendDigits(ref int id, int value)
         {
             if (value >= 100)

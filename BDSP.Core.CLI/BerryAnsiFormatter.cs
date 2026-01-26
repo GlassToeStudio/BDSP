@@ -1,5 +1,6 @@
 using System.Globalization;
 using BDSP.Core.Berries;
+using BDSP.Core.CLI;
 
 namespace BDSP.Tools
 {
@@ -8,20 +9,12 @@ namespace BDSP.Tools
     /// </summary>
     public static class BerryAnsiFormatter
     {
-        private const string Esc = "\u001b[";
-        private const string Reset = "\u001b[0m";
-        private const string Bold = "\u001b[1m";
-        private const string Italic = "\u001b[3m";
-        private const string NoItalic = "\u001b[23m";
-
-        private static string Rgb(byte r, byte g, byte b) => $"{Esc}38;2;{r};{g};{b}m";
-
-        private static readonly string SpicyColor = Rgb(255, 127, 0);
-        private static readonly string DryColor = Rgb(0, 160, 255);
-        private static readonly string SweetColor = Rgb(255, 105, 180);
-        private static readonly string BitterColor = Rgb(0, 200, 0);
-        private static readonly string SourColor = Rgb(255, 230, 0);
-        private static readonly string SmoothColor = Rgb(220, 220, 220);
+        private static readonly string SpicyColor = Colors.Color256(208);
+        private static readonly string DryColor = Colors.Color256(39);
+        private static readonly string SweetColor = Colors.Color256(212);
+        private static readonly string BitterColor = Colors.Color256(40);
+        private static readonly string SourColor = Colors.Color256(226);
+        private static readonly string SmoothColor = Colors.Rgb(220, 220, 220);
 
         private static readonly string[] EmojiTable =
         [
@@ -55,15 +48,15 @@ namespace BDSP.Tools
                 ColorizeValue(Flavor.Bitter, berry.Bitter, berry.MainFlavor),
                 ColorizeValue(Flavor.Sour, berry.Sour, berry.MainFlavor));
 
-            var flavorName = $"{Italic}{berry.MainFlavor,-6}{NoItalic}";
+            var flavorName = $"{Colors.ITALIC}{berry.MainFlavor,-6}{Colors.N_ITALIC}";
 
             return string.Format(
                 CultureInfo.InvariantCulture,
                 "{0} {1}{2,-7}{3} {4}{5}{3} ({6,2}) - Flavors {7} {8}Smoothness:{3} {9,2} {10}Rarity:{3} {11,2}",
                 emoji,
-                Bold,
+                Colors.BOLD,
                 name,
-                Reset,
+                Colors.RESET,
                 mainColor,
                 flavorName,
                 berry.MainFlavorValue,
@@ -77,8 +70,8 @@ namespace BDSP.Tools
         private static string ColorizeValue(Flavor flavor, byte value, Flavor mainFlavor)
         {
             var color = GetColor(flavor);
-            var bold = flavor == mainFlavor ? Bold : string.Empty;
-            return $"{color}{bold}{value,3}{Reset}";
+            var bold = flavor == mainFlavor ? Colors.BOLD : string.Empty;
+            return $"{color}{bold}{value,3}{Colors.RESET}";
         }
 
         private static string GetColor(Flavor flavor)
@@ -90,7 +83,7 @@ namespace BDSP.Tools
                 Flavor.Sweet => SweetColor,
                 Flavor.Bitter => BitterColor,
                 Flavor.Sour => SourColor,
-                _ => Reset
+                _ => Colors.RESET
             };
         }
     }

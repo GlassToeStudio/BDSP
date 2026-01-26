@@ -80,17 +80,20 @@ namespace BDSP.Core.Poffins
                 };
             }
 
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             private static int GetTotalFlavor(in Poffin poffin)
             {
                 return poffin.Spicy + poffin.Dry + poffin.Sweet + poffin.Bitter + poffin.Sour;
             }
 
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             private static int GetLevelRatio(in Poffin poffin)
             {
                 int smooth = poffin.Smoothness == 0 ? 1 : poffin.Smoothness;
                 return poffin.Level * 1000 / smooth;
             }
 
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             private static int GetTotalFlavorRatio(in Poffin poffin)
             {
                 int smooth = poffin.Smoothness == 0 ? 1 : poffin.Smoothness;
