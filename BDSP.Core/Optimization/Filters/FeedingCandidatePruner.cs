@@ -15,22 +15,17 @@ namespace BDSP.Core.Optimization.Filters
         /// <summary>
         /// Removes candidates that are strictly dominated by another candidate.
         /// A dominates B if all flavors are &gt;=, smoothness &lt;=, rarity cost &lt;=,
-        /// and at least one comparison is strict. Duplicate stat sets are collapsed first.
+        /// and at least one comparison is strict. Duplicate stat sets are collapsed first. 
         /// </summary>
-        public static PoffinWithRecipe[] Prune(
-            ReadOnlySpan<PoffinWithRecipe> candidates,
-            RarityCostMode rarityCostMode = RarityCostMode.MaxBerryRarity)
+        /// <param name="candidates"></param>
+        /// <param name="rarityCostMode"></param>
+        /// <returns></returns>
+        public static PoffinWithRecipe[] Prune(ReadOnlySpan<PoffinWithRecipe> candidates, RarityCostMode rarityCostMode = RarityCostMode.MaxBerryRarity)
         {
-            if (candidates.Length == 0)
-            {
-                return Array.Empty<PoffinWithRecipe>();
-            }
+            if (candidates.Length == 0) return [];
 
             PoffinWithRecipe[] deduped = Deduplicate(candidates, rarityCostMode);
-            if (deduped.Length == 0)
-            {
-                return Array.Empty<PoffinWithRecipe>();
-            }
+            if (deduped.Length == 0) return [];
 
             var rarityCosts = new int[deduped.Length];
             for (int i = 0; i < deduped.Length; i++)
@@ -81,11 +76,7 @@ namespace BDSP.Core.Optimization.Filters
             return results;
         }
 
-        private static bool Dominates(
-            in PoffinWithRecipe better,
-            int betterRarity,
-            in PoffinWithRecipe worse,
-            int worseRarity)
+        private static bool Dominates(in PoffinWithRecipe better, int betterRarity, in PoffinWithRecipe worse, int worseRarity)
         {
             var b = better.Poffin;
             var w = worse.Poffin;
@@ -110,28 +101,7 @@ namespace BDSP.Core.Optimization.Filters
             return strict;
         }
 
-        private static int ComputeRarityCost(in PoffinRecipe recipe, RarityCostMode mode)
-        {
-            int cost = 0;
-            for (int i = 0; i < recipe.Berries.Length; i++)
-            {
-                ref readonly var berry = ref BerryTable.Get(recipe.Berries[i]);
-                int rarity = berry.Rarity;
-                if (mode == RarityCostMode.MaxBerryRarity)
-                {
-                    if (rarity > cost) cost = rarity;
-                }
-                else
-                {
-                    cost += rarity;
-                }
-            }
-            return cost;
-        }
-
-        private static PoffinWithRecipe[] Deduplicate(
-            ReadOnlySpan<PoffinWithRecipe> candidates,
-            RarityCostMode rarityCostMode)
+        private static PoffinWithRecipe[] Deduplicate(ReadOnlySpan<PoffinWithRecipe> candidates, RarityCostMode rarityCostMode)
         {
             var unique = new Dictionary<PoffinKey, DedupEntry>(candidates.Length);
 
@@ -172,46 +142,43 @@ namespace BDSP.Core.Optimization.Filters
             return results;
         }
 
-        private struct DedupEntry
+        private static int ComputeRarityCost(in PoffinRecipe recipe, RarityCostMode mode)
         {
-            public PoffinWithRecipe Best;
-            public int BestRarityCost;
-            public int DuplicateCount;
-
-            public DedupEntry(PoffinWithRecipe best, int bestRarityCost, int duplicateCount)
+            int cost = 0;
+            for (int i = 0; i < recipe.Berries.Length; i++)
             {
-                Best = best;
-                BestRarityCost = bestRarityCost;
-                DuplicateCount = duplicateCount;
+                ref readonly var berry = ref BerryTable.Get(recipe.Berries[i]);
+                int rarity = berry.Rarity;
+                if (mode == RarityCostMode.MaxBerryRarity)
+                {
+                    if (rarity > cost) cost = rarity;
+                }
+                else
+                {
+                    cost += rarity;
+                }
             }
+            return cost;
+        }
+        private struct DedupEntry(PoffinWithRecipe best, int bestRarityCost, int duplicateCount)
+        {
+            public PoffinWithRecipe Best = best;
+            public int BestRarityCost = bestRarityCost;
+            public int DuplicateCount = duplicateCount;
         }
 
-        private readonly struct PoffinKey : IEquatable<PoffinKey>
+        private readonly struct PoffinKey(in Poffin poffin) : IEquatable<PoffinKey>
         {
-            private readonly byte _spicy;
-            private readonly byte _dry;
-            private readonly byte _sweet;
-            private readonly byte _bitter;
-            private readonly byte _sour;
-            private readonly byte _smoothness;
-            private readonly byte _level;
-            private readonly byte _numFlavors;
-            private readonly Flavor _mainFlavor;
-            private readonly Flavor _secondaryFlavor;
-
-            public PoffinKey(in Poffin poffin)
-            {
-                _spicy = poffin.Spicy;
-                _dry = poffin.Dry;
-                _sweet = poffin.Sweet;
-                _bitter = poffin.Bitter;
-                _sour = poffin.Sour;
-                _smoothness = poffin.Smoothness;
-                _level = poffin.Level;
-                _numFlavors = poffin.NumFlavors;
-                _mainFlavor = poffin.MainFlavor;
-                _secondaryFlavor = poffin.SecondaryFlavor;
-            }
+            private readonly byte _spicy = poffin.Spicy;
+            private readonly byte _dry = poffin.Dry;
+            private readonly byte _sweet = poffin.Sweet;
+            private readonly byte _bitter = poffin.Bitter;
+            private readonly byte _sour = poffin.Sour;
+            private readonly byte _smoothness = poffin.Smoothness;
+            private readonly byte _level = poffin.Level;
+            private readonly byte _numFlavors = poffin.NumFlavors;
+            private readonly Flavor _mainFlavor = poffin.MainFlavor;
+            private readonly Flavor _secondaryFlavor = poffin.SecondaryFlavor;
 
             public bool Equals(PoffinKey other)
             {
