@@ -22,9 +22,6 @@ catch {
     exit 1
 }
 
-# --- Check for Administrator Privileges ---
-$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
 # --- Robustly read the .env file ---
 $expectedUser = $null
 $envPath = Join-Path -Path $SolutionDir -ChildPath ".env"
@@ -46,10 +43,21 @@ if ([string]::IsNullOrEmpty($expectedUser)) {
     exit 1
 }
 
-# --- Main Logic Gate with Toggle ---
 $currentUser = $env:USERNAME
-$currentUser = $expectedUser
-$isAdmin = $true
+
+# --- Check for Administrator Privileges ---
+$admins = Get-LocalGroupMember -Name Administrators
+if ($admins.Name -contains "$env:COMPUTERNAME\$currentUser" -or $admins.Name -contains "NT AUTHORITY\SYSTEM") {
+    Write-Host "$currentUser is a local administrator"
+    $isAdmin = $true
+} else {
+    Write-Host "$currentUser is not a local administrator"
+    $isAdmin = $false
+}
+
+
+# --- Main Logic Gate with Toggle ---
+
 
 # --- ACTION 1: ADMIN USER ---
 # If the check passes, ensure the <BaseOutputPath> tag is REMOVED.
