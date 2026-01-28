@@ -88,12 +88,12 @@ namespace BDSP.Core.Tests.Berries
         public void GetFlavor_ReturnsCorrectValues()
         {
             ref readonly var ganlon = ref BerryTable.Get(new BerryId(18));
-            Assert.Equal(0, ganlon.GetFlavor(Flavor.Spicy));
-            Assert.Equal(30, ganlon.GetFlavor(Flavor.Dry));
-            Assert.Equal(10, ganlon.GetFlavor(Flavor.Sweet));
-            Assert.Equal(30, ganlon.GetFlavor(Flavor.Bitter));
-            Assert.Equal(0, ganlon.GetFlavor(Flavor.Sour));
-            Assert.Equal(0, ganlon.GetFlavor(Flavor.None));
+            Assert.Equal(0, ganlon.GetFlavorValue(Flavor.Spicy));
+            Assert.Equal(30, ganlon.GetFlavorValue(Flavor.Dry));
+            Assert.Equal(10, ganlon.GetFlavorValue(Flavor.Sweet));
+            Assert.Equal(30, ganlon.GetFlavorValue(Flavor.Bitter));
+            Assert.Equal(0, ganlon.GetFlavorValue(Flavor.Sour));
+            Assert.Equal(0, ganlon.GetFlavorValue(Flavor.None));
 
             ref readonly var ganlonBase = ref BerryTable.GetBase(new BerryId(18));
             Assert.Equal(0, ganlonBase.GetFlavor(Flavor.Spicy));

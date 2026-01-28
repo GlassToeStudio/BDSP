@@ -34,20 +34,8 @@ namespace BDSP.Core.Berries
         /// <summary>Number of non-zero flavors (1-5).</summary>
         public readonly byte NumFlavors;
 
-        public Berry(
-            BerryId id,
-            byte spicy,
-            byte dry,
-            byte sweet,
-            byte bitter,
-            byte sour,
-            byte smoothness,
-            byte rarity,
-            Flavor mainFlavor,
-            Flavor secondaryFlavor,
-            byte mainFlavorValue,
-            byte secondaryFlavorValue,
-            byte numFlavors)
+        public Berry(BerryId id, byte spicy, byte dry, byte sweet, byte bitter, byte sour, byte smoothness, byte rarity,
+            Flavor mainFlavor, Flavor secondaryFlavor, byte mainFlavorValue, byte secondaryFlavorValue, byte numFlavors)
         {
             Id = id;
             Spicy = spicy;
@@ -68,7 +56,7 @@ namespace BDSP.Core.Berries
         /// Returns the value for the given flavor.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public byte GetFlavor(Flavor flavor)
+        public byte GetFlavorValue(Flavor flavor)
         {
             return flavor switch
             {
@@ -90,26 +78,7 @@ namespace BDSP.Core.Berries
         public override string ToString()
         {
             var name = BerryNames.GetName(Id);
-            if (name.EndsWith(" Berry", StringComparison.Ordinal))
-            {
-                name = name[..^6];
-            }
-
-            name = name.ToLowerInvariant();
-
-            return string.Format(
-                System.Globalization.CultureInfo.InvariantCulture,
-                "{0,-7} {1,-6} ({2,2}) - Flavors [{3,3}, {4,3}, {5,3}, {6,3}, {7,3}] Smoothness: {8,2}, Rarity: {9,2}",
-                name,
-                MainFlavor,
-                MainFlavorValue,
-                Spicy,
-                Dry,
-                Sweet,
-                Bitter,
-                Sour,
-                Smoothness,
-                Rarity);
+            return $"{(name.EndsWith(" Berry", StringComparison.Ordinal) ? name = name[..^6] : name).ToLowerInvariant(),-7} {MainFlavor,-6} ({MainFlavorValue,2}) - Flavors [{Spicy,3}, {Dry,3}, {Sweet,3}, {Bitter,3}, {Sour,3}] Smoothness: {Smoothness,2}, Rarity: {Rarity,2}";
         }
 
     }
