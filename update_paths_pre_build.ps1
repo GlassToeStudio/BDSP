@@ -21,11 +21,17 @@ if (-not (Test-Path $envPath)) {
     exit 1
 }
 
-$moveOutput = $null
+$moveOutput = $false
+$stringValue = ""
 Get-Content $envPath | ForEach-Object {
     $line = $_.Trim()
     if ($line -like "MOVE_OUTPUT=*") {
-        $moveOutput = [bool]$line.Split('=', 2)[1].Trim()
+        $stringValue = $line.Split('=$', 2)[1].Trim()
+        $moveOutput = ($stringValue -eq 'true')
+        Write-Host "Change Output Flag Detected: $moveOutput"
+        write-Host "Line Content: $line"
+        write-Host "Parsed Value: $($line.Split('=', 2)[1].Trim())"
+        write-Host "$moveOutput == $true : $($moveOutput -eq $true)"
     }
 }
 
