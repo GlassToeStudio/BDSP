@@ -1,7 +1,7 @@
 param (
     [string]$SolutionDir
 )
-
+#exit 0
 # --- Clean the incoming path from MSBuild ---
 $SolutionDir = $SolutionDir.TrimEnd('"')
 

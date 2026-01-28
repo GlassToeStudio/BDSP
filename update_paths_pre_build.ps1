@@ -26,12 +26,8 @@ $stringValue = ""
 Get-Content $envPath | ForEach-Object {
     $line = $_.Trim()
     if ($line -like "MOVE_OUTPUT=*") {
-        $stringValue = $line.Split('=$', 2)[1].Trim()
+        $stringValue = $line.Split('=', 2)[1].Trim()
         $moveOutput = ($stringValue -eq 'true')
-        Write-Host "Change Output Flag Detected: $moveOutput"
-        write-Host "Line Content: $line"
-        write-Host "Parsed Value: $($line.Split('=', 2)[1].Trim())"
-        write-Host "$moveOutput == $true : $($moveOutput -eq $true)"
     }
 }
 
@@ -56,7 +52,7 @@ if ($moveOutput -eq $true) {
                 if ($null -eq $propertyGroup.BaseOutputPath) {
                     Write-Host " -> Adding tag to: $csprojPath"
                     $newElement = $xml.CreateElement("BaseOutputPath")
-                    $newElement.InnerText = "\bin"
+                    $newElement.InnerText = "\bin\"
                     $propertyGroup.AppendChild($newElement) | Out-Null
                 } 
                 # If the tag exists but has the wrong value, update it.
