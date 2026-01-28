@@ -1,11 +1,3 @@
-# =================================================================================
-# POWERSHELL SCRIPT TO MODIFY CSPROJ OUTPUT PATHS (FOR MSBUILD) - v4 (Toggle Logic)
-# =================================================================================
-# This script toggles the build output path based on the current user.
-# - If the user is the specified admin, it REMOVES the <BaseOutputPath> tag.
-# - For all other users, it SETS the <BaseOutputPath> tag to "\bin".
-# =================================================================================
-
 param (
     [string]$SolutionDir
 )
@@ -22,69 +14,30 @@ catch {
     exit 1
 }
 
-# --- Robustly read the .env file ---
-$changeOutput = $null
+# --- Read the .env file ---
 $envPath = Join-Path -Path $SolutionDir -ChildPath ".env"
-
 if (-not (Test-Path $envPath)) {
     Write-Host "FATAL ERROR: The file '$envPath' could not be found."
     exit 1
 }
 
+$moveOutput = $null
 Get-Content $envPath | ForEach-Object {
     $line = $_.Trim()
     if ($line -like "MOVE_OUTPUT=*") {
-
-        $isSet = [System.Convert]::ToBoolean($env:MOVE_OUTPUT)
-        if ($isSet) { Write-Host "Feature is on" } else { "isSet = $isSet" }
-        $changeOutput = $line.Split('=', 2)[1].Trim()
-        Write-Host "Change Output Flag Detected: $changeOutput"
-        write-Host "Line Content: $line"
-        write-Host "Parsed Value: $($line.Split('=', 2)[1].Trim())"
-        write-Host "$changeOutput == $true : $($changeOutput -eq $true)"
+        $moveOutput = [bool]$line.Split('=', 2)[1].Trim()
     }
 }
 
-if ([string]::IsNullOrEmpty($changeOutput)) {
-    Write-Host "FATAL ERROR: .env file was found, but does not contain a valid 'TARGET_USER=username' entry."
+if ([string]::IsNullOrEmpty($moveOutput)) {
+    Write-Host "FATAL ERROR: .env file was found, but does not contain a valid 'MOVE_OUTPUT=username' entry."
     exit 1
 }
 
-# --- Main Logic Gate with Toggle ---
-#$changeOutput = $false
-
-# --- ACTION 1: REMOVE ---
-# If the check passes, ensure the <BaseOutputPath> tag is REMOVED.
-if ($changeOutput -eq $false) {
-    Write-Host "Removing <BaseOutputPath> to restore default build paths."
-
-    Get-ChildItem -Path . -Filter "*.csproj" -Recurse | ForEach-Object {
-        $csprojPath = $_.FullName
-        try {
-            $xml = [xml](Get-Content $csprojPath)
-            $propertyGroup = $xml.Project.PropertyGroup | Select-Object -First 1
-
-            # --- THE CORRECTED REMOVAL LOGIC ---
-            # 1. Find the actual XML node for BaseOutputPath.
-            $nodeToRemove = $propertyGroup.SelectSingleNode("BaseOutputPath")
-
-            # 2. If that node exists, remove it.
-            if ($null -ne $nodeToRemove) {
-                Write-Host " -> Removing tag from: $csprojPath"
-                $propertyGroup.RemoveChild($nodeToRemove) | Out-Null
-                $xml.Save($csprojPath)
-            }
-        }
-        catch {
-            Write-Host " -> ERROR processing file: $_.Exception.Message"
-        }
-    }
-}
-# --- ACTION 2: OTHER USERS ---
-# If the check fails, ensure the <BaseOutputPath> tag is SET to "\bin".
-else {
-    Write-Host "Pre-Build Event: User check failed. Setting <BaseOutputPath> to '\bin'..."
-    Write-Host "Current User: $currentUser (Expected: $expectedUser), Is Admin: $isAdmin"
+# --- ACTION 1: CHANGE OUTPUT PATH ---
+# If the check passes, ensure the <BaseOutputPath> tag is SET to "\bin".
+if ($moveOutput -eq $true) {
+    Write-Host "Changing <BaseOutputPath> to bin\."
 
     Get-ChildItem -Path . -Filter "*.csproj" -Recurse | ForEach-Object {
         $csprojPath = $_.FullName
@@ -105,6 +58,33 @@ else {
                     Write-Host " -> Updating tag in: $csprojPath"
                     $propertyGroup.BaseOutputPath = "\bin"
                 }
+                $xml.Save($csprojPath)
+            }
+        }
+        catch {
+            Write-Host " -> ERROR processing file: $_.Exception.Message"
+        }
+    }
+}
+# --- ACTION 2: OTHER USERS ---
+# If the check fails, ensure the <BaseOutputPath> tag is REMOVED.
+else {
+    Write-Host "Removing <BaseOutputPath> to restore default build paths."
+
+    Get-ChildItem -Path . -Filter "*.csproj" -Recurse | ForEach-Object {
+        $csprojPath = $_.FullName
+        try {
+            $xml = [xml](Get-Content $csprojPath)
+            $propertyGroup = $xml.Project.PropertyGroup | Select-Object -First 1
+
+            # --- THE CORRECTED REMOVAL LOGIC ---
+            # 1. Find the actual XML node for BaseOutputPath.
+            $nodeToRemove = $propertyGroup.SelectSingleNode("BaseOutputPath")
+
+            # 2. If that node exists, remove it.
+            if ($null -ne $nodeToRemove) {
+                Write-Host " -> Removing tag from: $csprojPath"
+                $propertyGroup.RemoveChild($nodeToRemove) | Out-Null
                 $xml.Save($csprojPath)
             }
         }

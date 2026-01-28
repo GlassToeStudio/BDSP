@@ -14,7 +14,6 @@ catch {
     exit 1
 }
 
-
 Get-ChildItem -Path . -Filter "*.csproj" -Recurse | ForEach-Object {
     $csprojPath = $_.FullName
     try {
