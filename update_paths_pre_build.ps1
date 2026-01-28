@@ -23,7 +23,7 @@ catch {
 }
 
 # --- Robustly read the .env file ---
-$expectedUser = $null
+$changeOutput = $null
 $envPath = Join-Path -Path $SolutionDir -ChildPath ".env"
 
 if (-not (Test-Path $envPath)) {
@@ -33,36 +33,30 @@ if (-not (Test-Path $envPath)) {
 
 Get-Content $envPath | ForEach-Object {
     $line = $_.Trim()
-    if ($line -like "TARGET_USER=*") {
-        $expectedUser = $line.Split('=', 2)[1].Trim()
+    if ($line -like "MOVE_OUTPUT=*") {
+
+        $isSet = [System.Convert]::ToBoolean($env:MOVE_OUTPUT)
+        if ($isSet) { Write-Host "Feature is on" } else { "isSet = $isSet" }
+        $changeOutput = $line.Split('=', 2)[1].Trim()
+        Write-Host "Change Output Flag Detected: $changeOutput"
+        write-Host "Line Content: $line"
+        write-Host "Parsed Value: $($line.Split('=', 2)[1].Trim())"
+        write-Host "$changeOutput == $true : $($changeOutput -eq $true)"
     }
 }
 
-if ([string]::IsNullOrEmpty($expectedUser)) {
+if ([string]::IsNullOrEmpty($changeOutput)) {
     Write-Host "FATAL ERROR: .env file was found, but does not contain a valid 'TARGET_USER=username' entry."
     exit 1
 }
 
-$currentUser = $env:USERNAME
-
-# --- Check for Administrator Privileges ---
-$admins = Get-LocalGroupMember -Name Administrators
-if ($admins.Name -contains "$env:COMPUTERNAME\$currentUser" -or $admins.Name -contains "NT AUTHORITY\SYSTEM") {
-    Write-Host "$currentUser is a local administrator"
-    $isAdmin = $true
-} else {
-    Write-Host "$currentUser is not a local administrator"
-    $isAdmin = $false
-}
-
-
 # --- Main Logic Gate with Toggle ---
+#$changeOutput = $false
 
-
-# --- ACTION 1: ADMIN USER ---
+# --- ACTION 1: REMOVE ---
 # If the check passes, ensure the <BaseOutputPath> tag is REMOVED.
-if ($currentUser -eq $expectedUser -and $isAdmin) {
-    Write-Host "User '$currentUser' is the expected admin. Removing <BaseOutputPath> to restore default build paths."
+if ($changeOutput -eq $false) {
+    Write-Host "Removing <BaseOutputPath> to restore default build paths."
 
     Get-ChildItem -Path . -Filter "*.csproj" -Recurse | ForEach-Object {
         $csprojPath = $_.FullName
@@ -89,7 +83,7 @@ if ($currentUser -eq $expectedUser -and $isAdmin) {
 # --- ACTION 2: OTHER USERS ---
 # If the check fails, ensure the <BaseOutputPath> tag is SET to "\bin".
 else {
-    Write-Host "Pre-Build Event: User/permission check failed. Setting <BaseOutputPath> to '\bin'..."
+    Write-Host "Pre-Build Event: User check failed. Setting <BaseOutputPath> to '\bin'..."
     Write-Host "Current User: $currentUser (Expected: $expectedUser), Is Admin: $isAdmin"
 
     Get-ChildItem -Path . -Filter "*.csproj" -Recurse | ForEach-Object {

@@ -1,8 +1,8 @@
 @echo off
-echo --- Running Pre-Build Orchestrator ---
+echo --- Running Post-Build Orchestrator ---
 
 set "SOLUTION_DIR=%~1"
-set "SCRIPT_PATH=%SOLUTION_DIR%update_paths_pre_build.ps1"
+set "SCRIPT_PATH=%SOLUTION_DIR%update_paths_post_build.ps1"
 
 powershell.exe -ExecutionPolicy Bypass -File "%SCRIPT_PATH%" -SolutionDir "%SOLUTION_DIR%"
 
@@ -14,5 +14,5 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
-echo --- Pre-Build Orchestrator Finished Successfully ---
+echo --- Post-Build Orchestrator Finished Successfully ---
 exit /b 0
