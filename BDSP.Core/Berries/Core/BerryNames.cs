@@ -86,5 +86,11 @@ namespace BDSP.Core.Berries
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string GetName(BerryId id) => Names[id.Value];
+
+        /// <summary>
+        /// Returns the display name for the given berry ID.
+        /// <include file='BerryDocs.xml' path='doc/members/member[@name="T:BerryIdTable"]/*' />
+        /// </summary>
+        public static object GetName(int iD) => Names[iD];
     }
 }
