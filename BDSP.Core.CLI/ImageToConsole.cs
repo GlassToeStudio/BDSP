@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections.Concurrent;
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -57,18 +58,19 @@ namespace BDSP.Core.CLI
             {
                 bmp.SetResolution(resolution, resolution);
                 using (Bitmap resizedImage = ResizeImage(bmp, resolution, resolution)) {
-                    for (int y = 0; y < bmp.Height; y++)
+                    for (int y = 0; y < resizedImage.Height; y++)
                     {
-                        for (int x = 0; x < bmp.Width; x++)
+                        for (int x = 0; x < resizedImage.Width; x++)
                         {
-                            Color pixelColor = bmp.GetPixel(x, y);
+                            Color pixelColor = resizedImage.GetPixel(x, y);
                             byte r = pixelColor.R;
                             byte g = pixelColor.G;
                             byte b = pixelColor.B;
                             //byte a = pixelColor.A;
-                            string block = "█"; // You can choose different characters for different effects
+                            string block = "██"; // You can choose different characters for different effects
                             sb.Append($"{Colors.Rgb(r, g, b)}{block}"); // Placeholder for pixel
                         }
+                        sb.Append('\n');
                     }
                 }
             }
