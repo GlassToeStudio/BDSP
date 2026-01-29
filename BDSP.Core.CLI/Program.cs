@@ -15,9 +15,8 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
-
-
        
+        //Console.WriteLine(ImageToConsole.GetImageString(1));
         Console.WriteLine(ImageToConsole.GetImageString(1));
         return;
 
