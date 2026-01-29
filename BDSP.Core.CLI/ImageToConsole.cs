@@ -1,10 +1,12 @@
-﻿using System.Drawing;
+﻿using Avalonia;
+using Avalonia.Controls.Documents;
+using BDSP.Core.Berries; // Assuming this namespace exists from your previous code
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
-using BDSP.Core.Berries; // Assuming this namespace exists from your previous code
 
 namespace BDSP.Core.CLI
 {
@@ -154,6 +156,7 @@ namespace BDSP.Core.CLI
         /// <summary>
         /// Resizes an image using high-quality bicubic interpolation.
         /// </summary>
+        [SupportedOSPlatform("windows")]
         public static Bitmap ResizeImage(Image image, int width, int height)
         {
             var resizedImage = new Bitmap(width, height);
@@ -168,6 +171,7 @@ namespace BDSP.Core.CLI
         /// <summary>
         /// Generates a string representation of an image using colored console blocks.
         /// </summary>
+        [SupportedOSPlatform("windows")]
         public static string GetImageString(int ID)
         {
             // --- CONTROLS ---
@@ -196,7 +200,7 @@ namespace BDSP.Core.CLI
             using (var resizedImage = ResizeImage(bmp, resolution, resolution))
             {
                 var rect = new Rectangle(0, 0, resizedImage.Width, resizedImage.Height);
-                BitmapData bmpData = null;
+                BitmapData? bmpData = null;
 
                 try
                 {
@@ -210,17 +214,15 @@ namespace BDSP.Core.CLI
                     // Perform one single, fast copy from the bitmap memory to our array.
                     Marshal.Copy(bmpData.Scan0, pixels, 0, byteCount);
 
-                    // Loop through the byte array instead of calling GetPixel() repeatedly.
                     sb.Append(Colors.WhiteBg + Colors.Black);
                     for (int i = 0; i < resizedImage.Width; i++)
                     {
-                        // Append something related to 'i'
-                        sb.Append($"{i}."); 
-                    }
-                    sb.Append("\n");
+                        sb.Append($"{$"{i,2}.",3}"); 
+                    }sb.Append('\n');
+                    
                     for (int y = 0; y < resizedImage.Height; y++)
                     {
-                        sb.Append($"{Colors.WhiteBg}{Colors.Black}{y}.\t");
+                        sb.Append($"{Colors.WhiteBg}{Colors.Black}{$"{y+1,2}.",3}{Colors.Reset}\t");
                         int rowIndex = y * bmpData.Stride;
                         for (int x = 0; x < resizedImage.Width; x++)
                         {
@@ -231,37 +233,18 @@ namespace BDSP.Core.CLI
                             byte r = pixels[pixelIndex + 2];
                             byte a = pixels[pixelIndex + 3]; // Alpha is available if you need it
 
-                            /*
-                             * 
-                             * Character	Density     (Approx.)	    Notes
-                             *  █	        Very High   (100%)	        Full block. Best for fully opaque, bold colors.
-                             *  ▓	        High        (75%)           Dark shade.
-                             *  ▒	        Medium      (50%)	        Medium shade.
-                             *  ░	        Low         (25%)	        Light shade.
-                             *  •	        Very Low	                A bullet point can give a speckled effect.
-                             *  .	        Very Low	                A simple dot, barely there.
-                             *  None (0%)	The space character.        Useful for very bright or transparent areas.
-                             *  
-                             */
-
-
-                            // Inside GetImageString, in the inner loop (where you get r, g, b):
-
-                            // Assuming 'r', 'g', 'b' are your pixel color components
-                            //double luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0; // Normalize 0.0 to 1.0
-                            //string block = GetShadeCharacter_INVERTED(luminance); // Get character based on brightness
-                            string block = "█";
+                            double luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0; // Normalize 0.0 to 1.0
+                            string block = GetShadeCharacter(luminance); // Get character based on brightness
 ;
 
-                            if (a <= .99)
+                            if (a <= 50)
                             {
                                 sb.Append("  ");
                                 continue;
                             }
 
-
-                            // Assuming you have a 'Colors' class for ANSI escape codes
-                            sb.Append($"{Colors.Rgb(r, g, b)}{block}{block}");
+                            //sb.Append($"{Colors.Rgb(r, g, b)}██|{Colors.Rgb(r, 0, 0)}r:{Colors.Rgb(0, g, 0)}g:{Colors.Rgb(0, 0, b)}b:{Colors.Rgba(r, g, b, a)}a:|");
+                            sb.Append($"{Colors.Rgba(r, g, b, a)}{block}{block}");
                         }
                         sb.Append('\n');
                     }
@@ -278,28 +261,41 @@ namespace BDSP.Core.CLI
 
             sb.Append(Colors.Reset); // Reset color at the end
             return sb.ToString();
+            //return "Done";
         }
 
-        // --- THIS PRODUCES A NEGATIVE/INVERTED IMAGE ---
-        private static string GetShadeCharacter_INVERTED(double luminance)
+        /// <summary>
+        /// Selects a character to represent a pixel's brightness.
+        /// This table uses the "Light on a Black Screen" model, where characters act as light sources.
+        /// A bright pixel needs a dense character (a big light), and a dark pixel needs a sparse
+        /// character (a small light or no light).
+        /// </summary>
+        /// <remarks>
+        /// <code>
+        /// | Character | Density   | Usage (for a Black Console Background)                     |
+        /// | --------- | --------- | ---------------------------------------------------------- |
+        /// |  █        | Very High | Used for the **brightest** pixels (whites, bright colors). |
+        /// |  ▓        | High      | Used for bright pixels.                                    |
+        /// |  ▒        | Medium    | Used for mid-range brightness pixels.                      |
+        /// |  ░        | Low       | Used for dim pixels.                                       |
+        /// |  •        | Very Low  | Used for very dim, near-black pixels.                      |
+        /// |  .        | Minimal   | Used for pixels that are just barely visible.              |
+        /// |           | None      | Used for **black** or fully transparent pixels (no light). |
+        /// |------------------------------------------------------------------------------------|
+        /// </code></remarks>
+        private static string GetShadeCharacter(double luminance) // luminance is 0.0 (dark) to 1.0 (bright)
         {
-            if (luminance > 0.9) return "█";   // Very BRIGHT pixel -> MOST ink (Incorrect for standard image)
-            if (luminance > 0.8) return "▓";
-            if (luminance > 0.7) return "▒";
-            if (luminance > 0.6) return "░";
-            if (luminance > 0.4) return "•";
-            if (luminance > 0.2) return ".";   // Fairly DARK pixel -> LESS ink (Incorrect)
-            return " ";                        // Very DARK pixel -> LEAST ink (Incorrect)
-        }
-        private static string GetShadeCharacter(double luminance)
-        {
-            if (luminance > 0.9) return " ";   // Very bright
-            if (luminance > 0.8) return ".";   // Bright
-            if (luminance > 0.7) return "•";   // Less bright
-            if (luminance > 0.6) return "░";   // Light shade
-            if (luminance > 0.4) return "▒";   // Medium shade
-            if (luminance > 0.2) return "▓";   // Dark shade
-            return "█";                        // Very dark
+            // C# 9+ switch expression
+            return luminance switch
+            {
+                > 0.3 => "█",   // Very BRIGHT pixel -> Use MOST "light" (full block)
+                > 0.2 => "▓",
+                > 0.1 => "▒",
+                > 0.05 => "░",
+                > 0.025 => "•",
+                > 0.0125 => ".",   // Fairly DARK pixel -> Use LESS "light" (a dot)
+                _ => " "    // Black pixel (or very dark) -> Use NO "light" (space)
+            };
         }
 
         public static string GetImageString(BerryId ID) => GetImageString(ID.Value);

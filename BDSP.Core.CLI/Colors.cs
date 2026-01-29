@@ -41,7 +41,39 @@ namespace BDSP.Core.CLI
         /// <param name="g">Green ID (0-255)</param>
         /// <param name="b">Blue ID (0-255)</param>
         /// <returns><see cref="Esc"/>[38;2;&lt;r&gt;;&lt;g&gt;;&lt;b&gt;m</returns>
+        /// <remarks>Values from 0 - 255</remarks>
         public static string Rgb(byte r, byte g, byte b) => $"\u001b[38;2;{r};{g};{b}m";
+        /// <summary>
+        /// Change the text to an RGBA color.
+        /// </summary>
+        /// <param name="r">Red ID (0-255)</param>
+        /// <param name="g">Green ID (0-255)</param>
+        /// <param name="b">Blue ID (0-255)</param>
+        /// <param name="a">Alpha ID (0-255)</param>
+        /// <returns><see cref="Esc"/>[38;2;&lt;r&gt;;&lt;g&gt;;&lt;b&gt;m</returns>
+        /// <remarks>Values from 0 - 255</remarks>
+        public static string Rgba(byte r, byte g, byte b, byte a)
+        {
+            double alpha = ( a / 255.0);
+            byte round(byte v)
+            {
+                return (byte)(v * alpha);
+            }
+            //Console.Write($"R:({r })\t");
+            //Console.Write($"G:({g })\t");
+            //Console.Write($"B:({b })\t");
+            //Console.Write($"A:({a })\t");
+            //Console.Write($"={Rgb(r, g, b)}██|");
+            r = round(r);
+            g = round(g);
+            b = round(b);
+            //Console.Write($"|{Rgb(r,g,b)}██");
+            //Console.Write($"R:({r})\t");
+            //Console.Write($"G:({g})\t");
+            //Console.Write($"B:({b})\t");
+            //Console.Write($"A:({alpha:F2})\n");
+            return $"\u001b[38;2;{r};{g};{b}m";
+        }
 
         /// <summary>
         /// Change the background to an RGB color.
