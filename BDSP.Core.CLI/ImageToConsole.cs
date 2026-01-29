@@ -136,7 +136,7 @@ namespace BDSP.Core.CLI
 
                 // 1. Set the Window size DOWN first to a minimal value.
                 //    This ensures the window is not "in the way" when we resize the buffer.
-                Console.SetWindowSize(1, 1);
+                //Console.SetWindowSize(1, 1);
 
                 // 2. Now, set the Buffer size to our desired dimensions.
                 //    This now works because the window is tiny.
@@ -144,7 +144,7 @@ namespace BDSP.Core.CLI
 
                 // 3. Finally, set the Window size to our desired dimensions.
                 //    This works because the buffer is already the correct size.
-                Console.SetWindowSize(newWidth, newHeight);
+                Console.SetWindowSize(newWidth, newHeight );
             }
             catch (Exception ex)
             {
@@ -178,7 +178,7 @@ namespace BDSP.Core.CLI
             // Adjust these values to change the output.
             // resolution: The number of characters wide/high the image will be. Higher = more detail.
             // fontSize: The size of each character. Smaller allows for a higher resolution on screen.
-            const int resolution = 50;
+            const int resolution = 250;
             const short fontSize = 2;
             // ------------------
 
@@ -214,15 +214,15 @@ namespace BDSP.Core.CLI
                     // Perform one single, fast copy from the bitmap memory to our array.
                     Marshal.Copy(bmpData.Scan0, pixels, 0, byteCount);
 
-                    sb.Append(Colors.WhiteBg + Colors.Black);
-                    for (int i = 0; i < resizedImage.Width; i++)
-                    {
-                        sb.Append($"{$"{i,2}.",3}"); 
-                    }sb.Append('\n');
+                    //sb.Append(Colors.WhiteBg + Colors.Black);
+                    //for (int i = 0; i < resizedImage.Width; i++)
+                    //{
+                    //    sb.Append($"{$"{i,2}.",3}"); 
+                    //}sb.Append('\n');
                     
                     for (int y = 0; y < resizedImage.Height; y++)
                     {
-                        sb.Append($"{Colors.WhiteBg}{Colors.Black}{$"{y+1,2}.",3}{Colors.Reset}\t");
+                        //sb.Append($"{Colors.WhiteBg}{Colors.Black}{$"{y+1,2}.",3}{Colors.Reset}\t");
                         int rowIndex = y * bmpData.Stride;
                         for (int x = 0; x < resizedImage.Width; x++)
                         {
@@ -288,12 +288,12 @@ namespace BDSP.Core.CLI
             // C# 9+ switch expression
             return luminance switch
             {
-                > 0.3 => "█",   // Very BRIGHT pixel -> Use MOST "light" (full block)
-                > 0.2 => "▓",
-                > 0.1 => "▒",
-                > 0.05 => "░",
-                > 0.025 => "•",
-                > 0.0125 => ".",   // Fairly DARK pixel -> Use LESS "light" (a dot)
+                > 0.02 => "█",   // Very BRIGHT pixel -> Use MOST "light" (full block)
+                //> 0.15 => "▓",
+                //> 0.1 => "▒",
+                //> 0.05 => "░",
+                //> 0.025 => "•",
+                //> 0.0125 => ".",   // Fairly DARK pixel -> Use LESS "light" (a dot)
                 _ => " "    // Black pixel (or very dark) -> Use NO "light" (space)
             };
         }

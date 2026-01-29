@@ -17,7 +17,7 @@ internal class Program
     {
        
         //Console.WriteLine(ImageToConsole.GetImageString(1));
-        Console.WriteLine(ImageToConsole.GetImageString(1));
+        Console.WriteLine(ImageToConsole.GetImageString(14));
         return;
 
         if (args.Length > 0 && args[0].Equals("feeding-plan", StringComparison.OrdinalIgnoreCase))
