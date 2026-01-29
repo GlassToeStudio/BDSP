@@ -17,9 +17,8 @@ internal class Program
     {
 
 
-        var ex = new ExampleUsage();
-        await ex.RunExample();
-
+       
+        Console.WriteLine(ImageToConsole.GetImageString(1));
         return;
 
         if (args.Length > 0 && args[0].Equals("feeding-plan", StringComparison.OrdinalIgnoreCase))
