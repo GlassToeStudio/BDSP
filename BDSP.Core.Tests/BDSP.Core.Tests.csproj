@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -7,9 +7,6 @@
   </PropertyGroup>
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="call &quot;$(SolutionDir)pre-build-runner.bat&quot; &quot;$(SolutionDir)&quot;" />
-  </Target>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call &quot;$(SolutionDir)post-build-runner.bat&quot; &quot;$(SolutionDir)&quot;" />
   </Target>
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
