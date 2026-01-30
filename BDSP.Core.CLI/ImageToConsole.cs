@@ -251,7 +251,7 @@ namespace BDSP.Core.CLI
                             double luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
 
                             // Get the character that best represents this brightness level.
-                            string block = GetShadeCharacter(luminance);
+                            string block = "█"; //GetShadeCharacter(luminance);
 
                             // Append the colored character twice to create a more square-like "pixel".
                             sb.Append($"{Colors.Rgb(r, g, b)}{block}{block}");
