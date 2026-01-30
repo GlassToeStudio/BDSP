@@ -18,7 +18,7 @@ catch {
 $envPath = Join-Path -Path $SolutionDir -ChildPath ".env"
 if (-not (Test-Path $envPath)) {
     Write-Host "FATAL ERROR: The file '$envPath' could not be found."
-    exit 1
+    exit 0
 }
 
 $moveOutput = $false

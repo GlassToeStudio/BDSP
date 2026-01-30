@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\BDSP.Core\BDSP.Core.csproj" />
   </ItemGroup>
@@ -26,6 +26,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <BaseOutputPath>\bin</BaseOutputPath>
   </PropertyGroup>
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="call &quot;$(SolutionDir)pre-build-runner.bat&quot; &quot;$(SolutionDir)&quot;" />
